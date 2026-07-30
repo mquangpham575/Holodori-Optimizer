@@ -3,7 +3,7 @@ export const CHARACTERS = [
   {
     "id": "tokinosora",
     "name": "Tokino Sora",
-    "title": "5-Star Gen 0 Vocalist",
+    "title": "Rainbow's Devotion",
     "rarity": "5-Star",
     "group": "Gen 0",
     "type": "HAPPY",
@@ -26,7 +26,7 @@ export const CHARACTERS = [
   {
     "id": "robocosan",
     "name": "Robocosan",
-    "title": "5-Star Gen 0 Vocalist",
+    "title": "High-Tech Victory V",
     "rarity": "5-Star",
     "group": "Gen 0",
     "type": "HAPPY",
@@ -49,7 +49,7 @@ export const CHARACTERS = [
   {
     "id": "azki",
     "name": "AZKi",
-    "title": "5-Star Gen 0 Vocalist",
+    "title": "A Flower in Full Bloom",
     "rarity": "5-Star",
     "group": "Gen 0",
     "type": "PURE",
@@ -72,7 +72,7 @@ export const CHARACTERS = [
   {
     "id": "sakuramiko",
     "name": "Sakura Miko",
-    "title": "5-Star Gen 0 Vocalist",
+    "title": "Sakura Bloom",
     "rarity": "5-Star",
     "group": "Gen 0",
     "type": "HAPPY",
@@ -95,7 +95,7 @@ export const CHARACTERS = [
   {
     "id": "hoshimachisuisei",
     "name": "Hoshimachi Suisei",
-    "title": "5-Star Gen 0 Vocalist",
+    "title": "Comet Heart Stealer",
     "rarity": "5-Star",
     "group": "Gen 0",
     "type": "PURE",
@@ -118,7 +118,7 @@ export const CHARACTERS = [
   {
     "id": "akirosenthal",
     "name": "Aki Rosenthal",
-    "title": "5-Star Gen 1 Vocalist",
+    "title": "Ethereal Half-Elf",
     "rarity": "5-Star",
     "group": "Gen 1",
     "type": "PURE",
@@ -141,7 +141,7 @@ export const CHARACTERS = [
   {
     "id": "akaihaato",
     "name": "Akai Haato",
-    "title": "5-Star Gen 1 Vocalist",
+    "title": "Snack-Time Rebel",
     "rarity": "5-Star",
     "group": "Gen 1",
     "type": "PURE",
@@ -164,7 +164,7 @@ export const CHARACTERS = [
   {
     "id": "shirakamifubuki",
     "name": "Shirakami Fubuki",
-    "title": "5-Star Gen 1 Vocalist",
+    "title": "Kitsune's Rite",
     "rarity": "5-Star",
     "group": "Gen 1",
     "type": "PURE",
@@ -187,7 +187,7 @@ export const CHARACTERS = [
   {
     "id": "natsuiromatsuri",
     "name": "Natsuiro Matsuri",
-    "title": "5-Star Gen 1 Vocalist",
+    "title": "Vivid Cheer Spirit",
     "rarity": "5-Star",
     "group": "Gen 1",
     "type": "PURE",
@@ -210,7 +210,7 @@ export const CHARACTERS = [
   {
     "id": "nakiriayame",
     "name": "Nakiri Ayame",
-    "title": "5-Star Gen 2 Vocalist",
+    "title": "Spirit Realm Lantern",
     "rarity": "5-Star",
     "group": "Gen 2",
     "type": "PURE",
@@ -233,7 +233,7 @@ export const CHARACTERS = [
   {
     "id": "yuzukichoco",
     "name": "Yuzuki Choco",
-    "title": "5-Star Gen 2 Vocalist",
+    "title": "Fatal Temptation",
     "rarity": "5-Star",
     "group": "Gen 2",
     "type": "HAPPY",
@@ -256,7 +256,7 @@ export const CHARACTERS = [
   {
     "id": "oozorasubaru",
     "name": "Oozora Subaru",
-    "title": "5-Star Gen 2 Vocalist",
+    "title": "Duckling Noon Jam",
     "rarity": "5-Star",
     "group": "Gen 2",
     "type": "PURE",
@@ -279,7 +279,7 @@ export const CHARACTERS = [
   {
     "id": "ookamimio",
     "name": "Ookami Mio",
-    "title": "5-Star GAMERS Vocalist",
+    "title": "Calming Nightscape",
     "rarity": "5-Star",
     "group": "GAMERS",
     "type": "PURE",
@@ -302,7 +302,7 @@ export const CHARACTERS = [
   {
     "id": "nekomataokayu",
     "name": "Nekomata Okayu",
-    "title": "5-Star GAMERS Vocalist",
+    "title": "Secret Post-Feast",
     "rarity": "5-Star",
     "group": "GAMERS",
     "type": "CUTE",
@@ -325,7 +325,7 @@ export const CHARACTERS = [
   {
     "id": "inugamikorone",
     "name": "Inugami Korone",
-    "title": "5-Star GAMERS Vocalist",
+    "title": "Vibrant Skater",
     "rarity": "5-Star",
     "group": "GAMERS",
     "type": "HAPPY",
@@ -348,7 +348,7 @@ export const CHARACTERS = [
   {
     "id": "usadapekora",
     "name": "Usada Pekora",
-    "title": "5-Star Gen 3 Vocalist",
+    "title": "Playful Rabbit Field",
     "rarity": "5-Star",
     "group": "Gen 3",
     "type": "CUTE",
@@ -371,7 +371,7 @@ export const CHARACTERS = [
   {
     "id": "shiranuiflare",
     "name": "Shiranui Flare",
-    "title": "5-Star Gen 3 Vocalist",
+    "title": "Elven Gale Gondola",
     "rarity": "5-Star",
     "group": "Gen 3",
     "type": "PURE",
@@ -394,7 +394,7 @@ export const CHARACTERS = [
   {
     "id": "shiroganenoel",
     "name": "Shirogane Noel",
-    "title": "5-Star Gen 3 Vocalist",
+    "title": "Gentle Breeze Knight",
     "rarity": "5-Star",
     "group": "Gen 3",
     "type": "HAPPY",
@@ -417,7 +417,7 @@ export const CHARACTERS = [
   {
     "id": "houshoumarine",
     "name": "Houshou Marine",
-    "title": "5-Star Gen 3 Vocalist",
+    "title": "Siren Marine Blue",
     "rarity": "5-Star",
     "group": "Gen 3",
     "type": "HAPPY",
@@ -440,7 +440,7 @@ export const CHARACTERS = [
   {
     "id": "tsunomakiwatame",
     "name": "Tsunomaki Watame",
-    "title": "5-Star Gen 4 Vocalist",
+    "title": "Woolly Smile Festival",
     "rarity": "5-Star",
     "group": "Gen 4",
     "type": "CUTE",
@@ -463,7 +463,7 @@ export const CHARACTERS = [
   {
     "id": "tokoyamitowa",
     "name": "Tokoyami Towa",
-    "title": "5-Star Gen 4 Vocalist",
+    "title": "Eternal Night Out",
     "rarity": "5-Star",
     "group": "Gen 4",
     "type": "PURE",
@@ -486,7 +486,7 @@ export const CHARACTERS = [
   {
     "id": "himemoriluna",
     "name": "Himemori Luna",
-    "title": "5-Star Gen 4 Vocalist",
+    "title": "Royal Loyal Noon",
     "rarity": "5-Star",
     "group": "Gen 4",
     "type": "CUTE",
@@ -509,7 +509,7 @@ export const CHARACTERS = [
   {
     "id": "yukihanalamy",
     "name": "Yukihana Lamy",
-    "title": "5-Star Gen 5 Vocalist",
+    "title": "Lonely Snow Heiress",
     "rarity": "5-Star",
     "group": "Gen 5",
     "type": "PURE",
@@ -532,7 +532,7 @@ export const CHARACTERS = [
   {
     "id": "momosuzunene",
     "name": "Momosuzu Nene",
-    "title": "5-Star Gen 5 Vocalist",
+    "title": "Pureheart Song",
     "rarity": "5-Star",
     "group": "Gen 5",
     "type": "CUTE",
@@ -555,7 +555,7 @@ export const CHARACTERS = [
   {
     "id": "shishirobotan",
     "name": "Shishiro Botan",
-    "title": "5-Star Gen 5 Vocalist",
+    "title": "Lion's Deadeye",
     "rarity": "5-Star",
     "group": "Gen 5",
     "type": "HAPPY",
@@ -578,7 +578,7 @@ export const CHARACTERS = [
   {
     "id": "omarupolka",
     "name": "Omaru Polka",
-    "title": "5-Star Gen 5 Vocalist",
+    "title": "Polka's Phantasm",
     "rarity": "5-Star",
     "group": "Gen 5",
     "type": "HAPPY",
@@ -601,7 +601,7 @@ export const CHARACTERS = [
   {
     "id": "laplusdarknesss",
     "name": "La+ Darknesss",
-    "title": "5-Star holoX Vocalist",
+    "title": "Commanding Genius",
     "rarity": "5-Star",
     "group": "holoX",
     "type": "PURE",
@@ -624,7 +624,7 @@ export const CHARACTERS = [
   {
     "id": "takanelui",
     "name": "Takane Lui",
-    "title": "5-Star holoX Vocalist",
+    "title": "Iron Executive",
     "rarity": "5-Star",
     "group": "holoX",
     "type": "CUTE",
@@ -647,7 +647,7 @@ export const CHARACTERS = [
   {
     "id": "hakuikoyori",
     "name": "Hakui Koyori",
-    "title": "5-Star holoX Vocalist",
+    "title": "Assistant's Muse",
     "rarity": "5-Star",
     "group": "holoX",
     "type": "PURE",
@@ -670,7 +670,7 @@ export const CHARACTERS = [
   {
     "id": "kazamairoha",
     "name": "Kazama Iroha",
-    "title": "5-Star holoX Vocalist",
+    "title": "Blade Flash",
     "rarity": "5-Star",
     "group": "holoX",
     "type": "CUTE",
@@ -693,7 +693,7 @@ export const CHARACTERS = [
   {
     "id": "ayundarisu",
     "name": "Ayunda Risu",
-    "title": "5-Star Gen 1 Vocalist",
+    "title": "いたずらたくらむ木漏れ日の森",
     "rarity": "5-Star",
     "group": "Gen 1",
     "type": "HAPPY",
@@ -716,7 +716,7 @@ export const CHARACTERS = [
   {
     "id": "moonahoshinova",
     "name": "Moona Hoshinova",
-    "title": "5-Star Gen 1 Vocalist",
+    "title": "Lunar Songstress",
     "rarity": "5-Star",
     "group": "Gen 1",
     "type": "PURE",
@@ -739,7 +739,7 @@ export const CHARACTERS = [
   {
     "id": "airaniiofifteen",
     "name": "Airani Iofifteen",
-    "title": "5-Star Gen 1 Vocalist",
+    "title": "陽光射すCosmos Palette",
     "rarity": "5-Star",
     "group": "Gen 1",
     "type": "PURE",
@@ -762,7 +762,7 @@ export const CHARACTERS = [
   {
     "id": "kureijiollie",
     "name": "Kureiji Ollie",
-    "title": "5-Star Gen 2 Vocalist",
+    "title": "Z nonstop talker",
     "rarity": "5-Star",
     "group": "Gen 2",
     "type": "PURE",
@@ -785,7 +785,7 @@ export const CHARACTERS = [
   {
     "id": "anyamelfissa",
     "name": "Anya Melfissa",
-    "title": "5-Star Gen 2 Vocalist",
+    "title": "ソファに沈んでまったりゲーム",
     "rarity": "5-Star",
     "group": "Gen 2",
     "type": "PURE",
@@ -808,7 +808,7 @@ export const CHARACTERS = [
   {
     "id": "pavoliareine",
     "name": "Pavolia Reine",
-    "title": "5-Star Gen 2 Vocalist",
+    "title": "おすまし孔雀と嗜む一杯",
     "rarity": "5-Star",
     "group": "Gen 2",
     "type": "HAPPY",
@@ -831,7 +831,7 @@ export const CHARACTERS = [
   {
     "id": "vestiazeta",
     "name": "Vestia Zeta",
-    "title": "5-Star Gen 3 Vocalist",
+    "title": "陽だまりとネコと構成員",
     "rarity": "5-Star",
     "group": "Gen 3",
     "type": "PURE",
@@ -854,7 +854,7 @@ export const CHARACTERS = [
   {
     "id": "kaelakovalskia",
     "name": "Kaela Kovalskia",
-    "title": "5-Star Gen 3 Vocalist",
+    "title": "こころ強さは鍛冶場で研ぐ",
     "rarity": "5-Star",
     "group": "Gen 3",
     "type": "CUTE",
@@ -877,7 +877,7 @@ export const CHARACTERS = [
   {
     "id": "kobokanaeru",
     "name": "Kobo Kanaeru",
-    "title": "5-Star Gen 3 Vocalist",
+    "title": "あめ上がりの雨喜雨喜シャーマン",
     "rarity": "5-Star",
     "group": "Gen 3",
     "type": "PURE",
@@ -900,7 +900,7 @@ export const CHARACTERS = [
   {
     "id": "calliopemori",
     "name": "Calliope Mori",
-    "title": "5-Star Myth Vocalist",
+    "title": "Grim Reaper's Melody",
     "rarity": "5-Star",
     "group": "Myth",
     "type": "PURE",
@@ -923,7 +923,7 @@ export const CHARACTERS = [
   {
     "id": "takanashikiara",
     "name": "Takanashi Kiara",
-    "title": "5-Star Myth Vocalist",
+    "title": "Lovely Phoenixダイナー",
     "rarity": "5-Star",
     "group": "Myth",
     "type": "CUTE",
@@ -946,7 +946,7 @@ export const CHARACTERS = [
   {
     "id": "ninomaeinanis",
     "name": "Ninomae Ina\u2019nis",
-    "title": "5-Star Myth Vocalist",
+    "title": "ぽかぽかチャージなひととき",
     "rarity": "5-Star",
     "group": "Myth",
     "type": "PURE",
@@ -969,7 +969,7 @@ export const CHARACTERS = [
   {
     "id": "irys",
     "name": "IRyS",
-    "title": "5-Star Promise Vocalist",
+    "title": "nephilim sonority",
     "rarity": "5-Star",
     "group": "Promise",
     "type": "PURE",
@@ -992,7 +992,7 @@ export const CHARACTERS = [
   {
     "id": "ourokronii",
     "name": "Ouro Kronii",
-    "title": "5-Star Promise Vocalist",
+    "title": "Clock Tower Warden",
     "rarity": "5-Star",
     "group": "Promise",
     "type": "CUTE",
@@ -1015,7 +1015,7 @@ export const CHARACTERS = [
   {
     "id": "hakosbaelz",
     "name": "Hakos Baelz",
-    "title": "5-Star Promise Vocalist",
+    "title": "Chaotic Powerful Rat",
     "rarity": "5-Star",
     "group": "Promise",
     "type": "PURE",
@@ -1038,7 +1038,7 @@ export const CHARACTERS = [
   {
     "id": "shiorinovella",
     "name": "Shiori Novella",
-    "title": "5-Star Advent Vocalist",
+    "title": "書庫ではぐくむ探究心",
     "rarity": "5-Star",
     "group": "Advent",
     "type": "PURE",
@@ -1061,7 +1061,7 @@ export const CHARACTERS = [
   {
     "id": "kosekibijou",
     "name": "Koseki Bijou",
-    "title": "5-Star Advent Vocalist",
+    "title": "Prism Crystal Realm",
     "rarity": "5-Star",
     "group": "Advent",
     "type": "PURE",
@@ -1084,7 +1084,7 @@ export const CHARACTERS = [
   {
     "id": "nerissaravencroft",
     "name": "Nerissa Ravencroft",
-    "title": "5-Star Advent Vocalist",
+    "title": "Echoes of Nocturne",
     "rarity": "5-Star",
     "group": "Advent",
     "type": "PURE",
@@ -1107,7 +1107,7 @@ export const CHARACTERS = [
   {
     "id": "fuwawaabyssgard",
     "name": "Fuwawa Abyssgard",
-    "title": "5-Star Advent Vocalist",
+    "title": "Fluffy Donut Feast",
     "rarity": "5-Star",
     "group": "Advent",
     "type": "CUTE",
@@ -1130,7 +1130,7 @@ export const CHARACTERS = [
   {
     "id": "mococoabyssgard",
     "name": "Mococo Abyssgard",
-    "title": "5-Star Advent Vocalist",
+    "title": "のほほんドーナツパーティー♪",
     "rarity": "5-Star",
     "group": "Advent",
     "type": "CUTE",
@@ -1153,7 +1153,7 @@ export const CHARACTERS = [
   {
     "id": "otonosekanade",
     "name": "Otonose Kanade",
-    "title": "5-Star ReGLOSS Vocalist",
+    "title": "パレードで笑顔をお届け",
     "rarity": "5-Star",
     "group": "ReGLOSS",
     "type": "PURE",
@@ -1176,7 +1176,7 @@ export const CHARACTERS = [
   {
     "id": "ichijouririka",
     "name": "Ichijou Ririka",
-    "title": "5-Star ReGLOSS Vocalist",
+    "title": "深夜にひと息、CEOの限界飯",
     "rarity": "5-Star",
     "group": "ReGLOSS",
     "type": "PURE",
@@ -1199,7 +1199,7 @@ export const CHARACTERS = [
   {
     "id": "juufuuteiraden",
     "name": "Juufuutei Raden",
-    "title": "5-Star ReGLOSS Vocalist",
+    "title": "叡智を灯し、アートに導く",
     "rarity": "5-Star",
     "group": "ReGLOSS",
     "type": "PURE",
@@ -1222,7 +1222,7 @@ export const CHARACTERS = [
   {
     "id": "todorokihajime",
     "name": "Todoroki Hajime",
-    "title": "5-Star ReGLOSS Vocalist",
+    "title": "ガーリー番長のお裾分け",
     "rarity": "5-Star",
     "group": "ReGLOSS",
     "type": "CUTE",

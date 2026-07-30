@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Users, AlertCircle, CheckCircle2, ShieldAlert, Award } from 'lucide-react';
+import { Trash2, Users, AlertCircle, CheckCircle2, ShieldAlert, Award, Leaf, Heart, Sun } from 'lucide-react';
 import { CHARACTERS } from '../data';
 import './TeamBuilder.css';
 
@@ -7,11 +7,26 @@ export default function TeamBuilder({ activeTeam, setActiveTeam, activeLeader, s
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSlotIndex, setActiveSlotIndex] = useState(null); // 'leader' or 0, 1, 2, 3, 4 or null
 
+  const typeDisplayMap = {
+    'PURE': 'Pure Type',
+    'CUTE': 'Cute Type',
+    'HAPPY': 'Happy Type'
+  };
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'PURE': return <Leaf size={11} />;
+      case 'CUTE': return <Heart size={11} />;
+      case 'HAPPY': return <Sun size={11} />;
+      default: return null;
+    }
+  };
+
   const getTypeColor = (type) => {
     switch (type) {
-      case 'PURE': return '#06b6d4'; // Cyan
-      case 'CUTE': return '#ef4444'; // Red
-      case 'HAPPY': return '#f59e0b'; // Orange
+      case 'PURE': return '#4caf50'; // Green
+      case 'CUTE': return '#ff4d6d'; // Pink
+      case 'HAPPY': return '#ff9f1c'; // Yellow/Orange
       default: return 'var(--text-primary)';
     }
   };
@@ -176,7 +191,10 @@ export default function TeamBuilder({ activeTeam, setActiveTeam, activeLeader, s
                     <div className="slot-details">
                       <h4 className="slot-name">{leaderChar.name}</h4>
                       <span className="slot-role">{leaderChar.group}</span>
-                      <span className="slot-element" style={{ color: getTypeColor(leaderChar.type) }}>{leaderChar.type}</span>
+                      <span className="slot-element" style={{ color: getTypeColor(leaderChar.type) }}>
+                        {getTypeIcon(leaderChar.type)}
+                        {typeDisplayMap[leaderChar.type] || leaderChar.type}
+                      </span>
                     </div>
                     <button 
                       className="btn-remove-slot" 
@@ -237,7 +255,10 @@ export default function TeamBuilder({ activeTeam, setActiveTeam, activeLeader, s
                           <div className="slot-details">
                             <h4 className="slot-name">{char.name}</h4>
                             <span className="slot-role">{char.group}</span>
-                            <span className="slot-element" style={{ color: getTypeColor(char.type) }}>{char.type}</span>
+                            <span className="slot-element" style={{ color: getTypeColor(char.type) }}>
+                              {getTypeIcon(char.type)}
+                              {typeDisplayMap[char.type] || char.type}
+                            </span>
                           </div>
                           <button 
                             className="btn-remove-slot" 

@@ -97,8 +97,11 @@
 .slot-element {
   font-size: 0.7rem;
   font-weight: 700;
-  text-transform: uppercase;
   margin-top: 0.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
 }
 
 .btn-remove-slot {
@@ -599,7 +602,7 @@
 
 .builder-slot .slot-details {
   display: grid;
-  grid-template-columns: 180px 100px 80px;
+  grid-template-columns: 180px 100px 120px;
   align-items: center;
   gap: 1.5rem;
   text-align: left;

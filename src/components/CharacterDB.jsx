@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Shield, Swords, Sparkles, Zap, Heart, Smile, Sparkle, Paintbrush, Users } from 'lucide-react';
+import { X, Shield, Swords, Sparkles, Zap, Heart, Leaf, Sun, Paintbrush, Users } from 'lucide-react';
 import { CHARACTERS } from '../data';
 import './CharacterDB.css';
 
@@ -12,6 +12,12 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
   const groups = ['All', 'Gen 0', 'Gen 1', 'Gen 3', 'Myth', 'ID Gen 3', 'ReGLOSS'];
   const types = ['All', 'PURE', 'CUTE', 'HAPPY'];
 
+  const typeDisplayMap = {
+    'PURE': 'Pure Type',
+    'CUTE': 'Cute Type',
+    'HAPPY': 'Happy Type'
+  };
+
   const filteredCharacters = CHARACTERS.filter((char) => {
     const matchesGroup = selectedGroup === 'All' || char.group === selectedGroup;
     const matchesType = selectedType === 'All' || char.type === selectedType;
@@ -21,14 +27,12 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'PURE': return <Sparkle className="elem-icon text-cyan" size={14} />;
-      case 'CUTE': return <Heart className="elem-icon text-red" size={14} />;
-      case 'HAPPY': return <Smile className="elem-icon text-orange" size={14} />;
+      case 'PURE': return <Leaf className="elem-icon text-pure" size={14} />;
+      case 'CUTE': return <Heart className="elem-icon text-cute" size={14} />;
+      case 'HAPPY': return <Sun className="elem-icon text-happy" size={14} />;
       default: return null;
     }
   };
-
-
 
   const skillTypes = [
     { key: 'outfit', label: 'Outfit Skill' },
@@ -79,7 +83,7 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
                 className={`filter-btn ${selectedType === type ? 'active' : ''}`}
                 onClick={() => setSelectedType(type)}
               >
-                {type}
+                {typeDisplayMap[type] || type}
               </button>
             ))}
           </div>
@@ -114,7 +118,7 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
                 </span>
                 <span className="badge-elem">
                   {getTypeIcon(char.type)}
-                  {char.type}
+                  {typeDisplayMap[char.type] || char.type}
                 </span>
               </div>
             </div>
@@ -149,7 +153,7 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
                   </span>
                   <span className="badge-elem">
                     {getTypeIcon(activeCharacter.type)}
-                    {activeCharacter.type}
+                    {typeDisplayMap[activeCharacter.type] || activeCharacter.type}
                   </span>
                 </div>
                 
