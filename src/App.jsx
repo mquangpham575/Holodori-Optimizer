@@ -36,25 +36,37 @@ function App() {
   const [notification, setNotification] = useState(null);
 
 
-  // Load team selection state (5 slots)
-  const [activeTeam, setActiveTeam] = useState(() => {
-    const saved = localStorage.getItem('holodreams_player_data');
-    if (saved) {
-      const data = JSON.parse(saved);
-      return (data.favoriteTeam || DEFAULT_USER_SHOWCASE.favoriteTeam).map(migrateIds);
+  // Load presets from localStorage or default (includes migration)
+  const [presets, setPresets] = useState(() => {
+    const savedPresets = localStorage.getItem('holodreams_presets');
+    if (savedPresets) {
+      return JSON.parse(savedPresets);
     }
-    return DEFAULT_USER_SHOWCASE.favoriteTeam;
+    
+    // Migration fallback
+    const savedOld = localStorage.getItem('holodreams_player_data');
+    let oldTeam = [null, null, null, null, null];
+    let oldLeader = null;
+    if (savedOld) {
+      const parsed = JSON.parse(savedOld);
+      if (parsed.favoriteTeam) {
+        oldTeam = parsed.favoriteTeam.map(migrateIds);
+      }
+      if (parsed.favoriteLeader) {
+        oldLeader = migrateIds(parsed.favoriteLeader);
+      }
+    }
+    
+    return [
+      { id: 'preset_1', name: 'Preset 1', team: oldTeam, leader: oldLeader, isActive: true },
+      { id: 'preset_2', name: 'Preset 2', team: [null, null, null, null, null], leader: null, isActive: false },
+      { id: 'preset_3', name: 'Preset 3', team: [null, null, null, null, null], leader: null, isActive: false },
+      { id: 'preset_4', name: 'Preset 4', team: [null, null, null, null, null], leader: null, isActive: false },
+      { id: 'preset_5', name: 'Preset 5', team: [null, null, null, null, null], leader: null, isActive: false }
+    ];
   });
 
-  // Load active leader state
-  const [activeLeader, setActiveLeader] = useState(() => {
-    const saved = localStorage.getItem('holodreams_player_data');
-    if (saved) {
-      const data = JSON.parse(saved);
-      return migrateIds(data.favoriteLeader || DEFAULT_USER_SHOWCASE.favoriteLeader);
-    }
-    return DEFAULT_USER_SHOWCASE.favoriteLeader;
-  });
+  const [selectedPresetId, setSelectedPresetId] = useState('preset_1');
 
   // Load theme accent color from localStorage or default (Sora Blue)
   const [themeAccent, setThemeAccent] = useState(() => {
@@ -76,10 +88,26 @@ function App() {
     showNotification('Theme Accent Synced!', 'success');
   };
 
-  const handleSaveTeam = () => {
-    const saveData = { favoriteTeam: activeTeam, favoriteLeader: activeLeader };
-    localStorage.setItem('holodreams_player_data', JSON.stringify(saveData));
-    showNotification('Your active team has been updated!', 'success');
+  const handleUpdatePreset = (presetId, updatedFields) => {
+    setPresets(prev => prev.map(p => {
+      if (p.id === presetId) {
+        return { ...p, ...updatedFields };
+      }
+      // If we set a preset as active, deactivate all other presets
+      if (updatedFields.isActive && p.id !== presetId) {
+        return { ...p, isActive: false };
+      }
+      return p;
+    }));
+  };
+
+  const handleSavePresets = (updatedPresets = presets) => {
+    localStorage.setItem('holodreams_presets', JSON.stringify(updatedPresets));
+    // Sync active preset for backwards compatibility
+    const activePreset = updatedPresets.find(p => p.isActive) || updatedPresets[0];
+    const oldData = { favoriteTeam: activePreset.team, favoriteLeader: activePreset.leader };
+    localStorage.setItem('holodreams_player_data', JSON.stringify(oldData));
+    showNotification('Presets saved successfully!', 'success');
   };
 
   const showNotification = (message, type = 'success') => {
@@ -88,6 +116,8 @@ function App() {
       setNotification(null);
     }, 3000);
   };
+
+  const activePreset = presets.find(p => p.isActive) || presets[0];
 
   return (
     <div className="app-container">
@@ -107,8 +137,8 @@ function App() {
             path="/home" 
             element={
               <Home 
-                activeTeam={activeTeam} 
-                activeLeader={activeLeader}
+                activeTeam={activePreset.team} 
+                activeLeader={activePreset.leader}
               />
             } 
           />
@@ -125,11 +155,11 @@ function App() {
             path="/builder" 
             element={
               <TeamBuilder 
-                activeTeam={activeTeam} 
-                setActiveTeam={setActiveTeam} 
-                activeLeader={activeLeader}
-                setActiveLeader={setActiveLeader}
-                onSaveTeam={handleSaveTeam} 
+                presets={presets}
+                selectedPresetId={selectedPresetId}
+                setSelectedPresetId={setSelectedPresetId}
+                onUpdatePreset={handleUpdatePreset}
+                onSavePresets={() => handleSavePresets(presets)}
               />
             } 
           />

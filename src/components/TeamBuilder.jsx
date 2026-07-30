@@ -3,9 +3,35 @@ import { Trash2, Users, AlertCircle, CheckCircle2, ShieldAlert, Award, Leaf, Hea
 import { CHARACTERS } from '../data';
 import './TeamBuilder.css';
 
-export default function TeamBuilder({ activeTeam, setActiveTeam, activeLeader, setActiveLeader, onSaveTeam }) {
+export default function TeamBuilder({ presets, selectedPresetId, setSelectedPresetId, onUpdatePreset, onSavePresets }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSlotIndex, setActiveSlotIndex] = useState(null); // 'leader' or 0, 1, 2, 3, 4 or null
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newNameInput, setNewNameInput] = useState('');
+
+  const currentPreset = presets.find(p => p.id === selectedPresetId) || presets[0];
+  const activeTeam = currentPreset.team;
+  const activeLeader = currentPreset.leader;
+
+  const setActiveTeam = (newTeam) => {
+    onUpdatePreset(selectedPresetId, { team: newTeam });
+  };
+
+  const setActiveLeader = (newLeader) => {
+    onUpdatePreset(selectedPresetId, { leader: newLeader });
+  };
+
+  const handleStartRename = () => {
+    setNewNameInput(currentPreset.name);
+    setIsEditingName(true);
+  };
+
+  const handleSaveRename = () => {
+    if (newNameInput.trim()) {
+      onUpdatePreset(selectedPresetId, { name: newNameInput.trim() });
+    }
+    setIsEditingName(false);
+  };
 
   const typeDisplayMap = {
     'PURE': 'Pure Type',
@@ -163,6 +189,87 @@ export default function TeamBuilder({ activeTeam, setActiveTeam, activeLeader, s
         <p className="page-subtitle">Click on any slot to assign members or the Leader. Match VTuber requirements to trigger Passive Skills.</p>
       </div>
 
+      {/* Presets Manager */}
+      <div className="presets-manager glass">
+        <div className="presets-header">
+          <h3 className="section-title-small">Presets Manager</h3>
+          <span className="presets-info-text">Switch presets or activate one as your primary deck (Active Party)</span>
+        </div>
+        
+        <div className="presets-list-bar">
+          {presets.map((preset) => (
+            <button
+              key={preset.id}
+              className={`preset-selector-btn ${selectedPresetId === preset.id ? 'selected' : ''} ${preset.isActive ? 'active-deck' : ''}`}
+              onClick={() => {
+                setSelectedPresetId(preset.id);
+                setIsEditingName(false);
+              }}
+            >
+              {preset.isActive && <Award size={12} className="text-gold mr-1" />}
+              <span className="preset-btn-name">{preset.name}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="preset-actions-bar">
+          <div className="preset-meta-info">
+            {isEditingName ? (
+              <div className="rename-input-wrapper">
+                <input
+                  type="text"
+                  value={newNameInput}
+                  onChange={(e) => setNewNameInput(e.target.value)}
+                  className="rename-input glass"
+                  maxLength={25}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveRename();
+                    if (e.key === 'Escape') setIsEditingName(false);
+                  }}
+                />
+                <button className="btn-rename-save" onClick={handleSaveRename}>Save</button>
+                <button className="btn-rename-cancel" onClick={() => setIsEditingName(false)}>Cancel</button>
+              </div>
+            ) : (
+              <div className="preset-name-display">
+                <span className="current-preset-label">Editing:</span>
+                <strong className="current-preset-value">{currentPreset.name}</strong>
+                <button className="btn-icon-rename" onClick={handleStartRename} title="Rename preset">
+                  Rename
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="preset-control-buttons">
+            {!currentPreset.isActive && (
+              <button 
+                className="btn-activate-preset" 
+                onClick={() => onUpdatePreset(selectedPresetId, { isActive: true })}
+              >
+                Set as Active Party
+              </button>
+            )}
+            {currentPreset.isActive && (
+              <span className="active-party-badge">
+                <CheckCircle2 size={12} className="text-green" /> Primary Active Party
+              </span>
+            )}
+            <button 
+              className="btn-clear-preset" 
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to clear "${currentPreset.name}" slots?`)) {
+                  onUpdatePreset(selectedPresetId, { team: [null, null, null, null, null], leader: null });
+                }
+              }}
+            >
+              Clear Slots
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="builder-single-column-layout">
         {/* Row 1: Team Configuration Container */}
         <div className="slots-container glass">
@@ -283,11 +390,11 @@ export default function TeamBuilder({ activeTeam, setActiveTeam, activeLeader, s
 
           <button 
             className="btn-primary w-full mt-4" 
-            onClick={onSaveTeam}
+            onClick={() => onSavePresets()}
             disabled={activeTeam.filter(Boolean).length === 0}
             style={{ opacity: activeTeam.filter(Boolean).length === 0 ? 0.5 : 1 }}
           >
-            Save Team to Profile
+            Save Presets Configuration
           </button>
         </div>
 
