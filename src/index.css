@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  /* Colors */
+  --bg-dark: #0a0915;
+  --bg-card: rgba(18, 17, 35, 0.65);
+  --bg-card-hover: rgba(28, 26, 54, 0.8);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
+  --text-primary: #f8f9fa;
+  --text-secondary: #9fa0c3;
+  --text-muted: #626487;
+  
+  /* Primary Glowing Accent (Default Gawr Gura Blue) */
+  --accent-color: #00c3ff;
+  --accent-glow: rgba(0, 195, 255, 0.25);
+  --accent-glow-strong: rgba(0, 195, 255, 0.5);
+
+  /* Fonts */
+  --font-title: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-hover) var(--bg-dark);
+}
+
+body {
+  background-color: var(--bg-dark);
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(26, 21, 62, 0.3) 0px, transparent 50%),
+    radial-gradient(at 90% 80%, rgba(13, 37, 69, 0.3) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism Classes */
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.glass:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+}
+
+.glow-card {
+  box-shadow: 0 0 20px var(--accent-glow);
+  border-color: var(--accent-color);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-hover);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Global Modal Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 3, 10, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 900px;
+  border-radius: 20px;
+  padding: 2.5rem;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-color: rgba(255, 255, 255, 0.12);
+  animation: slideUp 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: var(--accent-color);
+  transform: rotate(90deg);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+

@@ -1,0 +1,99 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+}
+
+.main-content-layout {
+  flex: 1 0 auto;
+}
+
+/* Toast Notifications */
+.toast-notification {
+  position: fixed;
+  top: 90px;
+  right: 2rem;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+.toast-success {
+  border-color: rgba(46, 196, 182, 0.4);
+  color: #2ec4b6;
+  box-shadow: 0 0 15px rgba(46, 196, 182, 0.15);
+}
+
+.toast-error {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Footer styling */
+.footer {
+  margin-top: 4rem;
+  border-top: 1px solid var(--border-color);
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-radius: 0;
+}
+
+.footer-copyright {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.footer-disclaimer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.4;
+}
+
+/* Base utility elements */
+.w-full {
+  width: 100%;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+/* Responsive adjust for mobile */
+@media (max-width: 768px) {
+  .toast-notification {
+    top: 20px;
+    right: 1rem;
+    left: 1rem;
+    justify-content: center;
+  }
+  .footer {
+    margin-bottom: 65px; /* offset for sticky bottom nav */
+  }
+}

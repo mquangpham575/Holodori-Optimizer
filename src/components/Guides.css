@@ -1,0 +1,251 @@
+.guides-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 90px auto 40px auto;
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.guides-header {
+  text-align: center;
+}
+
+.inline-icon {
+  margin-right: 0.5rem;
+  vertical-align: text-bottom;
+}
+
+/* Category Filter Bar */
+.guides-filter {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border-radius: 12px;
+  align-self: center;
+}
+
+/* Guides Grid */
+.guides-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.75rem;
+}
+
+.guide-card {
+  border-radius: 16px;
+  padding: 1.75rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+}
+
+.guide-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  pointer-events: none;
+  transition: border-color 0.3s ease;
+}
+
+.guide-card:hover {
+  transform: translateY(-5px);
+  background: var(--bg-card-hover);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.guide-card:hover::after {
+  border-color: var(--accent-color);
+}
+
+.guide-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.guide-category {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent-color);
+  background: var(--accent-glow);
+  padding: 0.2rem 0.50rem;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.guide-read-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.guide-title {
+  font-family: var(--font-title);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+  transition: color 0.2s ease;
+}
+
+.guide-card:hover .guide-title {
+  color: var(--accent-color);
+}
+
+.guide-summary {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.guide-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.85rem;
+}
+
+.guide-author, .guide-date {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Reader Modal specific styles */
+.reader-modal {
+  max-width: 800px;
+  padding: 3rem;
+}
+
+.reader-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.reader-title {
+  font-family: var(--font-title);
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #fff, #bfdbfe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.reader-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.meta-item strong {
+  color: var(--text-primary);
+}
+
+/* Inside guide body text styles */
+.reader-body {
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 1rem;
+}
+
+.guide-h1 {
+  font-family: var(--font-title);
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin: 2rem 0 1rem 0;
+  border-bottom: 1.5px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  color: #fff;
+}
+
+.guide-h1:first-child {
+  margin-top: 0;
+}
+
+.guide-h2 {
+  font-family: var(--font-title);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.85rem 0;
+  color: #fff;
+}
+
+.guide-h3 {
+  font-family: var(--font-title);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 1.25rem 0 0.75rem 0;
+  color: #fff;
+}
+
+.guide-p {
+  margin-bottom: 1.25rem;
+  color: var(--text-secondary);
+  text-align: justify;
+}
+
+.guide-p strong, .guide-li strong {
+  color: var(--accent-color);
+}
+
+.reader-body ul {
+  margin-left: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.guide-li {
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .guides-page {
+    margin-top: 20px;
+    margin-bottom: 85px;
+    padding: 0 1rem;
+  }
+  .guides-grid {
+    grid-template-columns: 1fr;
+  }
+  .reader-modal {
+    padding: 1.5rem;
+  }
+  .reader-title {
+    font-size: 1.6rem;
+  }
+  .reader-meta {
+    gap: 0.75rem;
+  }
+}
