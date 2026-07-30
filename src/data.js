@@ -8,13 +8,13 @@ export const CHARACTERS = [
     "group": "Gen 0",
     "type": "HAPPY",
     "accentColor": "#3a86ff",
-    "image": null,
+    "image": "/images/tokinosora.webp",
     "avatar": "T",
     "stats": {
-      "sense": 89,
-      "technique": 78,
-      "performance": 75,
-      "support": 85
+      "sense": 80,
+      "technique": 76,
+      "performance": 85,
+      "support": 93
     },
     "skills": {
       "outfit": "When I have 2+ GEN 0 members, my outfit grants +50% All Stats to [ALL].",
@@ -31,13 +31,13 @@ export const CHARACTERS = [
     "group": "Gen 0",
     "type": "HAPPY",
     "accentColor": "#a2d2ff",
-    "image": null,
+    "image": "/images/robocosan.webp",
     "avatar": "R",
     "stats": {
-      "sense": 80,
-      "technique": 86,
-      "performance": 93,
-      "support": 84
+      "sense": 75,
+      "technique": 80,
+      "performance": 92,
+      "support": 95
     },
     "skills": {
       "outfit": "When I have 2+ HAPPY members, my outfit grants +130% Performance to [ALL].",
@@ -54,13 +54,13 @@ export const CHARACTERS = [
     "group": "Gen 0",
     "type": "PURE",
     "accentColor": "#ff007f",
-    "image": null,
+    "image": "/images/azki.webp",
     "avatar": "A",
     "stats": {
-      "sense": 78,
-      "technique": 91,
-      "performance": 79,
-      "support": 91
+      "sense": 90,
+      "technique": 94,
+      "performance": 85,
+      "support": 77
     },
     "skills": {
       "outfit": "My outfit grants +120% Sense to [ALL].",
@@ -77,13 +77,13 @@ export const CHARACTERS = [
     "group": "Gen 0",
     "type": "HAPPY",
     "accentColor": "#ff85a2",
-    "image": null,
+    "image": "/images/sakuramiko.webp",
     "avatar": "S",
     "stats": {
-      "sense": 93,
-      "technique": 79,
-      "performance": 91,
-      "support": 84
+      "sense": 85,
+      "technique": 77,
+      "performance": 86,
+      "support": 77
     },
     "skills": {
       "outfit": "My outfit grants +120% Sense to [ALL].",
@@ -100,13 +100,13 @@ export const CHARACTERS = [
     "group": "Gen 0",
     "type": "PURE",
     "accentColor": "#00c3ff",
-    "image": null,
+    "image": "/images/hoshimachisuisei.webp",
     "avatar": "H",
     "stats": {
-      "sense": 81,
+      "sense": 78,
       "technique": 81,
-      "performance": 92,
-      "support": 95
+      "performance": 76,
+      "support": 85
     },
     "skills": {
       "outfit": "My outfit grants +120% Technique to [ALL].",
@@ -123,13 +123,13 @@ export const CHARACTERS = [
     "group": "Gen 1",
     "type": "PURE",
     "accentColor": "#e2e200",
-    "image": null,
+    "image": "/images/akirosenthal.webp",
     "avatar": "A",
     "stats": {
-      "sense": 82,
-      "technique": 82,
-      "performance": 87,
-      "support": 83
+      "sense": 86,
+      "technique": 93,
+      "performance": 79,
+      "support": 86
     },
     "skills": {
       "outfit": "My outfit grants +120% Sense to [ALL].",
@@ -146,13 +146,13 @@ export const CHARACTERS = [
     "group": "Gen 1",
     "type": "PURE",
     "accentColor": "#ff4d4d",
-    "image": null,
+    "image": "/images/akaihaato.webp",
     "avatar": "A",
     "stats": {
-      "sense": 93,
-      "technique": 79,
-      "performance": 91,
-      "support": 89
+      "sense": 79,
+      "technique": 86,
+      "performance": 93,
+      "support": 84
     },
     "skills": {
       "outfit": "My outfit grants +120% Technique to [ALL].",
@@ -169,13 +169,13 @@ export const CHARACTERS = [
     "group": "Gen 1",
     "type": "PURE",
     "accentColor": "#8ecae6",
-    "image": null,
+    "image": "/images/shirakamifubuki.webp",
     "avatar": "S",
     "stats": {
-      "sense": 76,
-      "technique": 75,
-      "performance": 75,
-      "support": 90
+      "sense": 80,
+      "technique": 76,
+      "performance": 85,
+      "support": 82
     },
     "skills": {
       "outfit": "When I have 2+ [GEN 1] members, my outfit grants +50% All Stats to [ALL].",
@@ -192,13 +192,13 @@ export const CHARACTERS = [
     "group": "Gen 1",
     "type": "PURE",
     "accentColor": "#ffb703",
-    "image": null,
+    "image": "/images/natsuiromatsuri.webp",
     "avatar": "N",
     "stats": {
-      "sense": 90,
-      "technique": 89,
-      "performance": 78,
-      "support": 91
+      "sense": 89,
+      "technique": 94,
+      "performance": 85,
+      "support": 82
     },
     "skills": {
       "outfit": "My outfit grants +120% Performance to ALL.",
@@ -215,13 +215,13 @@ export const CHARACTERS = [
     "group": "Gen 2",
     "type": "PURE",
     "accentColor": "#d90429",
-    "image": null,
+    "image": "/images/nakiriayame.webp",
     "avatar": "N",
     "stats": {
-      "sense": 75,
-      "technique": 85,
-      "performance": 82,
-      "support": 92
+      "sense": 85,
+      "technique": 88,
+      "performance": 78,
+      "support": 86
     },
     "skills": {
       "outfit": "My outfit grants +60% Support to [ALL].",
@@ -238,13 +238,13 @@ export const CHARACTERS = [
     "group": "Gen 2",
     "type": "HAPPY",
     "accentColor": "#f7d08a",
-    "image": null,
+    "image": "/images/yuzukichoco.webp",
     "avatar": "Y",
     "stats": {
-      "sense": 78,
-      "technique": 86,
-      "performance": 88,
-      "support": 94
+      "sense": 94,
+      "technique": 85,
+      "performance": 77,
+      "support": 91
     },
     "skills": {
       "outfit": "When I have 2+ [HAPPY] members, my outfit grants +30% All Stats to [ALL] and +25% Support to [ALL].",
@@ -261,13 +261,13 @@ export const CHARACTERS = [
     "group": "Gen 2",
     "type": "PURE",
     "accentColor": "#fcd34d",
-    "image": null,
+    "image": "/images/oozorasubaru.webp",
     "avatar": "O",
     "stats": {
-      "sense": 92,
-      "technique": 84,
-      "performance": 87,
-      "support": 83
+      "sense": 95,
+      "technique": 80,
+      "performance": 92,
+      "support": 89
     },
     "skills": {
       "outfit": "When I have 2+ [GEN 2] members, my outfit grants +50% All Stats to [ALL].",
@@ -284,13 +284,13 @@ export const CHARACTERS = [
     "group": "GAMERS",
     "type": "PURE",
     "accentColor": "#333333",
-    "image": null,
+    "image": "/images/ookamimio.webp",
     "avatar": "O",
     "stats": {
-      "sense": 91,
-      "technique": 79,
-      "performance": 76,
-      "support": 85
+      "sense": 82,
+      "technique": 82,
+      "performance": 87,
+      "support": 78
     },
     "skills": {
       "outfit": "When I have 2+ [GAMERS] members, my outfit grants +50% Stats to [ALL].",
@@ -307,13 +307,13 @@ export const CHARACTERS = [
     "group": "GAMERS",
     "type": "CUTE",
     "accentColor": "#b388ff",
-    "image": null,
+    "image": "/images/nekomataokayu.webp",
     "avatar": "N",
     "stats": {
-      "sense": 87,
-      "technique": 88,
+      "sense": 93,
+      "technique": 90,
       "performance": 78,
-      "support": 86
+      "support": 91
     },
     "skills": {
       "outfit": "My outfit grants +120% Technique to [ALL].",
@@ -330,13 +330,13 @@ export const CHARACTERS = [
     "group": "GAMERS",
     "type": "HAPPY",
     "accentColor": "#e0a96d",
-    "image": null,
+    "image": "/images/inugamikorone.webp",
     "avatar": "I",
     "stats": {
-      "sense": 82,
-      "technique": 92,
-      "performance": 84,
-      "support": 82
+      "sense": 87,
+      "technique": 93,
+      "performance": 79,
+      "support": 86
     },
     "skills": {
       "outfit": "When I have 2+ [HAPPY] members, my outfit grants +130% Sense to [ALL].",
@@ -353,13 +353,13 @@ export const CHARACTERS = [
     "group": "Gen 3",
     "type": "CUTE",
     "accentColor": "#f77f00",
-    "image": null,
+    "image": "/images/usadapekora.webp",
     "avatar": "U",
     "stats": {
-      "sense": 91,
-      "technique": 94,
-      "performance": 79,
-      "support": 81
+      "sense": 79,
+      "technique": 76,
+      "performance": 80,
+      "support": 92
     },
     "skills": {
       "outfit": "When I have 2+ [CUTE] members, my outfit grants +30% All Stats to [ALL] and +25% Support to [ALL].",
@@ -376,12 +376,12 @@ export const CHARACTERS = [
     "group": "Gen 3",
     "type": "PURE",
     "accentColor": "#ff9f1c",
-    "image": null,
+    "image": "/images/shiranuiflare.webp",
     "avatar": "S",
     "stats": {
-      "sense": 86,
-      "technique": 77,
-      "performance": 86,
+      "sense": 93,
+      "technique": 95,
+      "performance": 85,
       "support": 93
     },
     "skills": {
@@ -399,13 +399,13 @@ export const CHARACTERS = [
     "group": "Gen 3",
     "type": "HAPPY",
     "accentColor": "#b5e2fa",
-    "image": null,
+    "image": "/images/shiroganenoel.webp",
     "avatar": "S",
     "stats": {
-      "sense": 87,
-      "technique": 93,
-      "performance": 95,
-      "support": 85
+      "sense": 86,
+      "technique": 88,
+      "performance": 83,
+      "support": 82
     },
     "skills": {
       "outfit": "My outfit grants +60% Support to [ALL].",
@@ -422,13 +422,13 @@ export const CHARACTERS = [
     "group": "Gen 3",
     "type": "HAPPY",
     "accentColor": "#e63946",
-    "image": null,
+    "image": "/images/houshoumarine.webp",
     "avatar": "H",
     "stats": {
-      "sense": 90,
-      "technique": 89,
-      "performance": 83,
-      "support": 92
+      "sense": 76,
+      "technique": 91,
+      "performance": 84,
+      "support": 82
     },
     "skills": {
       "outfit": "When I have 2+ [GEN 3] members, my outfit grants +50% All Stats to [ALL].",
@@ -445,13 +445,13 @@ export const CHARACTERS = [
     "group": "Gen 4",
     "type": "CUTE",
     "accentColor": "#fff3b0",
-    "image": null,
+    "image": "/images/tsunomakiwatame.webp",
     "avatar": "T",
     "stats": {
-      "sense": 80,
-      "technique": 76,
-      "performance": 91,
-      "support": 94
+      "sense": 92,
+      "technique": 95,
+      "performance": 85,
+      "support": 82
     },
     "skills": {
       "outfit": "My outfit grants +45% All Stats to [ALL].",
@@ -468,13 +468,13 @@ export const CHARACTERS = [
     "group": "Gen 4",
     "type": "PURE",
     "accentColor": "#a855f7",
-    "image": null,
+    "image": "/images/tokoyamitowa.webp",
     "avatar": "T",
     "stats": {
-      "sense": 88,
-      "technique": 88,
-      "performance": 88,
-      "support": 78
+      "sense": 87,
+      "technique": 93,
+      "performance": 90,
+      "support": 94
     },
     "skills": {
       "outfit": "When I have 2+ [GEN 4] members, my outfit grants +50% All Stats to [ALL].",
@@ -491,13 +491,13 @@ export const CHARACTERS = [
     "group": "Gen 4",
     "type": "CUTE",
     "accentColor": "#ffc6ff",
-    "image": null,
+    "image": "/images/himemoriluna.webp",
     "avatar": "H",
     "stats": {
-      "sense": 90,
-      "technique": 84,
-      "performance": 87,
-      "support": 93
+      "sense": 89,
+      "technique": 83,
+      "performance": 82,
+      "support": 87
     },
     "skills": {
       "outfit": "My outfit grants +120% Technique to [ALL].",
@@ -514,13 +514,13 @@ export const CHARACTERS = [
     "group": "Gen 5",
     "type": "PURE",
     "accentColor": "#a2d2ff",
-    "image": null,
+    "image": "/images/yukihanalamy.webp",
     "avatar": "Y",
     "stats": {
-      "sense": 78,
-      "technique": 86,
-      "performance": 93,
-      "support": 79
+      "sense": 81,
+      "technique": 81,
+      "performance": 76,
+      "support": 91
     },
     "skills": {
       "outfit": "When I have 2+ [GEN 5] members, my outfit grants +50% All Stats to [ALL].",
@@ -537,13 +537,13 @@ export const CHARACTERS = [
     "group": "Gen 5",
     "type": "CUTE",
     "accentColor": "#ffb3c6",
-    "image": null,
+    "image": "/images/momosuzunene.webp",
     "avatar": "M",
     "stats": {
-      "sense": 85,
-      "technique": 77,
-      "performance": 75,
-      "support": 90
+      "sense": 80,
+      "technique": 76,
+      "performance": 91,
+      "support": 84
     },
     "skills": {
       "outfit": "My outfit grants +120% Performance to [ALL].",
@@ -560,13 +560,13 @@ export const CHARACTERS = [
     "group": "Gen 5",
     "type": "HAPPY",
     "accentColor": "#a5a58d",
-    "image": null,
+    "image": "/images/shishirobotan.webp",
     "avatar": "S",
     "stats": {
-      "sense": 84,
-      "technique": 82,
-      "performance": 82,
-      "support": 76
+      "sense": 81,
+      "technique": 81,
+      "performance": 92,
+      "support": 84
     },
     "skills": {
       "outfit": "My outfit grants +45% All Stats to [ALL].",
@@ -583,13 +583,13 @@ export const CHARACTERS = [
     "group": "Gen 5",
     "type": "HAPPY",
     "accentColor": "#ff477e",
-    "image": null,
+    "image": "/images/omarupolka.webp",
     "avatar": "O",
     "stats": {
-      "sense": 82,
-      "technique": 82,
-      "performance": 76,
-      "support": 75
+      "sense": 81,
+      "technique": 87,
+      "performance": 88,
+      "support": 88
     },
     "skills": {
       "outfit": "My outfit grants +45% All Stats to [ALL].",
@@ -606,13 +606,13 @@ export const CHARACTERS = [
     "group": "holoX",
     "type": "PURE",
     "accentColor": "#6f2dbd",
-    "image": null,
+    "image": "/images/laplusdarknesss.webp",
     "avatar": "L",
     "stats": {
-      "sense": 92,
-      "technique": 84,
-      "performance": 82,
-      "support": 82
+      "sense": 90,
+      "technique": 94,
+      "performance": 79,
+      "support": 81
     },
     "skills": {
       "outfit": "When I have 2+ [HOLOX] members, my outfit grants +50% All Stats to [ALL].",
@@ -629,13 +629,13 @@ export const CHARACTERS = [
     "group": "holoX",
     "type": "CUTE",
     "accentColor": "#800000",
-    "image": null,
+    "image": "/images/takanelui.webp",
     "avatar": "T",
     "stats": {
-      "sense": 95,
-      "technique": 90,
-      "performance": 89,
-      "support": 94
+      "sense": 77,
+      "technique": 91,
+      "performance": 84,
+      "support": 82
     },
     "skills": {
       "outfit": "My outfit grants +45% All Stats to [ALL].",
@@ -652,13 +652,13 @@ export const CHARACTERS = [
     "group": "holoX",
     "type": "PURE",
     "accentColor": "#ff80df",
-    "image": null,
+    "image": "/images/hakuikoyori.webp",
     "avatar": "H",
     "stats": {
-      "sense": 78,
-      "technique": 86,
-      "performance": 83,
-      "support": 82
+      "sense": 82,
+      "technique": 82,
+      "performance": 76,
+      "support": 85
     },
     "skills": {
       "outfit": "When I have 2+ [PURE] members, my outfit grants +30% All Stats to [ALL] and +25% Support to [ALL].",
@@ -675,13 +675,13 @@ export const CHARACTERS = [
     "group": "holoX",
     "type": "CUTE",
     "accentColor": "#2ec4b6",
-    "image": null,
+    "image": "/images/kazamairoha.webp",
     "avatar": "K",
     "stats": {
-      "sense": 77,
-      "technique": 86,
-      "performance": 88,
-      "support": 94
+      "sense": 80,
+      "technique": 92,
+      "performance": 84,
+      "support": 87
     },
     "skills": {
       "outfit": "When I have 2+ [CUTE] members, my outfit grants +130% Technique to [ALL].",
@@ -698,13 +698,13 @@ export const CHARACTERS = [
     "group": "Gen 1",
     "type": "HAPPY",
     "accentColor": "#d4a373",
-    "image": null,
+    "image": "/images/ayundarisu.webp",
     "avatar": "A",
     "stats": {
-      "sense": 88,
-      "technique": 78,
+      "sense": 91,
+      "technique": 79,
       "performance": 81,
-      "support": 76
+      "support": 87
     },
     "skills": {
       "outfit": "When I have 2+ [HAPPY] members, my outfit grants +130% Technique to [ALL].",
@@ -721,13 +721,13 @@ export const CHARACTERS = [
     "group": "Gen 1",
     "type": "PURE",
     "accentColor": "#48cae4",
-    "image": null,
+    "image": "/images/moonahoshinova.webp",
     "avatar": "M",
     "stats": {
-      "sense": 78,
-      "technique": 86,
-      "performance": 93,
-      "support": 84
+      "sense": 75,
+      "technique": 80,
+      "performance": 92,
+      "support": 79
     },
     "skills": {
       "outfit": "When I have 2+ [ID GEN 1] members, my outfit grants +50% All Stats to [ALL].",
@@ -744,13 +744,13 @@ export const CHARACTERS = [
     "group": "Gen 1",
     "type": "PURE",
     "accentColor": "#ccd5ae",
-    "image": null,
+    "image": "/images/airaniiofifteen.webp",
     "avatar": "A",
     "stats": {
-      "sense": 81,
-      "technique": 76,
-      "performance": 91,
-      "support": 79
+      "sense": 75,
+      "technique": 75,
+      "performance": 85,
+      "support": 88
     },
     "skills": {
       "outfit": "When I have 2+ [PURE] members, my outfit grants +130% Technique to [ALL].",
@@ -767,13 +767,13 @@ export const CHARACTERS = [
     "group": "Gen 2",
     "type": "PURE",
     "accentColor": "#e63946",
-    "image": null,
+    "image": "/images/kureijiollie.webp",
     "avatar": "K",
     "stats": {
-      "sense": 77,
-      "technique": 86,
-      "performance": 93,
-      "support": 95
+      "sense": 90,
+      "technique": 89,
+      "performance": 94,
+      "support": 90
     },
     "skills": {
       "outfit": "My outfit grants +45% All Stats to [ALL].",
@@ -790,13 +790,13 @@ export const CHARACTERS = [
     "group": "Gen 2",
     "type": "PURE",
     "accentColor": "#9b2226",
-    "image": null,
+    "image": "/images/anyamelfissa.webp",
     "avatar": "A",
     "stats": {
-      "sense": 88,
-      "technique": 88,
-      "performance": 94,
-      "support": 85
+      "sense": 75,
+      "technique": 80,
+      "performance": 92,
+      "support": 79
     },
     "skills": {
       "outfit": "When I have 2+ [ID GEN 2] members, my outfit grants +50% All Stats to [ALL].",
@@ -813,13 +813,13 @@ export const CHARACTERS = [
     "group": "Gen 2",
     "type": "HAPPY",
     "accentColor": "#0077b6",
-    "image": null,
+    "image": "/images/pavoliareine.webp",
     "avatar": "P",
     "stats": {
-      "sense": 83,
-      "technique": 77,
-      "performance": 91,
-      "support": 94
+      "sense": 77,
+      "technique": 86,
+      "performance": 88,
+      "support": 83
     },
     "skills": {
       "outfit": "My outfit grants +60% Support to [ALL].",
@@ -836,13 +836,13 @@ export const CHARACTERS = [
     "group": "Gen 3",
     "type": "PURE",
     "accentColor": "#e5e5e5",
-    "image": null,
+    "image": "/images/vestiazeta.webp",
     "avatar": "V",
     "stats": {
-      "sense": 75,
-      "technique": 80,
-      "performance": 92,
-      "support": 84
+      "sense": 93,
+      "technique": 90,
+      "performance": 89,
+      "support": 78
     },
     "skills": {
       "outfit": "When I have 2+ [ID GEN 3] members, my outfit grants +50% All Stats to [ALL].",
@@ -859,13 +859,13 @@ export const CHARACTERS = [
     "group": "Gen 3",
     "type": "CUTE",
     "accentColor": "#b8c0ff",
-    "image": null,
+    "image": "/images/kaelakovalskia.webp",
     "avatar": "K",
     "stats": {
-      "sense": 78,
-      "technique": 91,
-      "performance": 94,
-      "support": 79
+      "sense": 79,
+      "technique": 86,
+      "performance": 88,
+      "support": 83
     },
     "skills": {
       "outfit": "My outfit grants +60% Support to [ALL].",
@@ -882,13 +882,13 @@ export const CHARACTERS = [
     "group": "Gen 3",
     "type": "PURE",
     "accentColor": "#2a9d8f",
-    "image": null,
+    "image": "/images/kobokanaeru.webp",
     "avatar": "K",
     "stats": {
-      "sense": 92,
-      "technique": 95,
-      "performance": 95,
-      "support": 90
+      "sense": 94,
+      "technique": 79,
+      "performance": 81,
+      "support": 81
     },
     "skills": {
       "outfit": "My outfit grants +45% All Stats to [ALL].",
@@ -905,13 +905,13 @@ export const CHARACTERS = [
     "group": "Myth",
     "type": "PURE",
     "accentColor": "#ff477e",
-    "image": null,
+    "image": "/images/calliopemori.webp",
     "avatar": "C",
     "stats": {
-      "sense": 78,
-      "technique": 91,
-      "performance": 79,
-      "support": 86
+      "sense": 76,
+      "technique": 85,
+      "performance": 82,
+      "support": 87
     },
     "skills": {
       "outfit": "When I have 2+ [MYTH] members, my outfit grants +50% All Stats to [ALL].",
@@ -928,13 +928,13 @@ export const CHARACTERS = [
     "group": "Myth",
     "type": "CUTE",
     "accentColor": "#f77f00",
-    "image": null,
+    "image": "/images/takanashikiara.webp",
     "avatar": "T",
     "stats": {
-      "sense": 84,
-      "technique": 93,
-      "performance": 79,
-      "support": 81
+      "sense": 78,
+      "technique": 75,
+      "performance": 80,
+      "support": 92
     },
     "skills": {
       "outfit": "When I have 2+ [CUTE] members, my outfit grants +130% Performance to [ALL].",
@@ -951,13 +951,13 @@ export const CHARACTERS = [
     "group": "Myth",
     "type": "PURE",
     "accentColor": "#00c3ff",
-    "image": null,
+    "image": "/images/ninomaeinanis.webp",
     "avatar": "N",
     "stats": {
-      "sense": 75,
-      "technique": 85,
-      "performance": 88,
-      "support": 78
+      "sense": 95,
+      "technique": 80,
+      "performance": 81,
+      "support": 76
     },
     "skills": {
       "outfit": "My outfit grants +60% Support to [ALL].",
@@ -974,13 +974,13 @@ export const CHARACTERS = [
     "group": "Promise",
     "type": "PURE",
     "accentColor": "#b5179e",
-    "image": null,
+    "image": "/images/irys.webp",
     "avatar": "I",
     "stats": {
-      "sense": 89,
-      "technique": 89,
-      "performance": 89,
-      "support": 89
+      "sense": 81,
+      "technique": 81,
+      "performance": 81,
+      "support": 87
     },
     "skills": {
       "outfit": "When I have 2+ [PROMISE] members, my outfit grants +50% All Stats to [ALL].",
@@ -997,13 +997,13 @@ export const CHARACTERS = [
     "group": "Promise",
     "type": "CUTE",
     "accentColor": "#0077b6",
-    "image": null,
+    "image": "/images/ourokronii.webp",
     "avatar": "O",
     "stats": {
-      "sense": 91,
-      "technique": 79,
+      "sense": 89,
+      "technique": 78,
       "performance": 81,
-      "support": 81
+      "support": 87
     },
     "skills": {
       "outfit": "My outfit grants +60% Support to [ALL].",
@@ -1020,13 +1020,13 @@ export const CHARACTERS = [
     "group": "Promise",
     "type": "PURE",
     "accentColor": "#d90429",
-    "image": null,
+    "image": "/images/hakosbaelz.webp",
     "avatar": "H",
     "stats": {
-      "sense": 90,
-      "technique": 94,
-      "performance": 95,
-      "support": 80
+      "sense": 95,
+      "technique": 80,
+      "performance": 92,
+      "support": 95
     },
     "skills": {
       "outfit": "When I have 2+ [PURE] members, my outfit grants +130% Performance to [ALL].",
@@ -1043,13 +1043,13 @@ export const CHARACTERS = [
     "group": "Advent",
     "type": "PURE",
     "accentColor": "#a2d2ff",
-    "image": null,
+    "image": "/images/shiorinovella.webp",
     "avatar": "S",
     "stats": {
-      "sense": 75,
-      "technique": 85,
-      "performance": 82,
-      "support": 92
+      "sense": 91,
+      "technique": 94,
+      "performance": 95,
+      "support": 95
     },
     "skills": {
       "outfit": "My outfit grants +120% Performance to [ALL].",
@@ -1066,13 +1066,13 @@ export const CHARACTERS = [
     "group": "Advent",
     "type": "PURE",
     "accentColor": "#e2e2e2",
-    "image": null,
+    "image": "/images/kosekibijou.webp",
     "avatar": "K",
     "stats": {
-      "sense": 91,
-      "technique": 94,
-      "performance": 79,
-      "support": 81
+      "sense": 83,
+      "technique": 87,
+      "performance": 78,
+      "support": 75
     },
     "skills": {
       "outfit": "My outfit grants +120% Sense to [ALL].",
@@ -1089,13 +1089,13 @@ export const CHARACTERS = [
     "group": "Advent",
     "type": "PURE",
     "accentColor": "#4361ee",
-    "image": null,
+    "image": "/images/nerissaravencroft.webp",
     "avatar": "N",
     "stats": {
-      "sense": 85,
-      "technique": 93,
-      "performance": 79,
-      "support": 81
+      "sense": 94,
+      "technique": 79,
+      "performance": 76,
+      "support": 75
     },
     "skills": {
       "outfit": "When I have 2+ [ADVENT] members, my outfit grants +50% All Stats to [ALL].",
@@ -1112,13 +1112,13 @@ export const CHARACTERS = [
     "group": "Advent",
     "type": "CUTE",
     "accentColor": "#ccd5ae",
-    "image": null,
+    "image": "/images/fuwawaabyssgard.webp",
     "avatar": "F",
     "stats": {
-      "sense": 88,
-      "technique": 78,
-      "performance": 75,
-      "support": 85
+      "sense": 82,
+      "technique": 76,
+      "performance": 80,
+      "support": 92
     },
     "skills": {
       "outfit": "My outfit grants +120% Technique to [ALL].",
@@ -1135,13 +1135,13 @@ export const CHARACTERS = [
     "group": "Advent",
     "type": "CUTE",
     "accentColor": "#ffccd5",
-    "image": null,
+    "image": "/images/mococoabyssgard.webp",
     "avatar": "M",
     "stats": {
-      "sense": 91,
-      "technique": 89,
-      "performance": 89,
-      "support": 94
+      "sense": 89,
+      "technique": 78,
+      "performance": 81,
+      "support": 87
     },
     "skills": {
       "outfit": "When I have 2+ [CUTE] members, my outfit grants +130% Sense to [ALL].",
@@ -1158,13 +1158,13 @@ export const CHARACTERS = [
     "group": "ReGLOSS",
     "type": "PURE",
     "accentColor": "#ff9f1c",
-    "image": null,
+    "image": "/images/otonosekanade.webp",
     "avatar": "O",
     "stats": {
-      "sense": 84,
-      "technique": 77,
-      "performance": 80,
-      "support": 81
+      "sense": 86,
+      "technique": 93,
+      "performance": 90,
+      "support": 78
     },
     "skills": {
       "outfit": "When I have 2+ [PURE] members, my outfit grants +130% Sense to [ALL].",
@@ -1181,13 +1181,13 @@ export const CHARACTERS = [
     "group": "ReGLOSS",
     "type": "PURE",
     "accentColor": "#ffb703",
-    "image": null,
+    "image": "/images/ichijouririka.webp",
     "avatar": "I",
     "stats": {
-      "sense": 91,
-      "technique": 89,
-      "performance": 94,
-      "support": 95
+      "sense": 86,
+      "technique": 93,
+      "performance": 84,
+      "support": 82
     },
     "skills": {
       "outfit": "When I have 2+ [REGLOSS] members, my outfit grants +50% All Stats to [ALL].",
@@ -1204,13 +1204,13 @@ export const CHARACTERS = [
     "group": "ReGLOSS",
     "type": "PURE",
     "accentColor": "#f4a261",
-    "image": null,
+    "image": "/images/juufuuteiraden.webp",
     "avatar": "J",
     "stats": {
-      "sense": 76,
+      "sense": 77,
       "technique": 80,
-      "performance": 76,
-      "support": 91
+      "performance": 92,
+      "support": 95
     },
     "skills": {
       "outfit": "My outfit grants +120% Sense to [ALL].",
@@ -1227,13 +1227,13 @@ export const CHARACTERS = [
     "group": "ReGLOSS",
     "type": "CUTE",
     "accentColor": "#8d99ae",
-    "image": null,
+    "image": "/images/todorokihajime.webp",
     "avatar": "T",
     "stats": {
-      "sense": 88,
-      "technique": 78,
-      "performance": 86,
-      "support": 77
+      "sense": 95,
+      "technique": 95,
+      "performance": 80,
+      "support": 86
     },
     "skills": {
       "outfit": "My outfit grants +120% Performance to [ALL].",
@@ -1295,7 +1295,7 @@ Suisei's Outfit Skill grants a massive **+120% Technique to [ALL]**, boosting ac
 
 ## Best Teammates
 - **Tokino Sora**: Sora's high Support stats ensure team Life stays above 600, consistently triggering Suisei's active +120% Score boost.
-- **Kobo Kanaeru**: Kobo is a PURE character, meaning she benefits from Suisei's passive (+41% Technique) while helping activate Kobo's own PURE active conditions.
+- **Kobo Kanaeru**: Kobo is a PURE character, meaning she benefits from Suisei's passive (+41% Technique) while helping active Kobo's own PURE active conditions.
     `
   },
   {
