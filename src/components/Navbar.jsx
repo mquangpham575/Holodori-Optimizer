@@ -1,22 +1,23 @@
-import React from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, Users, Layers, BookOpen, Sparkles } from 'lucide-react';
 import './Navbar.css';
 
 /**
  * Navbar - Premium navigation header for the application.
  */
-export default function Navbar({ activeTab, setActiveTab, playerData }) {
+export default function Navbar() {
+  const navigate = useNavigate();
   const navItems = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'characters', label: 'Characters', icon: Users },
-    { id: 'teambuilder', label: 'Team Builder', icon: Layers },
-    { id: 'guides', label: 'Guides', icon: BookOpen }
+    { path: '/home', label: 'Home', icon: Home },
+    { path: '/characters', label: 'Characters', icon: Users },
+    { path: '/builder', label: 'Team Builder', icon: Layers },
+    { path: '/guides', label: 'Guides', icon: BookOpen }
   ];
 
   return (
     <header className="navbar glass">
       <div className="nav-container">
-        <div className="brand" onClick={() => setActiveTab('home')}>
+        <div className="brand" onClick={() => navigate('/home')}>
           <Sparkles className="brand-icon" />
           <span className="brand-title">HoloDreams <span className="title-glow">Showcase</span></span>
         </div>
@@ -24,30 +25,23 @@ export default function Navbar({ activeTab, setActiveTab, playerData }) {
         <nav className="nav-links">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
             return (
-              <button
-                key={item.id}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveTab(item.id)}
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
               >
-                <Icon size={18} className="nav-icon" />
-                <span className="nav-label">{item.label}</span>
-                {isActive && <span className="active-indicator" />}
-              </button>
+                {({ isActive }) => (
+                  <>
+                    <Icon size={18} className="nav-icon" />
+                    <span className="nav-label">{item.label}</span>
+                    {isActive && <span className="active-indicator" />}
+                  </>
+                )}
+              </NavLink>
             );
           })}
         </nav>
-
-        <div className="player-badge" onClick={() => setActiveTab('home')}>
-          <div className="player-info">
-            <span className="player-name">{playerData.playerName}</span>
-            <span className="player-level">LV.{playerData.level}</span>
-          </div>
-          <div className="player-avatar">
-            {playerData.playerName.substring(0, 2).toUpperCase()}
-          </div>
-        </div>
       </div>
     </header>
   );

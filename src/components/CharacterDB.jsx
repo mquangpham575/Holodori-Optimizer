@@ -6,6 +6,7 @@ import './CharacterDB.css';
 export default function CharacterDB({ onAccentChange, currentAccent }) {
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeCharacter, setActiveCharacter] = useState(null);
 
   const groups = ['All', 'Gen 0', 'Gen 1', 'Gen 3', 'Myth', 'ID Gen 3', 'ReGLOSS'];
@@ -14,7 +15,8 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
   const filteredCharacters = CHARACTERS.filter((char) => {
     const matchesGroup = selectedGroup === 'All' || char.group === selectedGroup;
     const matchesType = selectedType === 'All' || char.type === selectedType;
-    return matchesGroup && matchesType;
+    const matchesSearch = char.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesGroup && matchesType && matchesSearch;
   });
 
   const getTypeIcon = (type) => {
@@ -26,44 +28,7 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
     }
   };
 
-  const renderStatsChart = (stats) => {
-    const maxVal = 100;
-    const statLabels = [
-      { key: 'sense', label: 'Sense', icon: Sparkles, color: '#a855f7' },
-      { key: 'technique', label: 'Technique', icon: Zap, color: '#3b82f6' },
-      { key: 'performance', label: 'Performance', icon: Swords, color: '#ef4444' },
-      { key: 'support', label: 'Support', icon: Shield, color: '#10b981' }
-    ];
 
-    return (
-      <div className="stats-visualizer">
-        {statLabels.map((stat) => {
-          const value = stats[stat.key];
-          const percentage = (value / maxVal) * 100;
-          const StatIcon = stat.icon;
-          return (
-            <div key={stat.key} className="stat-row">
-              <div className="stat-info">
-                <StatIcon size={14} style={{ color: stat.color }} />
-                <span className="stat-name">{stat.label}</span>
-                <span className="stat-num">{value}</span>
-              </div>
-              <div className="stat-bar-bg">
-                <div 
-                  className="stat-bar-fill" 
-                  style={{ 
-                    width: `${percentage}%`, 
-                    backgroundColor: stat.color,
-                    boxShadow: `0 0 10px ${stat.color}80`
-                  }} 
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
 
   const skillTypes = [
     { key: 'outfit', label: 'Outfit Skill' },
@@ -76,11 +41,20 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
     <div className="character-db-page animate-fade-in">
       <div className="db-header">
         <h1 className="page-title">HoloDreams Database</h1>
-        <p className="page-subtitle">Xem thông tin chi tiết, chỉ số kỹ năng và lối xây dựng tối ưu cho từng nhân vật.</p>
+        <p className="page-subtitle">View detailed profile information, character stats, and skill breakdowns for every Holo-talent.</p>
       </div>
 
       {/* Filter bar */}
       <div className="filter-bar glass">
+        <div className="search-group">
+          <input
+            type="text"
+            placeholder="Search characters by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="db-search-input glass"
+          />
+        </div>
         <div className="filter-group">
           <span className="filter-label">Group</span>
           <div className="filter-options">
@@ -193,15 +167,10 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
                 </button>
               </div>
 
-              {/* Right Column: Stats & Skills */}
+              {/* Right Column: Skills */}
               <div className="modal-right">
                 <div className="modal-section-block">
-                  <h3 className="section-subtitle">Chỉ Số Nhân Vật (Base Stats)</h3>
-                  {renderStatsChart(activeCharacter.stats)}
-                </div>
-
-                <div className="modal-section-block">
-                  <h3 className="section-subtitle">Kỹ Năng (Skills)</h3>
+                  <h3 className="section-subtitle">Skills</h3>
                   <div className="skills-container">
                     {skillTypes.map((skill) => (
                       <div key={skill.key} className="skill-item glass">

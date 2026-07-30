@@ -17,10 +17,10 @@ export const CHARACTERS = [
       "support": 93
     },
     "skills": {
-      "outfit": "When I have 2+ GEN 0 members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 10 seconds, my Special grants +160% Support.",
-      "active": "Every 24 seconds (Medium), my Active grants +100% Score for 10 seconds.",
-      "passive": "When I have 2+ GEN 0 members, my passive grants +33% All Stats to [Self]."
+      "outfit": "With 2 or more Gen 0 Members, grants All Stats UP 50% to all.",
+      "special": "For 10s, Grants Score Support Effect of 160%.",
+      "active": "For 10s, Score UP 100%. Every 24s with a Medium Probability chance.",
+      "passive": "With 2 or more Gen 0 Members, grants All Stats UP 33% to Self."
     }
   },
   {
@@ -40,10 +40,10 @@ export const CHARACTERS = [
       "support": 95
     },
     "skills": {
-      "outfit": "When I have 2+ HAPPY members, my outfit grants +130% Performance to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support; when my Life is 1000+, it also grants +55% Skill Rate.",
-      "active": "Every 18 seconds (High), my Active grants +90% Score for 8 seconds.",
-      "passive": "My passive grants +11% Support to 2 [HAPPY] members."
+      "outfit": "With 2 or more Happy Type Members, grants Performance UP 130% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
+      "active": "For 8s, Score UP 90%. Every 18s with a High Probability chance.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
     }
   },
   {
@@ -63,10 +63,10 @@ export const CHARACTERS = [
       "support": 77
     },
     "skills": {
-      "outfit": "My outfit grants +120% Sense to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 20 seconds (High), my Active grants +60% Score for 7 seconds; when my Life is 600+, it grants +120% Score.",
-      "passive": "My passive grants +43% Sense to 2 [GEN 0] members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 7s, Score UP 60%. Every 20s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
+      "passive": "Grants Sense UP 43% to 2 Gen 0 Members."
     }
   },
   {
@@ -86,10 +86,10 @@ export const CHARACTERS = [
       "support": 77
     },
     "skills": {
-      "outfit": "My outfit grants +120% Sense to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 15 seconds (Medium), my Active grants +55% Score for 6 seconds; when my Combo is 40+, it grants +110% Score.",
-      "passive": "My passive grants +11% Support to 2 [HAPPY] members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With a Combo of 40 or more, Score UP 110%.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
     }
   },
   {
@@ -109,10 +109,10 @@ export const CHARACTERS = [
       "support": 85
     },
     "skills": {
-      "outfit": "My outfit grants +120% Technique to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 29 seconds (High), my Active grants +60% Score for 10 seconds; when my Life is 600+, it grants +120% Score.",
-      "passive": "My passive grants +41% Technique to 2 [PURE] members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
+      "passive": "Grants Technique UP 41% to 2 Pure Type Members."
     }
   },
   {
@@ -132,10 +132,10 @@ export const CHARACTERS = [
       "support": 86
     },
     "skills": {
-      "outfit": "My outfit grants +120% Sense to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 21 seconds (Medium), my Active grants +100% Score for 8 seconds; when my Life is 600+, it grants +115% Score.",
-      "passive": "My passive grants +43% Sense to 2 [GEN 1] members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 8s, Score UP 100%. Every 21s with a Medium Probability chance. When LIFE is 600 or higher, Score UP 115%.",
+      "passive": "Grants Sense UP 43% to 2 Gen 1 Members."
     }
   },
   {
@@ -155,10 +155,10 @@ export const CHARACTERS = [
       "support": 84
     },
     "skills": {
-      "outfit": "My outfit grants +120% Technique to [ALL].",
-      "special": "For 12 seconds, my Special grants +135% Support.",
-      "active": "Every 19 seconds (Medium), my Active grants +60% Score for 7 seconds; when my Combo is 40+, it grants +120% Score.",
-      "passive": "My passive grants +11% Support to 2 [PURE] members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "special": "For 12s, Grants Score Support Effect of 135%.",
+      "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With a Combo of 40 or more, Score UP 120%.",
+      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
     }
   },
   {
@@ -178,10 +178,10 @@ export const CHARACTERS = [
       "support": 82
     },
     "skills": {
-      "outfit": "When I have 2+ [GEN 1] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 30 seconds (High), my Active grants +110% Score for 11 seconds.",
-      "passive": "When I have 2+ [GEN 1] members, my passive grants +45% Performance to 2 [GEN 1] members."
+      "outfit": "With 2 or more Gen 1 Members, grants All Stats UP 50% to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
+      "passive": "With 2 or more Gen 1 Members, grants Performance UP 45% to 2 Gen 1 Members."
     }
   },
   {
@@ -201,10 +201,10 @@ export const CHARACTERS = [
       "support": 82
     },
     "skills": {
-      "outfit": "My outfit grants +120% Performance to ALL.",
-      "special": "For 11 seconds, my Special grants +145% Support.",
-      "active": "Every 23 seconds (High), my Active grants +60% Score for 10 seconds; when my Life is 600+, it grants +120% Score.",
-      "passive": "My passive grants +43% Performance to 2 [GEN 1] members."
+      "outfit": "Grants Performance UP 120% to ALL.",
+      "special": "For 11s, Grants Score Support Effect of 145%.",
+      "active": "For 10s, Score UP 60%. Every 23s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
+      "passive": "Grants Performance UP 43% to 2 Gen 1 Members."
     }
   },
   {
@@ -224,10 +224,10 @@ export const CHARACTERS = [
       "support": 86
     },
     "skills": {
-      "outfit": "My outfit grants +60% Support to [ALL].",
-      "special": "For 10 seconds, my Special grants +160% Support.",
-      "active": "Every 29 seconds (High), my Active grants +60% Score for 10 seconds; when I have 2+ [PURE] members, it grants +120% Score.",
-      "passive": "My passive grants +41% Performance to 2 [PURE] members."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "special": "For 10s, Grants Score Support Effect of 160%.",
+      "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With 2 or more Pure Type Members, Score UP 120%.",
+      "passive": "Grants Performance UP 41% to 2 Pure Type Members."
     }
   },
   {
@@ -247,10 +247,10 @@ export const CHARACTERS = [
       "support": 91
     },
     "skills": {
-      "outfit": "When I have 2+ [HAPPY] members, my outfit grants +30% All Stats to [ALL] and +25% Support to [ALL].",
-      "special": "For 10 seconds, my Special grants +160% Support.",
-      "active": "Every 20 seconds (Medium), my Active grants +120% Score for 7 seconds.",
-      "passive": "My passive grants +11% Support to 2 [HAPPY] members."
+      "outfit": "With 2 or more Happy Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+      "special": "For 10s, Grants Score Support Effect of 160%.",
+      "active": "For 7s, Score UP 120%. Every 20s with a Medium Probability chance.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
     }
   },
   {
@@ -270,10 +270,10 @@ export const CHARACTERS = [
       "support": 89
     },
     "skills": {
-      "outfit": "When I have 2+ [GEN 2] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +120% Support and +40% Skill Rate.",
-      "active": "Every 34 seconds (High), my Active grants +115% Score for 12 seconds.",
-      "passive": "When I have 2+ [GEN 2] members, my passive grants +45% Performance to 2 [GEN 2] members."
+      "outfit": "With 2 or more Gen 2 Members, grants All Stats UP 50% to all.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+      "active": "For 12s, Score UP 115%. Every 34s with a High Probability chance.",
+      "passive": "With 2 or more Gen 2 Members, grants Performance UP 45% to 2 Gen 2 Members."
     }
   },
   {
@@ -293,10 +293,10 @@ export const CHARACTERS = [
       "support": 78
     },
     "skills": {
-      "outfit": "When I have 2+ [GAMERS] members, my outfit grants +50% Stats to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 27 seconds (High), my Active grants +120% Score for 9 seconds.",
-      "passive": "When I have 2+ [GAMERS] members, my passive grants +12% Support to 2 [GAMERS] members."
+      "outfit": "With 2 or more Gamers Members, grants +50% Stats to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 9s, Score UP 120%. Every 27s with a High Probability chance.",
+      "passive": "With 2 or more Gamers Members, grants Score Support Effect of 12% to 2 Gamers Members."
     }
   },
   {
@@ -316,10 +316,10 @@ export const CHARACTERS = [
       "support": 91
     },
     "skills": {
-      "outfit": "My outfit grants +120% Technique to [ALL].",
-      "special": "For 10 seconds, my Special grants +160% Support.",
-      "active": "Every 25 seconds (Medium), my Active grants +55% Score for 10 seconds; when my Life is 600+, it grants +110% Score.",
-      "passive": "My passive grants +41% Technique to 2 [CUTE] members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 160%.",
+      "active": "For 10s, Score UP 55%. Every 25s with a Medium Probability chance. When LIFE is 600 or higher, Score UP 110%.",
+      "passive": "Grants Technique UP 41% to 2 Cute Type Members."
     }
   },
   {
@@ -339,10 +339,10 @@ export const CHARACTERS = [
       "support": 86
     },
     "skills": {
-      "outfit": "When I have 2+ [HAPPY] members, my outfit grants +130% Sense to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support; when my Combo is 100+, it also grants +55% Skill Rate.",
-      "active": "Every 17 seconds (Medium), my Active grants +120% Score for 6 seconds.",
-      "passive": "My passive grants +11% Support to 2 [HAPPY] members."
+      "outfit": "With 2 or more Happy Type Members, grants Sense UP 130% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
+      "active": "For 6s, Score UP 120%. Every 17s with a Medium Probability chance.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
     }
   },
   {
@@ -362,10 +362,10 @@ export const CHARACTERS = [
       "support": 92
     },
     "skills": {
-      "outfit": "When I have 2+ [CUTE] members, my outfit grants +30% All Stats to [ALL] and +25% Support to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 30 seconds (Medium), my Active grants +105% Score for 12 seconds.",
-      "passive": "When I have 2+ [CUTE] members, my passive grants +32% All Stats to [Self]."
+      "outfit": "With 2 or more Cute Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 12s, Score UP 105%. Every 30s with a Medium Probability chance.",
+      "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self."
     }
   },
   {
@@ -385,10 +385,10 @@ export const CHARACTERS = [
       "support": 93
     },
     "skills": {
-      "outfit": "My outfit grants +120% Performance to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 26 seconds (High), my Active grants +60% Score for 9 seconds; when my Combo is 40+, it grants +120% Score.",
-      "passive": "My passive grants +43% Performance to 2 [GEN 3] members."
+      "outfit": "Grants Performance UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
+      "passive": "Grants Performance UP 43% to 2 Gen 3 Members."
     }
   },
   {
@@ -408,10 +408,10 @@ export const CHARACTERS = [
       "support": 82
     },
     "skills": {
-      "outfit": "My outfit grants +60% Support to [ALL].",
-      "special": "For 10 seconds, my Special grants +160% Support.",
-      "active": "Every 19 seconds (Medium), my Active grants +60% Score for 7 seconds; when I have 2+ [HAPPY] members, it grants +120% Score.",
-      "passive": "When I have 2+ [HAPPY] members, my passive grants +32% All Stats to [Self]."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "special": "For 10s, Grants Score Support Effect of 160%.",
+      "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With 2 or more Happy Type Members, Score UP 120%.",
+      "passive": "With 2 or more Happy Type Members, grants All Stats UP 32% to Self."
     }
   },
   {
@@ -431,10 +431,10 @@ export const CHARACTERS = [
       "support": 82
     },
     "skills": {
-      "outfit": "When I have 2+ [GEN 3] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +120% Support and +40% Skill Rate.",
-      "active": "Every 23 seconds (High), my Active grants +115% Score for 10 seconds.",
-      "passive": "When I have 2+ [GEN 3] members, my passive grants +12% Support to 2 [GEN 3] members."
+      "outfit": "With 2 or more Gen 3 Members, grants All Stats UP 50% to all.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+      "active": "For 10s, Score UP 115%. Every 23s with a High Probability chance.",
+      "passive": "With 2 or more Gen 3 Members, grants Score Support Effect of 12% to 2 Gen 3 Members."
     }
   },
   {
@@ -454,10 +454,10 @@ export const CHARACTERS = [
       "support": 82
     },
     "skills": {
-      "outfit": "My outfit grants +45% All Stats to [ALL].",
-      "special": "For 11 seconds, my Special grants +145% Support.",
-      "active": "Every 15 seconds (Medium), my Active grants +55% Score for 6 seconds; when I have 2+ [CUTE] members, it grants +110% Score.",
-      "passive": "My passive grants +11% Support to 2 [CUTE] members."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "special": "For 11s, Grants Score Support Effect of 145%.",
+      "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 110%.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
     }
   },
   {
@@ -477,10 +477,10 @@ export const CHARACTERS = [
       "support": 94
     },
     "skills": {
-      "outfit": "When I have 2+ [GEN 4] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 19 seconds (High), my Active grants +95% Score for 8 seconds.",
-      "passive": "When I have 2+ [GEN 4] members, my passive grants +45% Sense to 2 [GEN 4] members."
+      "outfit": "With 2 or more Gen 4 Members, grants All Stats UP 50% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 8s, Score UP 95%. Every 19s with a High Probability chance.",
+      "passive": "With 2 or more Gen 4 Members, grants Sense UP 45% to 2 Gen 4 Members."
     }
   },
   {
@@ -500,10 +500,10 @@ export const CHARACTERS = [
       "support": 87
     },
     "skills": {
-      "outfit": "My outfit grants +120% Technique to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 29 seconds (High), my Active grants +60% Score for 10 seconds; when my Combo is 40+, it grants +120% Score.",
-      "passive": "My passive grants +43% Technique to 2 [GEN 4] members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
+      "passive": "Grants Technique UP 43% to 2 Gen 4 Members."
     }
   },
   {
@@ -523,10 +523,10 @@ export const CHARACTERS = [
       "support": 91
     },
     "skills": {
-      "outfit": "When I have 2+ [GEN 5] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +120% Support and +40% Skill Rate.",
-      "active": "Every 23 seconds (High), my Active grants +115% Score for 8 seconds.",
-      "passive": "When I have 2+ [GEN 5] members, my passive grants +33% All Stats to [Self]."
+      "outfit": "With 2 or more Gen 5 Members, grants All Stats UP 50% to all.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+      "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
+      "passive": "With 2 or more Gen 5 Members, grants All Stats UP 33% to Self."
     }
   },
   {
@@ -546,10 +546,10 @@ export const CHARACTERS = [
       "support": 84
     },
     "skills": {
-      "outfit": "My outfit grants +120% Performance to [ALL].",
-      "special": "For 11 seconds, my Special grants +145% Support.",
-      "active": "Every 26 seconds (High), my Active grants +60% Score for 9 seconds; when my Life is 600+, it grants +120% Score.",
-      "passive": "My passive grants +11% Support to 2 [CUTE] members."
+      "outfit": "Grants Performance UP 120% to all.",
+      "special": "For 11s, Grants Score Support Effect of 145%.",
+      "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
     }
   },
   {
@@ -569,10 +569,10 @@ export const CHARACTERS = [
       "support": 84
     },
     "skills": {
-      "outfit": "My outfit grants +45% All Stats to [ALL].",
-      "special": "For 10 seconds, my Special grants +160% Support.",
-      "active": "Every 27 seconds (High), my Active grants +60% Score for 9 seconds; when I have 2+ [HAPPY] members, it grants +125% Score.",
-      "passive": "When I have 2+ [HAPPY] members, my passive grants +43% Performance to 2 [HAPPY] members."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "special": "For 10s, Grants Score Support Effect of 160%.",
+      "active": "For 9s, Score UP 60%. Every 27s with a High Probability chance. With 2 or more Happy Type Members, Score UP 125%.",
+      "passive": "With 2 or more Happy Type Members, grants Performance UP 43% to 2 Happy Type Members."
     }
   },
   {
@@ -592,10 +592,10 @@ export const CHARACTERS = [
       "support": 88
     },
     "skills": {
-      "outfit": "My outfit grants +45% All Stats to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 21 seconds (Medium), my Active grants +55% Score for 8 seconds; when I have 2+ [HAPPY] members, it grants +115% Score.",
-      "passive": "My passive grants +11% Support to 2 [HAPPY] members."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 8s, Score UP 55%. Every 21s with a Medium Probability chance. With 2 or more Happy Type Members, Score UP 115%.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
     }
   },
   {
@@ -615,10 +615,10 @@ export const CHARACTERS = [
       "support": 81
     },
     "skills": {
-      "outfit": "When I have 2+ [HOLOX] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +135% Support.",
-      "active": "Every 18 seconds (Medium), my Active grants +125% Score for 6 seconds.",
-      "passive": "When I have 2+ [HOLOX] members, my passive grants +33% All Stats to [Self]."
+      "outfit": "With 2 or more holoX Members, grants All Stats UP 50% to all.",
+      "special": "For 12s, Grants Score Support Effect of 135%.",
+      "active": "For 6s, Score UP 125%. Every 18s with a Medium Probability chance.",
+      "passive": "With 2 or more holoX Members, grants All Stats UP 33% to Self."
     }
   },
   {
@@ -638,10 +638,10 @@ export const CHARACTERS = [
       "support": 82
     },
     "skills": {
-      "outfit": "My outfit grants +45% All Stats to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 21 seconds (Medium), my Active grants +55% Score for 8 seconds; when I have 2+ [CUTE] members, it grants +115% Score.",
-      "passive": "When I have 2+ [CUTE] members, my passive grants +32% All Stats to [Self]."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 8s, Score UP 55%. Every 21s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 115%.",
+      "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self."
     }
   },
   {
@@ -661,10 +661,10 @@ export const CHARACTERS = [
       "support": 85
     },
     "skills": {
-      "outfit": "When I have 2+ [PURE] members, my outfit grants +30% All Stats to [ALL] and +25% Support to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support; when my Life is 1000+, it also grants +55% Skill Rate.",
-      "active": "Every 23 seconds (High), my Active grants +115% Score for 8 seconds.",
-      "passive": "When I have 2+ [PURE] members, my passive grants +43% Sense to 2 [PURE] members."
+      "outfit": "With 2 or more Pure Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
+      "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
+      "passive": "With 2 or more Pure Type Members, grants Sense UP 43% to 2 Pure Type Members."
     }
   },
   {
@@ -684,10 +684,10 @@ export const CHARACTERS = [
       "support": 87
     },
     "skills": {
-      "outfit": "When I have 2+ [CUTE] members, my outfit grants +130% Technique to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support; when my Life is 1000+, it also grants +55% Skill Rate.",
-      "active": "Every 30 seconds (High), my Active grants +110% Score for 11 seconds.",
-      "passive": "My passive grants +11% Support to 2 [CUTE] members."
+      "outfit": "With 2 or more Cute Type Members, grants Technique UP 130% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
+      "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
     }
   },
   {
@@ -707,10 +707,10 @@ export const CHARACTERS = [
       "support": 87
     },
     "skills": {
-      "outfit": "When I have 2+ [HAPPY] members, my outfit grants +130% Technique to [ALL].",
-      "special": "For 12 seconds, my Special grants +120% Support; when my Life is 1000+, it also grants +45% Skill Rate.",
-      "active": "Every 34 seconds (High), my Active grants +90% Score for 15 seconds.",
-      "passive": "My passive grants +11% Support to 2 [HAPPY] members."
+      "outfit": "With 2 or more Happy Type Members, grants Technique UP 130% to all.",
+      "special": "For 12s, Grants Score Support Effect of 120%. When LIFE is 1000 or higher, Skill Activation Rate UP 45%.",
+      "active": "For 15s, Score UP 90%. Every 34s with a High Probability chance.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
     }
   },
   {
@@ -730,10 +730,10 @@ export const CHARACTERS = [
       "support": 79
     },
     "skills": {
-      "outfit": "When I have 2+ [ID GEN 1] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +120% Support and +40% Skill Rate.",
-      "active": "Every 30 seconds (High), my Active grants +110% Score for 11 seconds.",
-      "passive": "When I have 2+ [ID GEN 1] members, my passive grants +45% Sense to 2 [ID GEN 1] members."
+      "outfit": "With 2 or more ID Gen 1 Members, grants All Stats UP 50% to all.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+      "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
+      "passive": "With 2 or more ID Gen 1 Members, grants Sense UP 45% to 2 ID Gen 1 Members."
     }
   },
   {
@@ -753,10 +753,10 @@ export const CHARACTERS = [
       "support": 88
     },
     "skills": {
-      "outfit": "When I have 2+ [PURE] members, my outfit grants +130% Technique to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support; when my Combo is 100+, it also grants +55% Skill Rate.",
-      "active": "Every 17 seconds (Medium), my Active grants +120% Score for 6 seconds.",
-      "passive": "My passive grants +41% Technique to 2 [PURE] members."
+      "outfit": "With 2 or more Pure Type Members, grants Technique UP 130% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
+      "active": "For 6s, Score UP 120%. Every 17s with a Medium Probability chance.",
+      "passive": "Grants Technique UP 41% to 2 Pure Type Members."
     }
   },
   {
@@ -776,10 +776,10 @@ export const CHARACTERS = [
       "support": 90
     },
     "skills": {
-      "outfit": "My outfit grants +45% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +135% Support.",
-      "active": "Every 25 seconds (Medium), my Active grants +55% Score for 10 seconds; when I have 2+ [PURE] members, it grants +110% Score.",
-      "passive": "My passive grants +11% Support to 2 [PURE] members."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "special": "For 12s, Grants Score Support Effect of 135%.",
+      "active": "For 10s, Score UP 55%. Every 25s with a Medium Probability chance. With 2 or more Pure Type Members, Score UP 110%.",
+      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
     }
   },
   {
@@ -799,10 +799,10 @@ export const CHARACTERS = [
       "support": 79
     },
     "skills": {
-      "outfit": "When I have 2+ [ID GEN 2] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 24 seconds (Medium), my Active grants +100% Score for 10 seconds.",
-      "passive": "When I have 2+ [ID GEN 2] members, my passive grants +33% All Stats to [Self]."
+      "outfit": "With 2 or more ID Gen 2 Members, grants All Stats UP 50% to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 10s, Score UP 100%. Every 24s with a Medium Probability chance.",
+      "passive": "With 2 or more ID Gen 2 Members, grants All Stats UP 33% to Self."
     }
   },
   {
@@ -822,10 +822,10 @@ export const CHARACTERS = [
       "support": 83
     },
     "skills": {
-      "outfit": "My outfit grants +60% Support to [ALL].",
-      "special": "For 10 seconds, my Special grants +160% Support.",
-      "active": "Every 29 seconds (High), my Active grants +60% Score for 10 seconds; when I have 2+ [HAPPY] members, it grants +120% Score.",
-      "passive": "My passive grants +41% Technique to 2 [HAPPY] members."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "special": "For 10s, Grants Score Support Effect of 160%.",
+      "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With 2 or more Happy Type Members, Score UP 120%.",
+      "passive": "Grants Technique UP 41% to 2 Happy Type Members."
     }
   },
   {
@@ -845,10 +845,10 @@ export const CHARACTERS = [
       "support": 78
     },
     "skills": {
-      "outfit": "When I have 2+ [ID GEN 3] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 25 seconds (High), my Active grants +90% Score for 11 seconds.",
-      "passive": "When I have 2+ [ID GEN 3] members, my passive grants +33% All Stats to [Self]."
+      "outfit": "With 2 or more ID Gen 3 Members, grants All Stats UP 50% to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 11s, Score UP 90%. Every 25s with a High Probability chance.",
+      "passive": "With 2 or more ID Gen 3 Members, grants All Stats UP 33% to Self."
     }
   },
   {
@@ -868,10 +868,10 @@ export const CHARACTERS = [
       "support": 83
     },
     "skills": {
-      "outfit": "My outfit grants +60% Support to [ALL].",
-      "special": "For 12 seconds, my Special grants +135% Support.",
-      "active": "Every 19 seconds (Medium), my Active grants +60% Score for 7 seconds; when I have 2+ [CUTE] members, it grants +120% Score.",
-      "passive": "My passive grants +41% Technique to 2 [CUTE] members."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "special": "For 12s, Grants Score Support Effect of 135%.",
+      "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 120%.",
+      "passive": "Grants Technique UP 41% to 2 Cute Type Members."
     }
   },
   {
@@ -891,10 +891,10 @@ export const CHARACTERS = [
       "support": 81
     },
     "skills": {
-      "outfit": "My outfit grants +45% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +135% Support.",
-      "active": "Every 15 seconds (Medium), my Active grants +55% Score for 6 seconds; when I have 2+ [PURE] members, it grants +110% Score.",
-      "passive": "When I have 2+ [PURE] members, my passive grants +32% All Stats to [Self]."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "special": "For 12s, Grants Score Support Effect of 135%.",
+      "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With 2 or more Pure Type Members, Score UP 110%.",
+      "passive": "With 2 or more Pure Type Members, grants All Stats UP 32% to Self."
     }
   },
   {
@@ -914,10 +914,10 @@ export const CHARACTERS = [
       "support": 87
     },
     "skills": {
-      "outfit": "When I have 2+ [MYTH] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +120% Support and +40% Skill Rate.",
-      "active": "Every 33 seconds (High), my Active grants +120% Score for 11 seconds.",
-      "passive": "When I have 2+ [MYTH] members, my passive grants +12% Support to 2 [MYTH] members."
+      "outfit": "With 2 or more Myth Members, grants All Stats UP 50% to all.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+      "active": "For 11s, Score UP 120%. Every 33s with a High Probability chance.",
+      "passive": "With 2 or more Myth Members, grants Score Support Effect of 12% to 2 Myth Members."
     }
   },
   {
@@ -937,10 +937,10 @@ export const CHARACTERS = [
       "support": 92
     },
     "skills": {
-      "outfit": "When I have 2+ [CUTE] members, my outfit grants +130% Performance to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support; when my Combo is 100+, it also grants +55% Skill Rate.",
-      "active": "Every 23 seconds (High), my Active grants +115% Score for 8 seconds.",
-      "passive": "My passive grants +11% Support to 2 [CUTE] members."
+      "outfit": "With 2 or more Cute Type Members, grants Performance UP 130% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
+      "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
     }
   },
   {
@@ -960,10 +960,10 @@ export const CHARACTERS = [
       "support": 76
     },
     "skills": {
-      "outfit": "My outfit grants +60% Support to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 32 seconds (High), my Active grants +45% Score for 14 seconds; when I have 2+ [PURE] members, it grants +95% Score.",
-      "passive": "When I have 2+ [PURE] members, my passive grants +32% All Stats to [Self]."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 14s, Score UP 45%. Every 32s with a High Probability chance. With 2 or more Pure Type Members, Score UP 95%.",
+      "passive": "With 2 or more Pure Type Members, grants All Stats UP 32% to Self."
     }
   },
   {
@@ -983,10 +983,10 @@ export const CHARACTERS = [
       "support": 87
     },
     "skills": {
-      "outfit": "When I have 2+ [PROMISE] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support; when my Life is 1000+, it also grants +55% Skill Rate.",
-      "active": "Every 25 seconds (Medium), my Active grants +95% Score for 11 seconds.",
-      "passive": "My passive grants +43% Technique to 2 [PROMISE] members."
+      "outfit": "With 2 or more Promise Members, grants All Stats UP 50% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
+      "active": "For 11s, Score UP 95%. Every 25s with a Medium Probability chance.",
+      "passive": "Grants Technique UP 43% to 2 Promise Members."
     }
   },
   {
@@ -1006,10 +1006,10 @@ export const CHARACTERS = [
       "support": 87
     },
     "skills": {
-      "outfit": "My outfit grants +60% Support to [ALL].",
-      "special": "For 14 seconds, my Special grants +115% Support.",
-      "active": "Every 33 seconds (High), my Active grants +55% Score for 12 seconds; when I have 2+ [CUTE] members, it grants +115% Score.",
-      "passive": "My passive grants +41% Sense to 2 [CUTE] members."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "special": "For 14s, Grants Score Support Effect of 115%.",
+      "active": "For 12s, Score UP 55%. Every 33s with a High Probability chance. With 2 or more Cute Type Members, Score UP 115%.",
+      "passive": "Grants Sense UP 41% to 2 Cute Type Members."
     }
   },
   {
@@ -1029,10 +1029,10 @@ export const CHARACTERS = [
       "support": 95
     },
     "skills": {
-      "outfit": "When I have 2+ [PURE] members, my outfit grants +130% Performance to [ALL].",
-      "special": "For 12 seconds, my Special grants +135% Support.",
-      "active": "Every 25 seconds (High), my Active grants +90% Score for 11 seconds.",
-      "passive": "My passive grants +11% Support to 2 [PURE] members."
+      "outfit": "With 2 or more Pure Type Members, grants Performance UP 130% to all.",
+      "special": "For 12s, Grants Score Support Effect of 135%.",
+      "active": "For 11s, Score UP 90%. Every 25s with a High Probability chance.",
+      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
     }
   },
   {
@@ -1052,10 +1052,10 @@ export const CHARACTERS = [
       "support": 95
     },
     "skills": {
-      "outfit": "My outfit grants +120% Performance to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 32 seconds (High), my Active grants +60% Score for 11 seconds; when my Combo is 40+, it grants +120% Score.",
-      "passive": "My passive grants +43% Performance to 2 [ADVENT] members."
+      "outfit": "Grants Performance UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 11s, Score UP 60%. Every 32s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
+      "passive": "Grants Performance UP 43% to 2 Advent Members."
     }
   },
   {
@@ -1075,10 +1075,10 @@ export const CHARACTERS = [
       "support": 75
     },
     "skills": {
-      "outfit": "My outfit grants +120% Sense to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 27 seconds (Medium), my Active grants +65% Score for 9 seconds; when my Combo is 40+, it grants +130% Score.",
-      "passive": "My passive grants +11% Support to 2 [PURE] members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 9s, Score UP 65%. Every 27s with a Medium Probability chance. With a Combo of 40 or more, Score UP 130%.",
+      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
     }
   },
   {
@@ -1098,10 +1098,10 @@ export const CHARACTERS = [
       "support": 75
     },
     "skills": {
-      "outfit": "When I have 2+ [ADVENT] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +135% Support.",
-      "active": "Every 15 seconds (Medium), my Active grants +90% Score for 7 seconds.",
-      "passive": "When I have 2+ [ADVENT] members, my passive grants +33% All Stats to [Self]."
+      "outfit": "With 2 or more Advent Members, grants All Stats UP 50% to all.",
+      "special": "For 12s, Grants Score Support Effect of 135%.",
+      "active": "For 7s, Score UP 90%. Every 15s with a Medium Probability chance.",
+      "passive": "With 2 or more Advent Members, grants All Stats UP 33% to Self."
     }
   },
   {
@@ -1121,10 +1121,10 @@ export const CHARACTERS = [
       "support": 92
     },
     "skills": {
-      "outfit": "My outfit grants +120% Technique to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 20 seconds (Medium), my Active grants +55% Score for 8 seconds; when my Combo is 40+, it grants +110% Score.",
-      "passive": "My passive grants +41% Technique to 2 [CUTE] members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 8s, Score UP 55%. Every 20s with a Medium Probability chance. With a Combo of 40 or more, Score UP 110%.",
+      "passive": "Grants Technique UP 41% to 2 Cute Type Members."
     }
   },
   {
@@ -1144,10 +1144,10 @@ export const CHARACTERS = [
       "support": 87
     },
     "skills": {
-      "outfit": "When I have 2+ [CUTE] members, my outfit grants +130% Sense to [ALL].",
-      "special": "For 11 seconds, my Special grants +130% Support; when my Combo is 100+, it also grants +50% Skill Rate.",
-      "active": "Every 25 seconds (High), my Active grants +125% Score for 8 seconds.",
-      "passive": "My passive grants +11% Support to 2 [CUTE] members."
+      "outfit": "With 2 or more Cute Type Members, grants Sense UP 130% to all.",
+      "special": "For 11s, Grants Score Support Effect of 130%. With a Combo of 100 or more, Skill Activation Rate UP 50%.",
+      "active": "For 8s, Score UP 125%. Every 25s with a High Probability chance.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
     }
   },
   {
@@ -1167,10 +1167,10 @@ export const CHARACTERS = [
       "support": 78
     },
     "skills": {
-      "outfit": "When I have 2+ [PURE] members, my outfit grants +130% Sense to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support; when my Combo is 100+, it also grants +55% Skill Rate.",
-      "active": "Every 27 seconds (High), my Active grants +90% Score for 12 seconds.",
-      "passive": "My passive grants +43% Sense to 2 [REGLOSS] members."
+      "outfit": "With 2 or more Pure Type Members, grants Sense UP 130% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
+      "active": "For 12s, Score UP 90%. Every 27s with a High Probability chance.",
+      "passive": "Grants Sense UP 43% to 2 ReGLOSS Members."
     }
   },
   {
@@ -1190,10 +1190,10 @@ export const CHARACTERS = [
       "support": 82
     },
     "skills": {
-      "outfit": "When I have 2+ [REGLOSS] members, my outfit grants +50% All Stats to [ALL].",
-      "special": "For 12 seconds, my Special grants +135% Support.",
-      "active": "Every 30 seconds (High), my Active grants +110% Score for 11 seconds.",
-      "passive": "When I have 2+ [REGLOSS] members, my passive grants +45% Performance to 2 [REGLOSS] members."
+      "outfit": "With 2 or more ReGLOSS Members, grants All Stats UP 50% to all.",
+      "special": "For 12s, Grants Score Support Effect of 135%.",
+      "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
+      "passive": "With 2 or more ReGLOSS Members, grants Performance UP 45% to 2 ReGLOSS Members."
     }
   },
   {
@@ -1213,10 +1213,10 @@ export const CHARACTERS = [
       "support": 95
     },
     "skills": {
-      "outfit": "My outfit grants +120% Sense to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 22 seconds (High), my Active grants +55% Score for 8 seconds; when my Life is 600+, it grants +115% Score.",
-      "passive": "My passive grants +43% Sense to 2 [REGLOSS] members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 8s, Score UP 55%. Every 22s with a High Probability chance. When LIFE is 600 or higher, Score UP 115%.",
+      "passive": "Grants Sense UP 43% to 2 ReGLOSS Members."
     }
   },
   {
@@ -1236,10 +1236,10 @@ export const CHARACTERS = [
       "support": 86
     },
     "skills": {
-      "outfit": "My outfit grants +120% Performance to [ALL].",
-      "special": "For 10 seconds, my Special grants +145% Support and +50% Skill Rate.",
-      "active": "Every 26 seconds (High), my Active grants +60% Score for 9 seconds; when my Combo is 40+, it grants +120% Score.",
-      "passive": "My passive grants +41% Performance to 2 [CUTE] members."
+      "outfit": "Grants Performance UP 120% to all.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+      "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
+      "passive": "Grants Performance UP 41% to 2 Cute Type Members."
     }
   }
 ];

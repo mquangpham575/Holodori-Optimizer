@@ -34,6 +34,29 @@
   border-radius: 12px;
 }
 
+.search-group {
+  width: 100%;
+}
+
+.db-search-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.75rem 1.2rem;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.db-search-input:focus {
+  border-color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
 .filter-group {
   display: flex;
   align-items: center;
@@ -448,21 +471,19 @@
 /* Character card and modal image styles */
 .char-card-media-wrapper {
   width: 100%;
-  aspect-ratio: 4 / 5;
-  border-radius: 10px;
+  aspect-ratio: 1 / 1;
+  border-radius: 22px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.25);
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 1rem;
-  border: 1px solid var(--border-color);
 }
 
 .char-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -477,10 +498,9 @@
 
 .modal-img-wrapper {
   width: 180px;
-  height: 220px;
-  border-radius: 16px;
+  height: 180px;
+  border-radius: 22px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.25);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -490,7 +510,7 @@
 .modal-char-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .mr-1 {

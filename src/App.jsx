@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import CharacterDB from './components/CharacterDB';
@@ -18,22 +19,29 @@ const hexToRgb = (hex) => {
   } : { r: 0, g: 195, b: 255 }; // fallback Gura Blue
 };
 
+const idMigrationMap = {
+  "sora": "tokinosora",
+  "suisei": "hoshimachisuisei",
+  "pekora": "usadapekora",
+  "marine": "houshoumarine",
+  "calli": "calliopemori",
+  "kobo": "kobokanaeru",
+  "fubuki": "shirakamifubuki",
+  "kanade": "otonosekanade"
+};
+
+const migrateIds = (id) => idMigrationMap[id] || id;
+
 function App() {
-  const [activeTab, setActiveTab] = useState('home');
   const [notification, setNotification] = useState(null);
 
-  // Load player data from localStorage or default
-  const [playerData, setPlayerData] = useState(() => {
-    const saved = localStorage.getItem('holodreams_player_data');
-    return saved ? JSON.parse(saved) : DEFAULT_USER_SHOWCASE;
-  });
 
   // Load team selection state (5 slots)
   const [activeTeam, setActiveTeam] = useState(() => {
     const saved = localStorage.getItem('holodreams_player_data');
     if (saved) {
       const data = JSON.parse(saved);
-      return data.favoriteTeam || DEFAULT_USER_SHOWCASE.favoriteTeam;
+      return (data.favoriteTeam || DEFAULT_USER_SHOWCASE.favoriteTeam).map(migrateIds);
     }
     return DEFAULT_USER_SHOWCASE.favoriteTeam;
   });
@@ -43,7 +51,7 @@ function App() {
     const saved = localStorage.getItem('holodreams_player_data');
     if (saved) {
       const data = JSON.parse(saved);
-      return data.favoriteLeader || DEFAULT_USER_SHOWCASE.favoriteLeader;
+      return migrateIds(data.favoriteLeader || DEFAULT_USER_SHOWCASE.favoriteLeader);
     }
     return DEFAULT_USER_SHOWCASE.favoriteLeader;
   });
@@ -53,10 +61,6 @@ function App() {
     return localStorage.getItem('holodreams_theme_accent') || '#3a86ff';
   });
 
-  // Persist player data updates
-  useEffect(() => {
-    localStorage.setItem('holodreams_player_data', JSON.stringify(playerData));
-  }, [playerData]);
 
   // Apply theme accent colors dynamically to CSS custom variables
   useEffect(() => {
@@ -73,9 +77,9 @@ function App() {
   };
 
   const handleSaveTeam = () => {
-    const updatedData = { ...playerData, favoriteTeam: activeTeam, favoriteLeader: activeLeader };
-    setPlayerData(updatedData);
-    showNotification('Đội hình của bạn đã được cập nhật!', 'success');
+    const saveData = { favoriteTeam: activeTeam, favoriteLeader: activeLeader };
+    localStorage.setItem('holodreams_player_data', JSON.stringify(saveData));
+    showNotification('Your active team has been updated!', 'success');
   };
 
   const showNotification = (message, type = 'success') => {
@@ -95,40 +99,44 @@ function App() {
         </div>
       )}
 
-      <Navbar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        playerData={playerData} 
-      />
+      <Navbar />
 
       <main className="main-content-layout">
-        {activeTab === 'home' && (
-          <Home 
-            activeTeam={activeTeam} 
-            activeLeader={activeLeader}
-            setActiveTab={setActiveTab} 
-            playerData={playerData} 
-            setPlayerData={setPlayerData} 
+        <Routes>
+          <Route 
+            path="/home" 
+            element={
+              <Home 
+                activeTeam={activeTeam} 
+                activeLeader={activeLeader}
+              />
+            } 
           />
-        )}
-        {activeTab === 'characters' && (
-          <CharacterDB 
-            onAccentChange={handleAccentChange} 
-            currentAccent={themeAccent} 
+          <Route 
+            path="/characters" 
+            element={
+              <CharacterDB 
+                onAccentChange={handleAccentChange} 
+                currentAccent={themeAccent} 
+              />
+            } 
           />
-        )}
-        {activeTab === 'teambuilder' && (
-          <TeamBuilder 
-            activeTeam={activeTeam} 
-            setActiveTeam={setActiveTeam} 
-            activeLeader={activeLeader}
-            setActiveLeader={setActiveLeader}
-            onSaveTeam={handleSaveTeam} 
+          <Route 
+            path="/builder" 
+            element={
+              <TeamBuilder 
+                activeTeam={activeTeam} 
+                setActiveTeam={setActiveTeam} 
+                activeLeader={activeLeader}
+                setActiveLeader={setActiveLeader}
+                onSaveTeam={handleSaveTeam} 
+              />
+            } 
           />
-        )}
-        {activeTab === 'guides' && (
-          <Guides />
-        )}
+          <Route path="/guides" element={<Guides />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
       </main>
 
       <footer className="footer glass">

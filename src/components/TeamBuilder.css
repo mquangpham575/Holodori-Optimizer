@@ -12,16 +12,11 @@
   text-align: center;
 }
 
-.builder-layout {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 2rem;
-}
-
-.builder-left, .builder-right {
+.builder-single-column-layout {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  width: 100%;
 }
 
 .slots-container, .roster-selector, .analytics-card, .synergy-card {
@@ -262,6 +257,13 @@
   margin-top: 1.25rem;
 }
 
+.synergies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
 .synergy-bonus-item {
   padding: 1rem;
   border-radius: 10px;
@@ -282,13 +284,12 @@
 }
 
 .synergy-badge-title {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  color: #ffb703;
   text-transform: uppercase;
-  background: rgba(255, 183, 3, 0.1);
-  padding: 0.15rem 0.5rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 4px;
+  letter-spacing: 0.5px;
 }
 
 .synergy-partners {
@@ -298,9 +299,11 @@
 }
 
 .synergy-desc {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+  font-weight: 500;
+  margin-top: 0.35rem;
 }
 
 .synergy-success {
@@ -515,8 +518,196 @@
 }
 
 .slots-grid.five-slots {
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.builder-slot {
+  height: 80px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.builder-slot.active-focused-slot {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 15px var(--accent-glow-strong);
+  animation: slotPulse 1.5s infinite ease-in-out;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.leader-slot {
+  height: 175px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+}
+
+.leader-slot.active-focused-slot {
+  border-color: #ffb703;
+  box-shadow: 0 0 15px rgba(255, 183, 3, 0.35);
+  animation: slotPulseGold 1.5s infinite ease-in-out;
+  background: rgba(255, 183, 3, 0.05);
+}
+
+@keyframes slotPulse {
+  0%, 100% { border-color: var(--accent-color); }
+  50% { border-color: rgba(255, 255, 255, 0.2); }
+}
+
+@keyframes slotPulseGold {
+  0%, 100% { border-color: #ffb703; }
+  50% { border-color: rgba(255, 255, 255, 0.2); }
+}
+
+.builder-slot .slot-content {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.5rem 1.25rem;
+  width: 100%;
+  height: 100%;
+}
+
+.leader-slot .slot-content {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1.25rem 0.5rem 0.5rem 0.5rem;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+.builder-slot .slot-details {
+  display: grid;
+  grid-template-columns: 180px 100px 80px;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: left;
+  margin-right: auto;
+}
+
+.leader-slot .slot-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  text-align: center;
+}
+
+.builder-slot .slot-name {
+  margin-top: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.leader-slot .slot-name {
+  margin-top: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.builder-slot .slot-role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.leader-slot .slot-role {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.builder-slot .slot-element {
+  margin-top: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.leader-slot .slot-element {
+  margin-top: 0.1rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.builder-slot .btn-remove-slot {
+  position: static;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.2s;
+}
+
+.builder-slot .btn-remove-slot:hover {
+  color: #ef4444;
+}
+
+.leader-slot .btn-remove-slot {
+  position: absolute;
+  top: 15px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 5;
+}
+
+.leader-slot .btn-remove-slot:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.leader-badge-ribbon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #ffb703;
+  color: #000;
+  font-size: 0.55rem;
+  font-weight: 900;
+  text-align: center;
+  padding: 0.15rem 0;
+  letter-spacing: 0.5px;
+  z-index: 3;
+}
+
+.roster-warning-sub {
+  font-size: 0.7rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.roster-item.disabled-roster {
+  pointer-events: none;
 }
 
 @media (max-width: 992px) {
@@ -524,24 +715,50 @@
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  .leader-slot {
-    height: 130px;
-  }
 }
 
 @media (max-width: 768px) {
-  .slots-grid.five-slots {
-    grid-template-columns: 1fr;
-  }
-  .slot-img-wrapper {
-    width: 45px;
-    height: 45px;
-  }
-  .slot-details {
-    display: flex;
+  .builder-slot .slot-details, .leader-slot .slot-details {
     flex-direction: column;
+    align-items: flex-start;
     gap: 0.15rem;
   }
+  .builder-slot .slot-name, .leader-slot .slot-name {
+    min-width: auto;
+  }
+  .builder-slot .slot-role, .leader-slot .slot-role {
+    min-width: auto;
+  }
 }
+
+
+.roster-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.roster-search-input {
+  width: 240px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.roster-search-input:focus {
+  border-color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
 
 

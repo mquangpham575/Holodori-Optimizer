@@ -142,11 +142,9 @@
   animation: float 8s ease-in-out infinite alternate;
 }
 
-/* Showcase Grid */
-.showcase-grid {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 2rem;
+/* Showcase Container */
+.showcase-container {
+  width: 100%;
 }
 
 .card-header {
@@ -203,6 +201,12 @@
 
 /* Profile Display */
 .profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-display {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -607,8 +611,8 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Responsiveness */

@@ -100,7 +100,7 @@ export default function Guides() {
     <div className="guides-page animate-fade-in">
       <div className="guides-header">
         <h1 className="page-title"><BookOpen className="title-icon inline-icon" /> Game Guides & Blog</h1>
-        <p className="page-subtitle">Tìm hiểu chiến thuật chơi game, phân tích nhân vật và các bài viết chia sẻ kinh nghiệm chơi Hololive Dreams.</p>
+        <p className="page-subtitle">Learn strategies, character insights, and guide builds to optimize your Hololive Dreams progression.</p>
       </div>
 
       {/* Categories filter */}
@@ -153,15 +153,15 @@ export default function Guides() {
               <div className="reader-meta">
                 <div className="meta-item">
                   <User size={14} />
-                  <span>Viết bởi <strong>{activeGuide.author}</strong></span>
+                  <span>Written by <strong>{activeGuide.author}</strong></span>
                 </div>
                 <div className="meta-item">
                   <Calendar size={14} />
-                  <span>Đăng ngày <strong>{activeGuide.date}</strong></span>
+                  <span>Published on <strong>{activeGuide.date}</strong></span>
                 </div>
                 <div className="meta-item">
                   <Clock size={14} />
-                  <span>Thời gian đọc: <strong>{activeGuide.readTime}</strong></span>
+                  <span>Read time: <strong>{activeGuide.readTime}</strong></span>
                 </div>
               </div>
             </div>
