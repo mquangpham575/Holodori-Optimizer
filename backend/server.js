@@ -32,16 +32,19 @@ const loadDB = () => {
   if (!fs.existsSync(dbPath)) {
     return {
       characters: [],
-      presets: [],
-      roster: []
+      presets: {},
+      roster: {}
     };
   }
   try {
     const raw = fs.readFileSync(dbPath, 'utf8');
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed.presets)) parsed.presets = {};
+    if (Array.isArray(parsed.roster)) parsed.roster = {};
+    return parsed;
   } catch (err) {
     console.error("Error reading database.json:", err);
-    return { characters: [], presets: [], roster: [] };
+    return { characters: [], presets: {}, roster: {} };
   }
 };
 
@@ -59,7 +62,19 @@ const initPostgresSchema = async () => {
   try {
     await client.query("BEGIN");
     
-    // Create characters table
+    // Check if we need to migrate/recreate tables to support device_id partitioning
+    const presetsCheck = await client.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'presets' AND column_name = 'device_id'
+    `);
+    
+    if (presetsCheck.rows.length === 0) {
+      console.log("Migrating PostgreSQL tables to support device partitioning...");
+      await client.query("DROP TABLE IF EXISTS presets CASCADE");
+      await client.query("DROP TABLE IF EXISTS roster CASCADE");
+    }
+
+    // Create characters table (shared)
     await client.query(`
       CREATE TABLE IF NOT EXISTS characters (
         id TEXT PRIMARY KEY,
@@ -76,21 +91,23 @@ const initPostgresSchema = async () => {
       )
     `);
 
-    // Create presets table
+    // Create presets table (partitioned by device_id)
     await client.query(`
       CREATE TABLE IF NOT EXISTS presets (
-        id TEXT PRIMARY KEY,
+        device_id TEXT NOT NULL,
+        id TEXT NOT NULL,
         name TEXT NOT NULL,
         team JSONB NOT NULL,
         leader TEXT,
-        isActive BOOLEAN NOT NULL DEFAULT FALSE
+        isActive BOOLEAN NOT NULL DEFAULT FALSE,
+        PRIMARY KEY (device_id, id)
       )
     `);
 
-    // Create roster table
+    // Create roster table (partitioned by device_id)
     await client.query(`
       CREATE TABLE IF NOT EXISTS roster (
-        id SERIAL PRIMARY KEY,
+        device_id TEXT PRIMARY KEY,
         owned_ids JSONB NOT NULL
       )
     `);
@@ -110,7 +127,7 @@ const initPostgresSchema = async () => {
 const seedPostgres = async () => {
   const client = await pgPool.connect();
   try {
-    // 1. Seed characters
+    // Seed characters table
     const charCountResult = await client.query("SELECT COUNT(*) FROM characters");
     if (parseInt(charCountResult.rows[0].count) === 0) {
       console.log("Seeding characters into PostgreSQL...");
@@ -118,7 +135,7 @@ const seedPostgres = async () => {
       for (const char of module.CHARACTERS) {
         await client.query(
           `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
           [
             char.id,
             char.name,
@@ -135,36 +152,6 @@ const seedPostgres = async () => {
         );
       }
       console.log("Characters seeded successfully in PostgreSQL!");
-    }
-
-    // 2. Seed presets
-    const presetCountResult = await client.query("SELECT COUNT(*) FROM presets");
-    if (parseInt(presetCountResult.rows[0].count) === 0) {
-      console.log("Seeding presets into PostgreSQL...");
-      const defaultPresets = [
-        { id: 'preset_1', name: 'Preset 1', team: [null, null, null, null, null], leader: null, isActive: true },
-        { id: 'preset_2', name: 'Preset 2', team: [null, null, null, null, null], leader: null, isActive: false },
-        { id: 'preset_3', name: 'Preset 3', team: [null, null, null, null, null], leader: null, isActive: false },
-        { id: 'preset_4', name: 'Preset 4', team: [null, null, null, null, null], leader: null, isActive: false },
-        { id: 'preset_5', name: 'Preset 5', team: [null, null, null, null, null], leader: null, isActive: false }
-      ];
-      for (const p of defaultPresets) {
-        await client.query(
-          `INSERT INTO presets (id, name, team, leader, isActive) VALUES ($1, $2, $3, $4, $5)`,
-          [p.id, p.name, JSON.stringify(p.team), p.leader, p.isActive]
-        );
-      }
-      console.log("Presets seeded successfully in PostgreSQL!");
-    }
-
-    // 3. Seed roster
-    const rosterCountResult = await client.query("SELECT COUNT(*) FROM roster");
-    if (parseInt(rosterCountResult.rows[0].count) === 0) {
-      console.log("Seeding default roster into PostgreSQL...");
-      const module = await import('../frontend/src/data.js');
-      const allIds = module.CHARACTERS.map(c => c.id);
-      await client.query("INSERT INTO roster (owned_ids) VALUES ($1)", [JSON.stringify(allIds)]);
-      console.log("Owned roster seeded successfully in PostgreSQL!");
     }
   } catch (err) {
     console.error("Error seeding PostgreSQL:", err);
@@ -197,27 +184,14 @@ const seedDatabase = async () => {
       }
     }
 
-    if (!db.presets || db.presets.length === 0) {
-      console.log("Seeding default presets...");
-      db.presets = [
-        { id: 'preset_1', name: 'Preset 1', team: [null, null, null, null, null], leader: null, isActive: true },
-        { id: 'preset_2', name: 'Preset 2', team: [null, null, null, null, null], leader: null, isActive: false },
-        { id: 'preset_3', name: 'Preset 3', team: [null, null, null, null, null], leader: null, isActive: false },
-        { id: 'preset_4', name: 'Preset 4', team: [null, null, null, null, null], leader: null, isActive: false },
-        { id: 'preset_5', name: 'Preset 5', team: [null, null, null, null, null], leader: null, isActive: false }
-      ];
+    if (!db.presets || Array.isArray(db.presets)) {
+      db.presets = {};
       updated = true;
     }
 
-    if (!db.roster || db.roster.length === 0) {
-      console.log("Seeding default roster...");
-      try {
-        const module = await import('../frontend/src/data.js');
-        db.roster = module.CHARACTERS.map(c => c.id);
-        updated = true;
-      } catch (err) {
-        console.error("Error seeding default roster:", err);
-      }
+    if (!db.roster || Array.isArray(db.roster)) {
+      db.roster = {};
+      updated = true;
     }
 
     if (updated) {
@@ -246,21 +220,56 @@ app.get('/api/characters', async (req, res) => {
 
 // GET /api/presets
 app.get('/api/presets', async (req, res) => {
+  const deviceId = req.headers['x-device-id'] || 'default_device';
   if (isProd) {
+    const client = await pgPool.connect();
     try {
-      const result = await pgPool.query("SELECT * FROM presets ORDER BY id ASC");
+      let result = await client.query("SELECT * FROM presets WHERE device_id = $1 ORDER BY id ASC", [deviceId]);
+      if (result.rows.length === 0) {
+        console.log(`Initializing default presets for device: ${deviceId}`);
+        const defaultPresets = [
+          { id: 'preset_1', name: 'Preset 1', team: [null, null, null, null, null], leader: null, isActive: true },
+          { id: 'preset_2', name: 'Preset 2', team: [null, null, null, null, null], leader: null, isActive: false },
+          { id: 'preset_3', name: 'Preset 3', team: [null, null, null, null, null], leader: null, isActive: false },
+          { id: 'preset_4', name: 'Preset 4', team: [null, null, null, null, null], leader: null, isActive: false },
+          { id: 'preset_5', name: 'Preset 5', team: [null, null, null, null, null], leader: null, isActive: false }
+        ];
+        await client.query("BEGIN");
+        for (const p of defaultPresets) {
+          await client.query(
+            `INSERT INTO presets (device_id, id, name, team, leader, isActive) 
+             VALUES ($1, $2, $3, $4::jsonb, $5, $6)`,
+            [deviceId, p.id, p.name, JSON.stringify(p.team), p.leader, p.isActive]
+          );
+        }
+        await client.query("COMMIT");
+        result = await client.query("SELECT * FROM presets WHERE device_id = $1 ORDER BY id ASC", [deviceId]);
+      }
       res.json(result.rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
     }
   } else {
     const db = loadDB();
-    res.json(db.presets || []);
+    if (!db.presets[deviceId]) {
+      db.presets[deviceId] = [
+        { id: 'preset_1', name: 'Preset 1', team: [null, null, null, null, null], leader: null, isActive: true },
+        { id: 'preset_2', name: 'Preset 2', team: [null, null, null, null, null], leader: null, isActive: false },
+        { id: 'preset_3', name: 'Preset 3', team: [null, null, null, null, null], leader: null, isActive: false },
+        { id: 'preset_4', name: 'Preset 4', team: [null, null, null, null, null], leader: null, isActive: false },
+        { id: 'preset_5', name: 'Preset 5', team: [null, null, null, null, null], leader: null, isActive: false }
+      ];
+      saveDB(db);
+    }
+    res.json(db.presets[deviceId]);
   }
 });
 
 // PUT /api/presets
 app.put('/api/presets', async (req, res) => {
+  const deviceId = req.headers['x-device-id'] || 'default_device';
   const updatedPresets = req.body;
   if (!Array.isArray(updatedPresets)) {
     return res.status(400).json({ error: 'Body must be an array of presets' });
@@ -272,8 +281,11 @@ app.put('/api/presets', async (req, res) => {
       await client.query("BEGIN");
       for (const p of updatedPresets) {
         await client.query(
-          "UPDATE presets SET name = $1, team = $2, leader = $3, isActive = $4 WHERE id = $5",
-          [p.name, JSON.stringify(p.team), p.leader, p.isActive, p.id]
+          `INSERT INTO presets (device_id, id, name, team, leader, isActive) 
+           VALUES ($1, $2, $3, $4::jsonb, $5, $6) 
+           ON CONFLICT (device_id, id) 
+           DO UPDATE SET name = EXCLUDED.name, team = EXCLUDED.team, leader = EXCLUDED.leader, isActive = EXCLUDED.isActive`,
+          [deviceId, p.id, p.name, JSON.stringify(p.team), p.leader, p.isActive]
         );
       }
       await client.query("COMMIT");
@@ -286,7 +298,7 @@ app.put('/api/presets', async (req, res) => {
     }
   } else {
     const db = loadDB();
-    db.presets = updatedPresets;
+    db.presets[deviceId] = updatedPresets;
     saveDB(db);
     res.json({ success: true });
   }
@@ -294,22 +306,40 @@ app.put('/api/presets', async (req, res) => {
 
 // GET /api/roster
 app.get('/api/roster', async (req, res) => {
+  const deviceId = req.headers['x-device-id'] || 'default_device';
   if (isProd) {
+    const client = await pgPool.connect();
     try {
-      const result = await pgPool.query("SELECT owned_ids FROM roster LIMIT 1");
-      if (result.rows.length === 0) return res.json([]);
+      let result = await client.query("SELECT owned_ids FROM roster WHERE device_id = $1", [deviceId]);
+      if (result.rows.length === 0) {
+        console.log(`Initializing default roster for device: ${deviceId}`);
+        const charResult = await client.query("SELECT id FROM characters");
+        const allIds = charResult.rows.map(c => c.id);
+        await client.query(
+          "INSERT INTO roster (device_id, owned_ids) VALUES ($1, $2::jsonb)",
+          [deviceId, JSON.stringify(allIds)]
+        );
+        result = await client.query("SELECT owned_ids FROM roster WHERE device_id = $1", [deviceId]);
+      }
       res.json(result.rows[0].owned_ids);
     } catch (err) {
       res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
     }
   } else {
     const db = loadDB();
-    res.json(db.roster || []);
+    if (!db.roster[deviceId]) {
+      db.roster[deviceId] = db.characters.map(c => c.id);
+      saveDB(db);
+    }
+    res.json(db.roster[deviceId]);
   }
 });
 
 // PUT /api/roster
 app.put('/api/roster', async (req, res) => {
+  const deviceId = req.headers['x-device-id'] || 'default_device';
   const ownedIds = req.body;
   if (!Array.isArray(ownedIds)) {
     return res.status(400).json({ error: 'Body must be an array of character IDs' });
@@ -317,14 +347,20 @@ app.put('/api/roster', async (req, res) => {
 
   if (isProd) {
     try {
-      await pgPool.query("UPDATE roster SET owned_ids = $1 WHERE id = 1", [JSON.stringify(ownedIds)]);
+      await pgPool.query(
+        `INSERT INTO roster (device_id, owned_ids) 
+         VALUES ($1, $2::jsonb) 
+         ON CONFLICT (device_id) 
+         DO UPDATE SET owned_ids = EXCLUDED.owned_ids`,
+        [deviceId, JSON.stringify(ownedIds)]
+      );
       res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   } else {
     const db = loadDB();
-    db.roster = ownedIds;
+    db.roster[deviceId] = ownedIds;
     saveDB(db);
     res.json({ success: true });
   }
@@ -370,7 +406,18 @@ app.get('/api/docs', (req, res) => {
       "/api/presets": {
         get: {
           summary: "Retrieve team presets",
-          description: "Retrieve all 5 team presets currently saved in the database.",
+          description: "Retrieve all 5 team presets for the current device.",
+          parameters: [
+            {
+              name: "x-device-id",
+              in: "header",
+              required: true,
+              schema: {
+                type: "string"
+              },
+              description: "Unique Device ID for partitioning data"
+            }
+          ],
           responses: {
             "200": {
               description: "Success",
@@ -389,7 +436,18 @@ app.get('/api/docs', (req, res) => {
         },
         put: {
           summary: "Save team presets",
-          description: "Update the 5 team presets configurations.",
+          description: "Update or insert presets for the current device.",
+          parameters: [
+            {
+              name: "x-device-id",
+              in: "header",
+              required: true,
+              schema: {
+                type: "string"
+              },
+              description: "Unique Device ID for partitioning data"
+            }
+          ],
           requestBody: {
             required: true,
             content: {
@@ -425,7 +483,18 @@ app.get('/api/docs', (req, res) => {
       "/api/roster": {
         get: {
           summary: "Retrieve owned roster IDs",
-          description: "Retrieve the array of character IDs currently checked as owned.",
+          description: "Retrieve the array of character IDs owned by the current device.",
+          parameters: [
+            {
+              name: "x-device-id",
+              in: "header",
+              required: true,
+              schema: {
+                type: "string"
+              },
+              description: "Unique Device ID for partitioning data"
+            }
+          ],
           responses: {
             "200": {
               description: "Success",
@@ -444,7 +513,18 @@ app.get('/api/docs', (req, res) => {
         },
         put: {
           summary: "Update owned roster IDs",
-          description: "Update the array of character IDs checked as owned.",
+          description: "Update the array of character IDs owned by the current device.",
+          parameters: [
+            {
+              name: "x-device-id",
+              in: "header",
+              required: true,
+              schema: {
+                type: "string"
+              },
+              description: "Unique Device ID for partitioning data"
+            }
+          ],
           requestBody: {
             required: true,
             content: {

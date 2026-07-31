@@ -32,6 +32,15 @@ const idMigrationMap = {
 
 const migrateIds = (id) => idMigrationMap[id] || id;
 
+const getOrCreateDeviceId = () => {
+  let id = localStorage.getItem('holodreams_device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('holodreams_device_id', id);
+  }
+  return id;
+};
+
 function App() {
   const [notification, setNotification] = useState(null);
   const [characters, setCharacters] = useState([]);
@@ -45,6 +54,8 @@ function App() {
       ? ''
       : 'https://site--hololive-dream--mv2hgs5fgpjc.code.run'
   );
+
+  const deviceId = getOrCreateDeviceId();
 
   // Load theme accent color from localStorage or default (Sora Blue)
   const [themeAccent, setThemeAccent] = useState(() => {
@@ -67,8 +78,8 @@ function App() {
         setIsLoading(true);
         const [charsRes, presetsRes, rosterRes] = await Promise.all([
           fetch(`${API_BASE}/api/characters`),
-          fetch(`${API_BASE}/api/presets`),
-          fetch(`${API_BASE}/api/roster`)
+          fetch(`${API_BASE}/api/presets`, { headers: { 'x-device-id': deviceId } }),
+          fetch(`${API_BASE}/api/roster`, { headers: { 'x-device-id': deviceId } })
         ]);
         
         if (!charsRes.ok || !presetsRes.ok || !rosterRes.ok) {
@@ -127,7 +138,7 @@ function App() {
     };
     
     fetchData();
-  }, [API_BASE]);
+  }, [API_BASE, deviceId]);
 
   const handleAccentChange = (hexColor) => {
     setThemeAccent(hexColor);
@@ -152,7 +163,8 @@ function App() {
       const res = await fetch(`${API_BASE}/api/presets`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-device-id': deviceId
         },
         body: JSON.stringify(updatedPresets)
       });
@@ -177,7 +189,8 @@ function App() {
       await fetch(`${API_BASE}/api/roster`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-device-id': deviceId
         },
         body: JSON.stringify(newRoster)
       });
