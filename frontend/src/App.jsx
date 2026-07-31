@@ -40,7 +40,11 @@ function App() {
   const [ownedRoster, setOwnedRoster] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || (
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? ''
+      : 'https://site--hololive-dream--mv2hgs5fgpjc.code.run'
+  );
 
   // Load theme accent color from localStorage or default (Sora Blue)
   const [themeAccent, setThemeAccent] = useState(() => {
