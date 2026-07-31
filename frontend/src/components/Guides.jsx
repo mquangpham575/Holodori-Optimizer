@@ -46,6 +46,37 @@ export default function Guides({ guides = [] }) {
         }
         elements.push(<h3 key={index} className="guide-h3">{trimmed.substring(4)}</h3>);
       } 
+      // Handle Images: ![alt](url)
+      else if (trimmed.startsWith('![') && trimmed.endsWith(')')) {
+        if (inList) {
+          elements.push(<ul key={`list-${index}`}>{listItems}</ul>);
+          listItems = [];
+          inList = false;
+        }
+        const imgRegex = /!\[(.*?)\]\((.*?)\)/;
+        const match = trimmed.match(imgRegex);
+        if (match) {
+          const alt = match[1];
+          const src = match[2];
+          elements.push(
+            <div key={index} className="guide-img-container" style={{ margin: '25px auto', textAlign: 'center', maxWidth: '100%' }}>
+              <img 
+                src={src} 
+                alt={alt} 
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '450px',
+                  borderRadius: '12px', 
+                  border: '1.5px solid rgba(255, 255, 255, 0.1)',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+                  objectFit: 'contain'
+                }} 
+              />
+              {alt && <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '8px', fontStyle: 'italic' }}>{alt}</p>}
+            </div>
+          );
+        }
+      }
       // Handle Lists
       else if (trimmed.startsWith('- ')) {
         inList = true;

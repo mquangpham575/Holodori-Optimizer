@@ -63,6 +63,71 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
     reader.readAsDataURL(file);
   };
 
+  // Handle pasting images directly from clipboard inside guide markdown editor
+  const handleContentPaste = async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    let imageItem = null;
+    for (const item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        imageItem = item;
+        break;
+      }
+    }
+
+    if (imageItem) {
+      e.preventDefault();
+      const file = imageItem.getAsFile();
+      if (!file) return;
+
+      showNotification('Uploading image from clipboard...', 'success');
+
+      const reader = new FileReader();
+      reader.onload = async (uploadEvent) => {
+        const base64Data = uploadEvent.target.result;
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/upload`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-password': password
+            },
+            body: JSON.stringify({
+              fileName: file.name || 'clipboard.png',
+              base64Data
+            })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Upload failed');
+          }
+
+          const textarea = e.target;
+          const start = textarea.selectionStart;
+          const end = textarea.selectionEnd;
+          const text = textarea.value;
+          const imageMarkdown = `\n![Pasted Image](${data.url})\n`;
+          const newContent = text.substring(0, start) + imageMarkdown + text.substring(end);
+
+          setGuideForm(prev => ({ ...prev, content: newContent }));
+
+          // Refocus and place cursor after inserted markdown
+          setTimeout(() => {
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + imageMarkdown.length;
+          }, 0);
+
+          showNotification('Clipboard image pasted and uploaded successfully!');
+        } catch (err) {
+          showNotification(err.message, 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Password Unlock Check
   const handleLogin = (e) => {
     e.preventDefault();
@@ -758,6 +823,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                   required
                   value={guideForm.content}
                   onChange={(e) => setGuideForm({ ...guideForm, content: e.target.value })}
+                  onPaste={handleContentPaste}
                   placeholder="# Article Heading&#10;&#10;Write markdown content here..."
                   className="content-textarea"
                 ></textarea>
