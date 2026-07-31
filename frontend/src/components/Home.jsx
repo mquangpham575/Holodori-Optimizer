@@ -1,13 +1,12 @@
 import React from 'react';
 import { Gamepad2, Shield, Calendar, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { GUIDES } from '../data';
 import './Home.css';
 
 /**
  * Home - Displays landing info, editable personal showcase, and links to guides/characters.
  */
-export default function Home({ activeTeam, activeLeader, characters = [] }) {
+export default function Home({ activeTeam, activeLeader, characters = [], guides = [] }) {
   const navigate = useNavigate();
 
   const leaderChar = characters.find(c => c.id === activeLeader);
@@ -98,7 +97,7 @@ export default function Home({ activeTeam, activeLeader, characters = [] }) {
           </button>
         </div>
         <div className="articles-grid">
-          {GUIDES.slice(0, 2).map((guide) => (
+          {guides.slice(0, 2).map((guide) => (
             <div key={guide.id} className="article-preview-card glass" onClick={() => navigate('/guides')}>
               <span className="article-category">{guide.category}</span>
               <h3 className="article-title">{guide.title}</h3>

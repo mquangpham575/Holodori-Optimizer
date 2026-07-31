@@ -5,6 +5,7 @@ import Home from './components/Home';
 import CharacterDB from './components/CharacterDB';
 import TeamBuilder from './components/TeamBuilder';
 import Guides from './components/Guides';
+import AdminDashboard from './components/AdminDashboard';
 import { CHARACTERS } from './data';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import './App.css';
@@ -47,6 +48,7 @@ function App() {
   const [presets, setPresets] = useState([]);
   const [selectedPresetId, setSelectedPresetId] = useState('preset_1');
   const [ownedRoster, setOwnedRoster] = useState([]);
+  const [guides, setGuides] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || (
@@ -76,23 +78,37 @@ function App() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [charsRes, presetsRes, rosterRes] = await Promise.all([
+        const [charsRes, presetsRes, rosterRes, guidesRes] = await Promise.all([
           fetch(`${API_BASE}/api/characters`),
           fetch(`${API_BASE}/api/presets`, { headers: { 'x-device-id': deviceId } }),
-          fetch(`${API_BASE}/api/roster`, { headers: { 'x-device-id': deviceId } })
+          fetch(`${API_BASE}/api/roster`, { headers: { 'x-device-id': deviceId } }),
+          fetch(`${API_BASE}/api/guides`)
         ]);
         
-        if (!charsRes.ok || !presetsRes.ok || !rosterRes.ok) {
+        if (!charsRes.ok || !presetsRes.ok || !rosterRes.ok || !guidesRes.ok) {
           throw new Error("Failed to load databases from backend");
         }
         
         const chars = await charsRes.json();
         const presetsData = await presetsRes.json();
         const rosterData = await rosterRes.json();
+        const guidesData = await guidesRes.json();
+        
+        // Sort characters in exact chronological game order defined in data.js
+        const originalOrder = CHARACTERS.map(c => c.id);
+        chars.sort((a, b) => {
+          const idxA = originalOrder.indexOf(a.id);
+          const idxB = originalOrder.indexOf(b.id);
+          if (idxA === -1 && idxB === -1) return 0;
+          if (idxA === -1) return 1;
+          if (idxB === -1) return -1;
+          return idxA - idxB;
+        });
         
         setCharacters(chars);
         setPresets(presetsData);
         setOwnedRoster(rosterData);
+        setGuides(guidesData);
       } catch (err) {
         console.error("Backend fetch failed, loading fallback state:", err);
         // Load fallback presets from local storage
@@ -131,6 +147,12 @@ function App() {
         }
         
         setCharacters(CHARACTERS);
+        try {
+          const module = await import('./data');
+          setGuides(module.GUIDES);
+        } catch (e) {
+          console.error("Failed to load fallback guides:", e);
+        }
         showNotification("Loaded database in local offline mode", "error");
       } finally {
         setIsLoading(false);
@@ -246,6 +268,7 @@ function App() {
                 activeTeam={activePreset.team} 
                 activeLeader={activePreset.leader}
                 characters={characters}
+                guides={guides}
               />
             } 
           />
@@ -274,7 +297,19 @@ function App() {
               />
             } 
           />
-          <Route path="/guides" element={<Guides />} />
+          <Route path="/guides" element={<Guides guides={guides} />} />
+          <Route 
+            path="/admin" 
+            element={
+              <AdminDashboard 
+                characters={characters} 
+                setCharacters={setCharacters} 
+                guides={guides} 
+                setGuides={setGuides} 
+                API_BASE={API_BASE}
+              />
+            } 
+          />
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>

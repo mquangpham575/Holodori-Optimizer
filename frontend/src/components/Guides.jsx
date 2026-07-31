@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { X, BookOpen, User, Clock, Calendar } from 'lucide-react';
-import { GUIDES } from '../data';
 import './Guides.css';
 
-export default function Guides() {
+export default function Guides({ guides = [] }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [activeGuide, setActiveGuide] = useState(null);
 
   const categories = ['All', 'General', 'Builds', 'Meta'];
 
-  const filteredGuides = GUIDES.filter((guide) => {
+  const filteredGuides = guides.filter((guide) => {
     return selectedCategory === 'All' || guide.category === selectedCategory;
   });
 

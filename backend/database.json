@@ -6,7 +6,7 @@
       "title": "Rainbow's Devotion",
       "rarity": "5-Star",
       "group": "Gen 0",
-      "type": "HAPPY",
+      "type": "CUTE",
       "accentColor": "#3a86ff",
       "image": "/images/tokinosora.webp",
       "avatar": "T",
@@ -14,7 +14,7 @@
         "sense": 80,
         "technique": 76,
         "performance": 85,
-        "support": 93
+        "total": 241
       },
       "skills": {
         "outfit": "With 2 or more Gen 0 Members, grants All Stats UP 50% to all.",
@@ -37,7 +37,7 @@
         "sense": 75,
         "technique": 80,
         "performance": 92,
-        "support": 95
+        "total": 247
       },
       "skills": {
         "outfit": "With 2 or more Happy Type Members, grants Performance UP 130% to all.",
@@ -60,7 +60,7 @@
         "sense": 90,
         "technique": 94,
         "performance": 85,
-        "support": 77
+        "total": 269
       },
       "skills": {
         "outfit": "Grants Sense UP 120% to all.",
@@ -83,7 +83,7 @@
         "sense": 85,
         "technique": 77,
         "performance": 86,
-        "support": 77
+        "total": 248
       },
       "skills": {
         "outfit": "Grants Sense UP 120% to all.",
@@ -106,7 +106,7 @@
         "sense": 78,
         "technique": 81,
         "performance": 76,
-        "support": 85
+        "total": 235
       },
       "skills": {
         "outfit": "Grants Technique UP 120% to all.",
@@ -121,7 +121,7 @@
       "title": "Ethereal Half-Elf",
       "rarity": "5-Star",
       "group": "Gen 1",
-      "type": "PURE",
+      "type": "CUTE",
       "accentColor": "#e2e200",
       "image": "/images/akirosenthal.webp",
       "avatar": "A",
@@ -129,7 +129,7 @@
         "sense": 86,
         "technique": 93,
         "performance": 79,
-        "support": 86
+        "total": 258
       },
       "skills": {
         "outfit": "Grants Sense UP 120% to all.",
@@ -152,7 +152,7 @@
         "sense": 79,
         "technique": 86,
         "performance": 93,
-        "support": 84
+        "total": 258
       },
       "skills": {
         "outfit": "Grants Technique UP 120% to all.",
@@ -175,7 +175,7 @@
         "sense": 80,
         "technique": 76,
         "performance": 85,
-        "support": 82
+        "total": 241
       },
       "skills": {
         "outfit": "With 2 or more Gen 1 Members, grants All Stats UP 50% to all.",
@@ -190,7 +190,7 @@
       "title": "Vivid Cheer Spirit",
       "rarity": "5-Star",
       "group": "Gen 1",
-      "type": "PURE",
+      "type": "HAPPY",
       "accentColor": "#ffb703",
       "image": "/images/natsuiromatsuri.webp",
       "avatar": "N",
@@ -198,7 +198,7 @@
         "sense": 89,
         "technique": 94,
         "performance": 85,
-        "support": 82
+        "total": 268
       },
       "skills": {
         "outfit": "Grants Performance UP 120% to ALL.",
@@ -221,7 +221,7 @@
         "sense": 85,
         "technique": 88,
         "performance": 78,
-        "support": 86
+        "total": 251
       },
       "skills": {
         "outfit": "Grants Score Support Effect of 60% to all.",
@@ -244,7 +244,7 @@
         "sense": 94,
         "technique": 85,
         "performance": 77,
-        "support": 91
+        "total": 256
       },
       "skills": {
         "outfit": "With 2 or more Happy Type Members, grants All Stats UP 30% to all and +25% Support to all.",
@@ -259,7 +259,7 @@
       "title": "Duckling Noon Jam",
       "rarity": "5-Star",
       "group": "Gen 2",
-      "type": "PURE",
+      "type": "CUTE",
       "accentColor": "#fcd34d",
       "image": "/images/oozorasubaru.webp",
       "avatar": "O",
@@ -267,7 +267,7 @@
         "sense": 95,
         "technique": 80,
         "performance": 92,
-        "support": 89
+        "total": 267
       },
       "skills": {
         "outfit": "With 2 or more Gen 2 Members, grants All Stats UP 50% to all.",
@@ -282,7 +282,7 @@
       "title": "Calming Nightscape",
       "rarity": "5-Star",
       "group": "GAMERS",
-      "type": "PURE",
+      "type": "CUTE",
       "accentColor": "#333333",
       "image": "/images/ookamimio.webp",
       "avatar": "O",
@@ -290,7 +290,7 @@
         "sense": 82,
         "technique": 82,
         "performance": 87,
-        "support": 78
+        "total": 251
       },
       "skills": {
         "outfit": "With 2 or more Gamers Members, grants +50% Stats to all.",
@@ -313,7 +313,7 @@
         "sense": 93,
         "technique": 90,
         "performance": 78,
-        "support": 91
+        "total": 261
       },
       "skills": {
         "outfit": "Grants Technique UP 120% to all.",
@@ -336,7 +336,7 @@
         "sense": 87,
         "technique": 93,
         "performance": 79,
-        "support": 86
+        "total": 259
       },
       "skills": {
         "outfit": "With 2 or more Happy Type Members, grants Sense UP 130% to all.",
@@ -359,7 +359,7 @@
         "sense": 79,
         "technique": 76,
         "performance": 80,
-        "support": 92
+        "total": 235
       },
       "skills": {
         "outfit": "With 2 or more Cute Type Members, grants All Stats UP 30% to all and +25% Support to all.",
@@ -382,7 +382,7 @@
         "sense": 93,
         "technique": 95,
         "performance": 85,
-        "support": 93
+        "total": 273
       },
       "skills": {
         "outfit": "Grants Performance UP 120% to all.",
@@ -405,7 +405,7 @@
         "sense": 86,
         "technique": 88,
         "performance": 83,
-        "support": 82
+        "total": 257
       },
       "skills": {
         "outfit": "Grants Score Support Effect of 60% to all.",
@@ -428,7 +428,7 @@
         "sense": 76,
         "technique": 91,
         "performance": 84,
-        "support": 82
+        "total": 251
       },
       "skills": {
         "outfit": "With 2 or more Gen 3 Members, grants All Stats UP 50% to all.",
@@ -451,7 +451,7 @@
         "sense": 92,
         "technique": 95,
         "performance": 85,
-        "support": 82
+        "total": 272
       },
       "skills": {
         "outfit": "Grants All Stats UP 45% to all.",
@@ -474,7 +474,7 @@
         "sense": 87,
         "technique": 93,
         "performance": 90,
-        "support": 94
+        "total": 270
       },
       "skills": {
         "outfit": "With 2 or more Gen 4 Members, grants All Stats UP 50% to all.",
@@ -489,7 +489,7 @@
       "title": "Royal Loyal Noon",
       "rarity": "5-Star",
       "group": "Gen 4",
-      "type": "CUTE",
+      "type": "HAPPY",
       "accentColor": "#ffc6ff",
       "image": "/images/himemoriluna.webp",
       "avatar": "H",
@@ -497,7 +497,7 @@
         "sense": 89,
         "technique": 83,
         "performance": 82,
-        "support": 87
+        "total": 254
       },
       "skills": {
         "outfit": "Grants Technique UP 120% to all.",
@@ -520,7 +520,7 @@
         "sense": 81,
         "technique": 81,
         "performance": 76,
-        "support": 91
+        "total": 238
       },
       "skills": {
         "outfit": "With 2 or more Gen 5 Members, grants All Stats UP 50% to all.",
@@ -543,7 +543,7 @@
         "sense": 80,
         "technique": 76,
         "performance": 91,
-        "support": 84
+        "total": 247
       },
       "skills": {
         "outfit": "Grants Performance UP 120% to all.",
@@ -566,7 +566,7 @@
         "sense": 81,
         "technique": 81,
         "performance": 92,
-        "support": 84
+        "total": 254
       },
       "skills": {
         "outfit": "Grants All Stats UP 45% to all.",
@@ -589,7 +589,7 @@
         "sense": 81,
         "technique": 87,
         "performance": 88,
-        "support": 88
+        "total": 256
       },
       "skills": {
         "outfit": "Grants All Stats UP 45% to all.",
@@ -604,7 +604,7 @@
       "title": "Commanding Genius",
       "rarity": "5-Star",
       "group": "holoX",
-      "type": "PURE",
+      "type": "HAPPY",
       "accentColor": "#6f2dbd",
       "image": "/images/laplusdarknesss.webp",
       "avatar": "L",
@@ -612,7 +612,7 @@
         "sense": 90,
         "technique": 94,
         "performance": 79,
-        "support": 81
+        "total": 263
       },
       "skills": {
         "outfit": "With 2 or more holoX Members, grants All Stats UP 50% to all.",
@@ -635,7 +635,7 @@
         "sense": 77,
         "technique": 91,
         "performance": 84,
-        "support": 82
+        "total": 252
       },
       "skills": {
         "outfit": "Grants All Stats UP 45% to all.",
@@ -658,7 +658,7 @@
         "sense": 82,
         "technique": 82,
         "performance": 76,
-        "support": 85
+        "total": 240
       },
       "skills": {
         "outfit": "With 2 or more Pure Type Members, grants All Stats UP 30% to all and +25% Support to all.",
@@ -681,7 +681,7 @@
         "sense": 80,
         "technique": 92,
         "performance": 84,
-        "support": 87
+        "total": 256
       },
       "skills": {
         "outfit": "With 2 or more Cute Type Members, grants Technique UP 130% to all.",
@@ -704,7 +704,7 @@
         "sense": 91,
         "technique": 79,
         "performance": 81,
-        "support": 87
+        "total": 251
       },
       "skills": {
         "outfit": "With 2 or more Happy Type Members, grants Technique UP 130% to all.",
@@ -719,7 +719,7 @@
       "title": "Lunar Songstress",
       "rarity": "5-Star",
       "group": "Gen 1",
-      "type": "PURE",
+      "type": "CUTE",
       "accentColor": "#48cae4",
       "image": "/images/moonahoshinova.webp",
       "avatar": "M",
@@ -727,7 +727,7 @@
         "sense": 75,
         "technique": 80,
         "performance": 92,
-        "support": 79
+        "total": 247
       },
       "skills": {
         "outfit": "With 2 or more ID Gen 1 Members, grants All Stats UP 50% to all.",
@@ -750,7 +750,7 @@
         "sense": 75,
         "technique": 75,
         "performance": 85,
-        "support": 88
+        "total": 235
       },
       "skills": {
         "outfit": "With 2 or more Pure Type Members, grants Technique UP 130% to all.",
@@ -773,7 +773,7 @@
         "sense": 90,
         "technique": 89,
         "performance": 94,
-        "support": 90
+        "total": 273
       },
       "skills": {
         "outfit": "Grants All Stats UP 45% to all.",
@@ -788,7 +788,7 @@
       "title": "ソファに沈んでまったりゲーム",
       "rarity": "5-Star",
       "group": "Gen 2",
-      "type": "PURE",
+      "type": "CUTE",
       "accentColor": "#9b2226",
       "image": "/images/anyamelfissa.webp",
       "avatar": "A",
@@ -796,7 +796,7 @@
         "sense": 75,
         "technique": 80,
         "performance": 92,
-        "support": 79
+        "total": 247
       },
       "skills": {
         "outfit": "With 2 or more ID Gen 2 Members, grants All Stats UP 50% to all.",
@@ -819,7 +819,7 @@
         "sense": 77,
         "technique": 86,
         "performance": 88,
-        "support": 83
+        "total": 251
       },
       "skills": {
         "outfit": "Grants Score Support Effect of 60% to all.",
@@ -834,7 +834,7 @@
       "title": "陽だまりとネコと構成員",
       "rarity": "5-Star",
       "group": "Gen 3",
-      "type": "PURE",
+      "type": "HAPPY",
       "accentColor": "#e5e5e5",
       "image": "/images/vestiazeta.webp",
       "avatar": "V",
@@ -842,7 +842,7 @@
         "sense": 93,
         "technique": 90,
         "performance": 89,
-        "support": 78
+        "total": 272
       },
       "skills": {
         "outfit": "With 2 or more ID Gen 3 Members, grants All Stats UP 50% to all.",
@@ -865,7 +865,7 @@
         "sense": 79,
         "technique": 86,
         "performance": 88,
-        "support": 83
+        "total": 253
       },
       "skills": {
         "outfit": "Grants Score Support Effect of 60% to all.",
@@ -888,7 +888,7 @@
         "sense": 94,
         "technique": 79,
         "performance": 81,
-        "support": 81
+        "total": 254
       },
       "skills": {
         "outfit": "Grants All Stats UP 45% to all.",
@@ -911,7 +911,7 @@
         "sense": 76,
         "technique": 85,
         "performance": 82,
-        "support": 87
+        "total": 243
       },
       "skills": {
         "outfit": "With 2 or more Myth Members, grants All Stats UP 50% to all.",
@@ -934,7 +934,7 @@
         "sense": 78,
         "technique": 75,
         "performance": 80,
-        "support": 92
+        "total": 233
       },
       "skills": {
         "outfit": "With 2 or more Cute Type Members, grants Performance UP 130% to all.",
@@ -957,7 +957,7 @@
         "sense": 95,
         "technique": 80,
         "performance": 81,
-        "support": 76
+        "total": 256
       },
       "skills": {
         "outfit": "Grants Score Support Effect of 60% to all.",
@@ -972,7 +972,7 @@
       "title": "nephilim sonority",
       "rarity": "5-Star",
       "group": "Promise",
-      "type": "PURE",
+      "type": "HAPPY",
       "accentColor": "#b5179e",
       "image": "/images/irys.webp",
       "avatar": "I",
@@ -980,7 +980,7 @@
         "sense": 81,
         "technique": 81,
         "performance": 81,
-        "support": 87
+        "total": 243
       },
       "skills": {
         "outfit": "With 2 or more Promise Members, grants All Stats UP 50% to all.",
@@ -1003,7 +1003,7 @@
         "sense": 89,
         "technique": 78,
         "performance": 81,
-        "support": 87
+        "total": 248
       },
       "skills": {
         "outfit": "Grants Score Support Effect of 60% to all.",
@@ -1026,7 +1026,7 @@
         "sense": 95,
         "technique": 80,
         "performance": 92,
-        "support": 95
+        "total": 267
       },
       "skills": {
         "outfit": "With 2 or more Pure Type Members, grants Performance UP 130% to all.",
@@ -1041,7 +1041,7 @@
       "title": "書庫ではぐくむ探究心",
       "rarity": "5-Star",
       "group": "Advent",
-      "type": "PURE",
+      "type": "HAPPY",
       "accentColor": "#a2d2ff",
       "image": "/images/shiorinovella.webp",
       "avatar": "S",
@@ -1049,7 +1049,7 @@
         "sense": 91,
         "technique": 94,
         "performance": 95,
-        "support": 95
+        "total": 280
       },
       "skills": {
         "outfit": "Grants Performance UP 120% to all.",
@@ -1072,7 +1072,7 @@
         "sense": 83,
         "technique": 87,
         "performance": 78,
-        "support": 75
+        "total": 248
       },
       "skills": {
         "outfit": "Grants Sense UP 120% to all.",
@@ -1095,7 +1095,7 @@
         "sense": 94,
         "technique": 79,
         "performance": 76,
-        "support": 75
+        "total": 249
       },
       "skills": {
         "outfit": "With 2 or more Advent Members, grants All Stats UP 50% to all.",
@@ -1118,7 +1118,7 @@
         "sense": 82,
         "technique": 76,
         "performance": 80,
-        "support": 92
+        "total": 238
       },
       "skills": {
         "outfit": "Grants Technique UP 120% to all.",
@@ -1141,7 +1141,7 @@
         "sense": 89,
         "technique": 78,
         "performance": 81,
-        "support": 87
+        "total": 248
       },
       "skills": {
         "outfit": "With 2 or more Cute Type Members, grants Sense UP 130% to all.",
@@ -1164,7 +1164,7 @@
         "sense": 86,
         "technique": 93,
         "performance": 90,
-        "support": 78
+        "total": 269
       },
       "skills": {
         "outfit": "With 2 or more Pure Type Members, grants Sense UP 130% to all.",
@@ -1179,7 +1179,7 @@
       "title": "深夜にひと息、CEOの限界飯",
       "rarity": "5-Star",
       "group": "ReGLOSS",
-      "type": "PURE",
+      "type": "HAPPY",
       "accentColor": "#ffb703",
       "image": "/images/ichijouririka.webp",
       "avatar": "I",
@@ -1187,7 +1187,7 @@
         "sense": 86,
         "technique": 93,
         "performance": 84,
-        "support": 82
+        "total": 263
       },
       "skills": {
         "outfit": "With 2 or more ReGLOSS Members, grants All Stats UP 50% to all.",
@@ -1202,7 +1202,7 @@
       "title": "叡智を灯し、アートに導く",
       "rarity": "5-Star",
       "group": "ReGLOSS",
-      "type": "PURE",
+      "type": "HAPPY",
       "accentColor": "#f4a261",
       "image": "/images/juufuuteiraden.webp",
       "avatar": "J",
@@ -1210,7 +1210,7 @@
         "sense": 77,
         "technique": 80,
         "performance": 92,
-        "support": 95
+        "total": 249
       },
       "skills": {
         "outfit": "Grants Sense UP 120% to all.",
@@ -1233,7 +1233,7 @@
         "sense": 95,
         "technique": 95,
         "performance": 80,
-        "support": 86
+        "total": 270
       },
       "skills": {
         "outfit": "Grants Performance UP 120% to all.",
@@ -1243,76 +1243,163 @@
       }
     }
   ],
-  "presets": [
+  "presets": {
+    "dev_hoq27emvy7gj1ajvf2wt3i": [
+      {
+        "id": "preset_1",
+        "name": "Preset 1",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": true
+      },
+      {
+        "id": "preset_2",
+        "name": "Preset 2",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_3",
+        "name": "Preset 3",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_4",
+        "name": "Preset 4",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_5",
+        "name": "Preset 5",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      }
+    ]
+  },
+  "roster": {
+    "dev_hoq27emvy7gj1ajvf2wt3i": [
+      "tokinosora",
+      "robocosan",
+      "azki",
+      "sakuramiko",
+      "hoshimachisuisei",
+      "akirosenthal",
+      "akaihaato",
+      "shirakamifubuki",
+      "natsuiromatsuri",
+      "nakiriayame",
+      "yuzukichoco",
+      "oozorasubaru",
+      "ookamimio",
+      "nekomataokayu",
+      "inugamikorone",
+      "usadapekora",
+      "shiranuiflare",
+      "shiroganenoel",
+      "houshoumarine",
+      "tsunomakiwatame",
+      "tokoyamitowa",
+      "himemoriluna",
+      "yukihanalamy",
+      "momosuzunene",
+      "shishirobotan",
+      "omarupolka",
+      "laplusdarknesss",
+      "takanelui",
+      "hakuikoyori",
+      "kazamairoha",
+      "ayundarisu",
+      "moonahoshinova",
+      "airaniiofifteen",
+      "kureijiollie",
+      "anyamelfissa",
+      "pavoliareine",
+      "vestiazeta",
+      "kaelakovalskia",
+      "kobokanaeru",
+      "calliopemori",
+      "takanashikiara",
+      "ninomaeinanis",
+      "irys",
+      "ourokronii",
+      "hakosbaelz",
+      "shiorinovella",
+      "kosekibijou",
+      "nerissaravencroft",
+      "fuwawaabyssgard",
+      "mococoabyssgard",
+      "otonosekanade",
+      "ichijouririka",
+      "juufuuteiraden",
+      "todorokihajime"
+    ]
+  },
+  "guides": [
     {
-      "id": "preset_1",
-      "name": "Preset 1",
-      "team": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      "leader": null,
-      "isActive": true
+      "id": "beginner-guide",
+      "title": "Beginner's Guide: Surviving the Dream World",
+      "summary": "Welcome to Hololive Dreams! Learn the basic mechanics, element advantages, and team roles to jumpstart your adventure.",
+      "category": "General",
+      "readTime": "5 min read",
+      "author": "DreamWalker_VT",
+      "date": "July 28, 2026",
+      "content": "\n# Welcome to Hololive Dreams!\n\nIn this guide, we will break down the essential concepts every Dreamwalker needs to master to navigate the chaotic and beautiful dreamscapes.\n\n## 1. Official Game Stats\nEach character in Hololive Dreams is defined by four core stats:\n- **Sense**: Determines ability activation accuracy and score modifiers.\n- **Technique**: Affects skill speed and timing.\n- **Performance**: Direct score multiplier for lives and concert performances.\n- **Support**: Determines health regeneration, combo shield, and energy recharge.\n\n## 2. Character Typing & Groups\nCharacters belong to one of three types: **PURE**, **CUTE**, or **HAPPY**. \nThey also belong to their VTuber group/generation (e.g., Gen 0, Myth, ReGLOSS). Matching these typings is essential to activate strong passives!\n\n## 3. Skill Slots\nEvery 5-star character possesses 4 distinct skill effects:\n1. **Outfit**: Passive team-wide stat buff or condition-based buff.\n2. **Special**: Active buff or score booster triggered manually.\n3. **Active**: Automatic score booster triggered on timer intervals.\n4. **Passive**: Core stat buff targeting specific group or type members.\n    "
     },
     {
-      "id": "preset_2",
-      "name": "Preset 2",
-      "team": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      "leader": null,
-      "isActive": false
+      "id": "suisei-crit-build",
+      "title": "Deep Dive: Hoshimachi Suisei Technique Carry Build",
+      "summary": "Maximize Suisei's score multipliers with the ultimate PURE Technique build. Skill breakdowns and ideal team synergies.",
+      "category": "Builds",
+      "readTime": "8 min read",
+      "author": "HoshiYomi_Star",
+      "date": "July 29, 2026",
+      "content": "\n# Hoshimachi Suisei: Star-Powered Technique Carry\n\nHoshimachi Suisei is a top-tier 5-star character specializing in **Technique** scaling and High-Interval scoring.\n\n## The Strategy\nSuisei's Outfit Skill grants a massive **+120% Technique to [ALL]**, boosting activation timings. Under PURE compositions, her passive increases Technique by **+41%** for two PURE allies. This makes her the cornerstone of PURE-meta teams.\n\n## Best Teammates\n- **Tokino Sora**: Sora's high Support stats ensure team Life stays above 600, consistently triggering Suisei's active +120% Score boost.\n- **Kobo Kanaeru**: Kobo is a PURE character, meaning she benefits from Suisei's passive (+41% Technique) while helping active Kobo's own PURE active conditions.\n    "
     },
     {
-      "id": "preset_3",
-      "name": "Preset 3",
-      "team": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      "leader": null,
-      "isActive": false
-    },
-    {
-      "id": "preset_4",
-      "name": "Preset 4",
-      "team": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      "leader": null,
-      "isActive": false
-    },
-    {
-      "id": "preset_5",
-      "name": "Preset 5",
-      "team": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      "leader": null,
-      "isActive": false
+      "id": "synergy-meta",
+      "title": "Stellar Synergy: Building the Ultimate Team",
+      "summary": "An analysis of the current meta-defining synergy combinations in Hololive Dreams. Learn how to combine buffs for massive combos.",
+      "category": "Meta",
+      "readTime": "6 min read",
+      "author": "Theorycrafter_KFP",
+      "date": "July 30, 2026",
+      "content": "\n# Meta Team Synergy Analysis\n\nSynergy is what separates casual players from high-ranking Dreamwalkers. Here are the top team compositions for the current patch.\n\n## 1. Gen 0 Harmony (Suisei + Sora + Kobo)\nThis is currently the most popular Technique-scaling team:\n- **Primary Carry**: Hoshimachi Suisei (Gen 0 / PURE)\n- **Primary Support**: Tokino Sora (Gen 0 / HAPPY)\n- **Secondary Support**: Kobo Kanaeru (ID Gen 3 / PURE)\n\n**How it works:**\nSora and Suisei activate Sora's Outfit (+50% All Stats) and Sora's Passive (+33% All Stats to self) because there are 2 Gen 0 members. Suisei and Kobo are both PURE type, triggering Kobo's Active boost condition (+110% Score) and Suisei's Passive (+41% Technique).\n\n## 2. Gen 3 PekoMari (Marine + Pekora + Calli)\nAn incredibly strong performance-based HAPPY/CUTE team:\n- **Primary Carry**: Houshou Marine (Gen 3 / HAPPY)\n- **Tactician**: Usada Pekora (Gen 3 / CUTE)\n- **Buff Support**: Calliope Mori (Myth / HAPPY)\n\n**How it works:**\nMarine and Pekora form a Gen 3 duo, triggering Marine's Outfit (+50% All Stats) and Passive (+12% Support to Gen 3). Marine and Calliope are both HAPPY type, sharing strong stat buffs, while Pekora acts as a general cute healer and combo protector.\n    "
     }
-  ],
-  "roster": [
-    "tokinosora",
-    "azki",
-    "sakuramiko"
   ]
 }

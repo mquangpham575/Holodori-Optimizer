@@ -11,7 +11,15 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Serve static images from frontend public folder
+const imagesDir = path.join(__dirname, '../frontend/public/images');
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
+app.use('/images', express.static(imagesDir));
 
 const dbPath = path.join(__dirname, 'database.json');
 const isProd = !!process.env.DATABASE_URL;
@@ -27,13 +35,25 @@ if (isProd) {
   });
 }
 
+// Admin Authentication Configuration
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
+const requireAdmin = (req, res, next) => {
+  const pwd = req.headers['x-admin-password'];
+  if (pwd !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid admin password' });
+  }
+  next();
+};
+
 // JSON file database helpers
 const loadDB = () => {
   if (!fs.existsSync(dbPath)) {
     return {
       characters: [],
       presets: {},
-      roster: {}
+      roster: {},
+      guides: []
     };
   }
   try {
@@ -41,10 +61,11 @@ const loadDB = () => {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed.presets)) parsed.presets = {};
     if (Array.isArray(parsed.roster)) parsed.roster = {};
+    if (!parsed.guides) parsed.guides = [];
     return parsed;
   } catch (err) {
     console.error("Error reading database.json:", err);
-    return { characters: [], presets: {}, roster: {} };
+    return { characters: [], presets: {}, roster: {}, guides: [] };
   }
 };
 
@@ -62,7 +83,7 @@ const initPostgresSchema = async () => {
   try {
     await client.query("BEGIN");
     
-    // Check if we need to migrate/recreate tables to support device_id partitioning
+    // Check if we need to migrate/recreate presets table to support device_id partitioning
     const presetsCheck = await client.query(`
       SELECT column_name FROM information_schema.columns 
       WHERE table_name = 'presets' AND column_name = 'device_id'
@@ -73,6 +94,9 @@ const initPostgresSchema = async () => {
       await client.query("DROP TABLE IF EXISTS presets CASCADE");
       await client.query("DROP TABLE IF EXISTS roster CASCADE");
     }
+
+    // Recreate characters table once to apply total stats migration
+    await client.query("DROP TABLE IF EXISTS characters CASCADE");
 
     // Create characters table (shared)
     await client.query(`
@@ -112,6 +136,20 @@ const initPostgresSchema = async () => {
       )
     `);
 
+    // Create guides table (shared)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS guides (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        category TEXT NOT NULL,
+        readTime TEXT NOT NULL,
+        author TEXT NOT NULL,
+        date TEXT NOT NULL,
+        content TEXT NOT NULL
+      )
+    `);
+
     await client.query("COMMIT");
     console.log("PostgreSQL schema validated successfully!");
   } catch (err) {
@@ -127,7 +165,7 @@ const initPostgresSchema = async () => {
 const seedPostgres = async () => {
   const client = await pgPool.connect();
   try {
-    // Seed characters table
+    // 1. Seed characters table
     const charCountResult = await client.query("SELECT COUNT(*) FROM characters");
     if (parseInt(charCountResult.rows[0].count) === 0) {
       console.log("Seeding characters into PostgreSQL...");
@@ -153,6 +191,30 @@ const seedPostgres = async () => {
       }
       console.log("Characters seeded successfully in PostgreSQL!");
     }
+
+    // 2. Seed guides table
+    const guideCountResult = await client.query("SELECT COUNT(*) FROM guides");
+    if (parseInt(guideCountResult.rows[0].count) === 0) {
+      console.log("Seeding guides into PostgreSQL...");
+      const module = await import('../frontend/src/data.js');
+      for (const guide of module.GUIDES) {
+        await client.query(
+          `INSERT INTO guides (id, title, summary, category, readTime, author, date, content)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+          [
+            guide.id,
+            guide.title,
+            guide.summary,
+            guide.category,
+            guide.readTime,
+            guide.author,
+            guide.date,
+            guide.content
+          ]
+        );
+      }
+      console.log("Guides seeded successfully in PostgreSQL!");
+    }
   } catch (err) {
     console.error("Error seeding PostgreSQL:", err);
   } finally {
@@ -173,14 +235,23 @@ const seedDatabase = async () => {
     const db = loadDB();
     let updated = false;
 
-    if (!db.characters || db.characters.length === 0) {
-      console.log("Seeding characters from src/data.js...");
+    console.log("Seeding characters from src/data.js...");
+    try {
+      const module = await import('../frontend/src/data.js');
+      db.characters = module.CHARACTERS;
+      updated = true;
+    } catch (err) {
+      console.error("Error importing data.js for seeding:", err);
+    }
+
+    if (!db.guides || db.guides.length === 0) {
+      console.log("Seeding guides from src/data.js...");
       try {
         const module = await import('../frontend/src/data.js');
-        db.characters = module.CHARACTERS;
+        db.guides = module.GUIDES;
         updated = true;
       } catch (err) {
-        console.error("Error importing data.js for seeding:", err);
+        console.error("Error seeding guides:", err);
       }
     }
 
@@ -387,6 +458,257 @@ app.put('/api/roster', async (req, res) => {
   }
 });
 
+// GET /api/guides
+app.get('/api/guides', async (req, res) => {
+  if (isProd) {
+    try {
+      const result = await pgPool.query("SELECT * FROM guides ORDER BY id ASC");
+      res.json(result.rows);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    const db = loadDB();
+    res.json(db.guides || []);
+  }
+});
+
+// ADMIN ENDPOINTS
+
+app.post('/api/admin/upload', requireAdmin, (req, res) => {
+  const { fileName, base64Data } = req.body;
+  if (!fileName || !base64Data) {
+    return res.status(400).json({ error: 'Filename and base64Data are required' });
+  }
+
+  try {
+    const cleanBase64 = base64Data.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    
+    const ext = path.extname(fileName) || '.webp';
+    const safeName = `upload_${Date.now()}${ext}`;
+    
+    const targetDir = path.join(__dirname, '../frontend/public/images');
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    
+    const targetPath = path.join(targetDir, safeName);
+    fs.writeFileSync(targetPath, buffer);
+    
+    console.log(`Saved uploaded image to: ${targetPath}`);
+    res.json({ success: true, url: `/images/${safeName}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 1. Characters CRUD
+app.post('/api/admin/characters', requireAdmin, async (req, res) => {
+  const char = req.body;
+  if (!char.id || !char.name) {
+    return res.status(400).json({ error: 'Character ID and Name are required' });
+  }
+  if (isProd) {
+    try {
+      await pgPool.query(
+        `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
+        [
+          char.id,
+          char.name,
+          char.title,
+          char.rarity,
+          char.group,
+          char.type,
+          char.accentColor,
+          char.image,
+          char.avatar,
+          JSON.stringify(char.stats || {}),
+          JSON.stringify(char.skills || {})
+        ]
+      );
+      res.status(201).json({ success: true, character: char });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    const db = loadDB();
+    if (db.characters.some(c => c.id === char.id)) {
+      return res.status(400).json({ error: 'Character ID already exists' });
+    }
+    db.characters.push(char);
+    saveDB(db);
+    res.status(201).json({ success: true, character: char });
+  }
+});
+
+app.put('/api/admin/characters/:id', requireAdmin, async (req, res) => {
+  const charId = req.params.id;
+  const char = req.body;
+  if (isProd) {
+    try {
+      const result = await pgPool.query(
+        `UPDATE characters 
+         SET name = $1, title = $2, rarity = $3, "group" = $4, type = $5, accentColor = $6, image = $7, avatar = $8, stats = $9::jsonb, skills = $10::jsonb
+         WHERE id = $11`,
+        [
+          char.name,
+          char.title,
+          char.rarity,
+          char.group,
+          char.type,
+          char.accentColor,
+          char.image,
+          char.avatar,
+          JSON.stringify(char.stats || {}),
+          JSON.stringify(char.skills || {}),
+          charId
+        ]
+      );
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Character not found' });
+      }
+      res.json({ success: true, character: char });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    const db = loadDB();
+    const idx = db.characters.findIndex(c => c.id === charId);
+    if (idx === -1) {
+      return res.status(404).json({ error: 'Character not found' });
+    }
+    db.characters[idx] = { ...db.characters[idx], ...char, id: charId };
+    saveDB(db);
+    res.json({ success: true, character: db.characters[idx] });
+  }
+});
+
+app.delete('/api/admin/characters/:id', requireAdmin, async (req, res) => {
+  const charId = req.params.id;
+  if (isProd) {
+    try {
+      const result = await pgPool.query("DELETE FROM characters WHERE id = $1", [charId]);
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Character not found' });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    const db = loadDB();
+    const idx = db.characters.findIndex(c => c.id === charId);
+    if (idx === -1) {
+      return res.status(404).json({ error: 'Character not found' });
+    }
+    db.characters.splice(idx, 1);
+    saveDB(db);
+    res.json({ success: true });
+  }
+});
+
+// 2. Guides CRUD
+app.post('/api/admin/guides', requireAdmin, async (req, res) => {
+  const guide = req.body;
+  if (!guide.id || !guide.title) {
+    return res.status(400).json({ error: 'Guide ID and Title are required' });
+  }
+  if (isProd) {
+    try {
+      await pgPool.query(
+        `INSERT INTO guides (id, title, summary, category, readTime, author, date, content)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          guide.id,
+          guide.title,
+          guide.summary,
+          guide.category,
+          guide.readTime,
+          guide.author,
+          guide.date,
+          guide.content
+        ]
+      );
+      res.status(201).json({ success: true, guide });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    const db = loadDB();
+    if (db.guides.some(g => g.id === guide.id)) {
+      return res.status(400).json({ error: 'Guide ID already exists' });
+    }
+    db.guides.push(guide);
+    saveDB(db);
+    res.status(201).json({ success: true, guide });
+  }
+});
+
+app.put('/api/admin/guides/:id', requireAdmin, async (req, res) => {
+  const guideId = req.params.id;
+  const guide = req.body;
+  if (isProd) {
+    try {
+      const result = await pgPool.query(
+        `UPDATE guides 
+         SET title = $1, summary = $2, category = $3, readTime = $4, author = $5, date = $6, content = $7
+         WHERE id = $8`,
+        [
+          guide.title,
+          guide.summary,
+          guide.category,
+          guide.readTime,
+          guide.author,
+          guide.date,
+          guide.content,
+          guideId
+        ]
+      );
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Guide not found' });
+      }
+      res.json({ success: true, guide });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    const db = loadDB();
+    const idx = db.guides.findIndex(g => g.id === guideId);
+    if (idx === -1) {
+      return res.status(404).json({ error: 'Guide not found' });
+    }
+    db.guides[idx] = { ...db.guides[idx], ...guide, id: guideId };
+    saveDB(db);
+    res.json({ success: true, guide: db.guides[idx] });
+  }
+});
+
+app.delete('/api/admin/guides/:id', requireAdmin, async (req, res) => {
+  const guideId = req.params.id;
+  if (isProd) {
+    try {
+      const result = await pgPool.query("DELETE FROM guides WHERE id = $1", [guideId]);
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Guide not found' });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    const db = loadDB();
+    const idx = db.guides.findIndex(g => g.id === guideId);
+    if (idx === -1) {
+      return res.status(404).json({ error: 'Guide not found' });
+    }
+    db.guides.splice(idx, 1);
+    saveDB(db);
+    res.json({ success: true });
+  }
+});
+
 // GET /api/docs (Official Swagger UI Sandbox)
 app.get('/api/docs', (req, res) => {
   const openApiSpec = {
@@ -577,6 +899,27 @@ app.get('/api/docs', (req, res) => {
             }
           }
         }
+      },
+      "/api/guides": {
+        get: {
+          summary: "Retrieve guide articles",
+          description: "Fetch all guide articles for Hololive Dreams.",
+          responses: {
+            "200": {
+              description: "Success",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "array",
+                    items: {
+                      $ref: "#/components/schemas/Guide"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     components: {
@@ -630,6 +973,19 @@ app.get('/api/docs', (req, res) => {
               nullable: true
             },
             isActive: { type: "boolean" }
+          }
+        },
+        Guide: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            title: { type: "string" },
+            summary: { type: "string" },
+            category: { type: "string" },
+            readTime: { type: "string" },
+            author: { type: "string" },
+            date: { type: "string" },
+            content: { type: "string" }
           }
         }
       }
