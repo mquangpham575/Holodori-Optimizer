@@ -835,9 +835,9 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                     <h4>Max Stats Values</h4>
                     <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
                       {[
-                        { key: 'sense', label: 'SENSE' },
+                        { key: 'performance', label: 'PERF' },
                         { key: 'technique', label: 'TECH' },
-                        { key: 'performance', label: 'PERF' }
+                        { key: 'sense', label: 'SENSE' }
                       ].map((item) => (
                         <div key={item.key} className="input-group stat-col">
                           <label>{item.label}</label>

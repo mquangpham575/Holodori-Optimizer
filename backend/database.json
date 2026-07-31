@@ -287,10 +287,10 @@
       "image": "/images/ookamimio.webp",
       "avatar": "O",
       "stats": {
-        "sense": 82,
-        "technique": 82,
-        "performance": 87,
-        "total": 251
+        "sense": 10909,
+        "technique": 7221,
+        "performance": 7844,
+        "total": 25974
       },
       "skills": {
         "outfit": "With 2 or more Gamers Members, grants +50% Stats to all.",
@@ -310,10 +310,10 @@
       "image": "/images/nekomataokayu.webp",
       "avatar": "N",
       "stats": {
-        "sense": 93,
-        "technique": 90,
-        "performance": 78,
-        "total": 261
+        "sense": 6803,
+        "technique": 11380,
+        "performance": 7682,
+        "total": 25865
       },
       "skills": {
         "outfit": "Grants Technique UP 120% to all.",
@@ -333,10 +333,10 @@
       "image": "/images/inugamikorone.webp",
       "avatar": "I",
       "stats": {
-        "sense": 87,
-        "technique": 93,
-        "performance": 79,
-        "total": 259
+        "sense": 11145,
+        "technique": 6947,
+        "performance": 7828,
+        "total": 25920
       },
       "skills": {
         "outfit": "With 2 or more Happy Type Members, grants Sense UP 130% to all.",
@@ -356,10 +356,10 @@
       "image": "/images/usadapekora.webp",
       "avatar": "U",
       "stats": {
-        "sense": 79,
-        "technique": 76,
-        "performance": 80,
-        "total": 235
+        "sense": 7991,
+        "technique": 10672,
+        "performance": 7366,
+        "total": 26029
       },
       "skills": {
         "outfit": "With 2 or more Cute Type Members, Grants All Stats UP 30% to all. With 2 or more Cute Type Members, Grants Score Support Effect of 25% to all.",
@@ -379,10 +379,10 @@
       "image": "/images/shiranuiflare.webp",
       "avatar": "S",
       "stats": {
-        "sense": 93,
-        "technique": 95,
-        "performance": 85,
-        "total": 273
+        "sense": 7682,
+        "technique": 6803,
+        "performance": 11380,
+        "total": 25865
       },
       "skills": {
         "outfit": "Grants Performance UP 120% to all.",
