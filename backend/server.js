@@ -208,7 +208,20 @@ app.get('/api/characters', async (req, res) => {
   if (isProd) {
     try {
       const result = await pgPool.query("SELECT * FROM characters");
-      res.json(result.rows);
+      const mapped = result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        title: row.title,
+        rarity: row.rarity,
+        group: row.group,
+        type: row.type,
+        accentColor: row.accentcolor !== undefined ? row.accentcolor : row.accentColor,
+        image: row.image,
+        avatar: row.avatar,
+        stats: row.stats,
+        skills: row.skills
+      }));
+      res.json(mapped);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -245,7 +258,14 @@ app.get('/api/presets', async (req, res) => {
         await client.query("COMMIT");
         result = await client.query("SELECT * FROM presets WHERE device_id = $1 ORDER BY id ASC", [deviceId]);
       }
-      res.json(result.rows);
+      const mapped = result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        team: row.team,
+        leader: row.leader,
+        isActive: row.isactive !== undefined ? row.isactive : row.isActive
+      }));
+      res.json(mapped);
     } catch (err) {
       res.status(500).json({ error: err.message });
     } finally {
@@ -280,12 +300,13 @@ app.put('/api/presets', async (req, res) => {
     try {
       await client.query("BEGIN");
       for (const p of updatedPresets) {
+        const isActiveVal = p.isActive !== undefined ? p.isActive : (p.isactive !== undefined ? p.isactive : false);
         await client.query(
           `INSERT INTO presets (device_id, id, name, team, leader, isActive) 
            VALUES ($1, $2, $3, $4::jsonb, $5, $6) 
            ON CONFLICT (device_id, id) 
            DO UPDATE SET name = EXCLUDED.name, team = EXCLUDED.team, leader = EXCLUDED.leader, isActive = EXCLUDED.isActive`,
-          [deviceId, p.id, p.name, JSON.stringify(p.team), p.leader, p.isActive]
+          [deviceId, p.id, p.name, JSON.stringify(p.team), p.leader, isActiveVal]
         );
       }
       await client.query("COMMIT");
