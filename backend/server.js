@@ -537,7 +537,7 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
 // 1. Characters CRUD
 
 app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
-  const { skills, stats, bio } = req.body;
+  const { skills, stats, bio, charIds } = req.body;
   if (!skills && !stats && !bio) {
     return res.status(400).json({ error: 'At least one sync option must be selected' });
   }
@@ -545,12 +545,16 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
   try {
     const module = await import('../frontend/src/data.js');
     const sourceCharacters = module.CHARACTERS;
+    let charactersToSync = sourceCharacters;
+    if (Array.isArray(charIds) && charIds.length > 0) {
+      charactersToSync = sourceCharacters.filter(c => charIds.includes(c.id));
+    }
 
     if (isProd) {
       const client = await pgPool.connect();
       try {
         await client.query("BEGIN");
-        for (const char of sourceCharacters) {
+        for (const char of charactersToSync) {
           const existing = await client.query("SELECT * FROM characters WHERE id = $1", [char.id]);
           if (existing.rows.length === 0) {
             await client.query(
@@ -638,7 +642,7 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
       const db = loadDB();
       if (!db.characters) db.characters = [];
 
-      for (const char of sourceCharacters) {
+      for (const char of charactersToSync) {
         const existingIdx = db.characters.findIndex(c => c.id === char.id);
         if (existingIdx === -1) {
           db.characters.push(char);

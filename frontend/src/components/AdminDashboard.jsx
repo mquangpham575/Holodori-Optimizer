@@ -26,6 +26,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [syncSuccess, setSyncSuccess] = useState('');
+  const [selectedCharIds, setSelectedCharIds] = useState([]);
   const [guideForm, setGuideForm] = useState({
     id: '', title: '', summary: '', category: 'General', readTime: '5 min read',
     author: 'Admin', date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
@@ -259,7 +260,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
           'Content-Type': 'application/json',
           'x-admin-password': password
         },
-        body: JSON.stringify(syncOptions)
+        body: JSON.stringify({ ...syncOptions, charIds: selectedCharIds })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -598,6 +599,82 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Name, Title, Rarity, Group, Type, Accent Color, Image path, and Avatar text</div>
                   </div>
                 </label>
+              </div>
+
+              {/* Character selection grid for targeted sync */}
+              <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
+                <label style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', marginBottom: '0.75rem' }}>
+                  Select Characters to Sync (Optional - leave empty to sync all)
+                </label>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                  gap: '8px', 
+                  maxHeight: '180px', 
+                  overflowY: 'auto', 
+                  background: 'rgba(0,0,0,0.15)', 
+                  padding: '10px', 
+                  borderRadius: '6px', 
+                  border: '1px solid var(--border-color)' 
+                }}>
+                  {characters.map(char => {
+                    const isSelected = selectedCharIds.includes(char.id);
+                    return (
+                      <div 
+                        key={char.id}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedCharIds(prev => prev.filter(id => id !== char.id));
+                          } else {
+                            setSelectedCharIds(prev => [...prev, char.id]);
+                          }
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '6px 8px',
+                          borderRadius: '4px',
+                          background: isSelected ? 'var(--accent-glow)' : 'transparent',
+                          border: `1px solid ${isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.03)'}`,
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          transition: 'all 0.15s ease',
+                          userSelect: 'none'
+                        }}
+                      >
+                        <div style={{ 
+                          width: '20px', 
+                          height: '20px', 
+                          borderRadius: '50%', 
+                          overflow: 'hidden', 
+                          border: `1px solid ${char.accentColor}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'rgba(0,0,0,0.3)',
+                          flexShrink: 0
+                        }}>
+                          {char.image ? <img src={char.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : char.avatar}
+                        </div>
+                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                          {char.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {selectedCharIds.length > 0 && (
+                  <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Selected: {selectedCharIds.length} VTubers</span>
+                    <button 
+                      onClick={() => setSelectedCharIds([])}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600, padding: 0 }}
+                    >
+                      Clear Selection
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
