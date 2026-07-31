@@ -247,7 +247,7 @@ export const CHARACTERS = [
       "total": 256
     },
     "skills": {
-      "outfit": "With 2 or more Happy Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+      "outfit": "With 2 or more Happy Type Members, Grants All Stats UP 30% to all. With 2 or more Happy Type Members, Grants Score Support Effect of 25% to all.",
       "special": "For 10s, Grants Score Support Effect of 160%.",
       "active": "For 7s, Score UP 120%. Every 20s with a Medium Probability chance.",
       "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
@@ -362,7 +362,7 @@ export const CHARACTERS = [
       "total": 235
     },
     "skills": {
-      "outfit": "With 2 or more Cute Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+      "outfit": "With 2 or more Cute Type Members, Grants All Stats UP 30% to all. With 2 or more Cute Type Members, Grants Score Support Effect of 25% to all.",
       "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 12s, Score UP 105%. Every 30s with a Medium Probability chance.",
       "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self."
@@ -661,7 +661,7 @@ export const CHARACTERS = [
       "total": 240
     },
     "skills": {
-      "outfit": "With 2 or more Pure Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+      "outfit": "With 2 or more Pure Type Members, Grants All Stats UP 30% to all. With 2 or more Pure Type Members, Grants Score Support Effect of 25% to all.",
       "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
       "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
       "passive": "With 2 or more Pure Type Members, grants Sense UP 43% to 2 Pure Type Members."

@@ -95,8 +95,8 @@ const initPostgresSchema = async () => {
       await client.query("DROP TABLE IF EXISTS roster CASCADE");
     }
 
-    // Recreate characters table once to apply total stats migration
-    await client.query("DROP TABLE IF EXISTS characters CASCADE");
+    // (Migration completed: characters table is now persistent)
+    // await client.query("DROP TABLE IF EXISTS characters CASCADE");
 
     // Create characters table (shared)
     await client.query(`
@@ -235,6 +235,7 @@ const seedDatabase = async () => {
     const db = loadDB();
     let updated = false;
 
+    if (!db.characters || db.characters.length === 0) {
     console.log("Seeding characters from src/data.js...");
     try {
       const module = await import('../frontend/src/data.js');
@@ -244,6 +245,7 @@ const seedDatabase = async () => {
       console.error("Error importing data.js for seeding:", err);
     }
 
+    }
     if (!db.guides || db.guides.length === 0) {
       console.log("Seeding guides from src/data.js...");
       try {
@@ -273,6 +275,35 @@ const seedDatabase = async () => {
 };
 
 await seedDatabase();
+
+// GET /api/health
+app.get('/api/health', async (req, res) => {
+  let postgresStatus = 'operational';
+  if (isProd) {
+    try {
+      const client = await pgPool.connect();
+      await client.query('SELECT 1');
+      client.release();
+    } catch (err) {
+      console.error("Health check failed for Postgres:", err);
+      postgresStatus = 'offline';
+    }
+  } else {
+    postgresStatus = 'local_file_db';
+  }
+
+  const isAllOperational = postgresStatus === 'operational' || postgresStatus === 'local_file_db';
+
+  res.json({
+    status: isAllOperational ? 'operational' : 'degraded',
+    services: {
+      backend: 'operational',
+      postgres: postgresStatus
+    }
+  });
+});
+
+
 
 // GET /api/characters
 app.get('/api/characters', async (req, res) => {
@@ -504,6 +535,142 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
 });
 
 // 1. Characters CRUD
+
+app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
+  const { skills, stats, bio } = req.body;
+  if (!skills && !stats && !bio) {
+    return res.status(400).json({ error: 'At least one sync option must be selected' });
+  }
+
+  try {
+    const module = await import('../frontend/src/data.js');
+    const sourceCharacters = module.CHARACTERS;
+
+    if (isProd) {
+      const client = await pgPool.connect();
+      try {
+        await client.query("BEGIN");
+        for (const char of sourceCharacters) {
+          const existing = await client.query("SELECT * FROM characters WHERE id = $1", [char.id]);
+          if (existing.rows.length === 0) {
+            await client.query(
+              `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
+              [
+                char.id,
+                char.name,
+                char.title,
+                char.rarity,
+                char.group,
+                char.type,
+                char.accentColor,
+                char.image,
+                char.avatar,
+                JSON.stringify(char.stats),
+                JSON.stringify(char.skills)
+              ]
+            );
+          } else {
+            const fieldsToUpdate = [];
+            const values = [];
+            let valIdx = 1;
+
+            if (bio) {
+              fieldsToUpdate.push(`name = $${valIdx++}`);
+              values.push(char.name);
+              fieldsToUpdate.push(`title = $${valIdx++}`);
+              values.push(char.title);
+              fieldsToUpdate.push(`rarity = $${valIdx++}`);
+              values.push(char.rarity);
+              fieldsToUpdate.push(`"group" = $${valIdx++}`);
+              values.push(char.group);
+              fieldsToUpdate.push(`type = $${valIdx++}`);
+              values.push(char.type);
+              fieldsToUpdate.push(`accentColor = $${valIdx++}`);
+              values.push(char.accentColor);
+              fieldsToUpdate.push(`image = $${valIdx++}`);
+              values.push(char.image);
+              fieldsToUpdate.push(`avatar = $${valIdx++}`);
+              values.push(char.avatar);
+            }
+            if (stats) {
+              fieldsToUpdate.push(`stats = $${valIdx++}::jsonb`);
+              values.push(JSON.stringify(char.stats));
+            }
+            if (skills) {
+              fieldsToUpdate.push(`skills = $${valIdx++}::jsonb`);
+              values.push(JSON.stringify(char.skills));
+            }
+
+            if (fieldsToUpdate.length > 0) {
+              values.push(char.id);
+              await client.query(
+                `UPDATE characters SET ${fieldsToUpdate.join(', ')} WHERE id = $${valIdx}`,
+                values
+              );
+            }
+          }
+        }
+        await client.query("COMMIT");
+
+        const updatedList = await pgPool.query("SELECT * FROM characters");
+        const mapped = updatedList.rows.map(row => ({
+          id: row.id,
+          name: row.name,
+          title: row.title,
+          rarity: row.rarity,
+          group: row.group,
+          type: row.type,
+          accentColor: row.accentcolor !== undefined ? row.accentcolor : row.accentColor,
+          image: row.image,
+          avatar: row.avatar,
+          stats: row.stats,
+          skills: row.skills
+        }));
+        res.json({ success: true, characters: mapped });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+    } else {
+      const db = loadDB();
+      if (!db.characters) db.characters = [];
+
+      for (const char of sourceCharacters) {
+        const existingIdx = db.characters.findIndex(c => c.id === char.id);
+        if (existingIdx === -1) {
+          db.characters.push(char);
+        } else {
+          const existing = db.characters[existingIdx];
+          if (bio) {
+            existing.name = char.name;
+            existing.title = char.title;
+            existing.rarity = char.rarity;
+            existing.group = char.group;
+            existing.type = char.type;
+            existing.accentColor = char.accentColor;
+            existing.image = char.image;
+            existing.avatar = char.avatar;
+          }
+          if (stats) {
+            existing.stats = char.stats;
+          }
+          if (skills) {
+            existing.skills = char.skills;
+          }
+          db.characters[existingIdx] = existing;
+        }
+      }
+      saveDB(db);
+      res.json({ success: true, characters: db.characters });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/admin/characters', requireAdmin, async (req, res) => {
   const char = req.body;
   if (!char.id || !char.name) {

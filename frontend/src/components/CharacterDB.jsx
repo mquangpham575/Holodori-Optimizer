@@ -1,8 +1,10 @@
+import { useLanguage } from '../context/LanguageContext';
 import React, { useState } from 'react';
 import { X, Heart, Leaf, Sun, Paintbrush, Users } from 'lucide-react';
 import './CharacterDB.css';
 
 export default function CharacterDB({ onAccentChange, currentAccent, characters = [] }) {
+  const { t } = useLanguage();
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,8 +45,8 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
   return (
     <div className="character-db-page animate-fade-in">
       <div className="db-header">
-        <h1 className="page-title">HoloDreams Database</h1>
-        <p className="page-subtitle">View detailed profile information, character stats, and skill breakdowns for every Holo-talent.</p>
+        <h1 className="page-title">{t('database_title')}</h1>
+        <p className="page-subtitle">{t('database_desc')}</p>
       </div>
 
       {/* Filter bar */}
@@ -52,18 +54,18 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
         <div className="search-group">
           <input
             type="text"
-            placeholder="Search characters by name..."
+            placeholder={t('search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="db-search-input glass"
           />
         </div>
         <div className="filter-group">
-          <span className="filter-label">Group</span>
+          <span className="filter-label">{t('group')}</span>
           <div className="filter-options">
             {groups.map((group) => (
               <button
-                key={group}
+                key={group === 'All' ? t('all') : group}
                 className={`filter-btn ${selectedGroup === group ? 'active' : ''}`}
                 onClick={() => setSelectedGroup(group)}
               >
@@ -74,7 +76,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
         </div>
 
         <div className="filter-group">
-          <span className="filter-label">Type</span>
+          <span className="filter-label">{t('type')}</span>
           <div className="filter-options">
             {types.map((type) => (
               <button
@@ -82,7 +84,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
                 className={`filter-btn ${selectedType === type ? 'active' : ''}`}
                 onClick={() => setSelectedType(type)}
               >
-                {typeDisplayMap[type] || type}
+                {type === 'All' ? t('all') : (typeDisplayMap[type] || type)}
               </button>
             ))}
           </div>
@@ -173,7 +175,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
               {/* Right Column: Skills */}
               <div className="modal-right">
                 <div className="modal-section-block">
-                  <h3 className="section-subtitle">Skills</h3>
+                  <h3 className="section-subtitle">{t('skills_label')}</h3>
                   <div className="skills-container">
                     {skillTypes.map((skill) => (
                       <div key={skill.key} className="skill-item glass">

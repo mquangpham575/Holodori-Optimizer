@@ -247,7 +247,7 @@
         "total": 256
       },
       "skills": {
-        "outfit": "With 2 or more Happy Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+        "outfit": "With 2 or more Happy Type Members, Grants All Stats UP 30% to all. With 2 or more Happy Type Members, Grants Score Support Effect of 25% to all.",
         "special": "For 10s, Grants Score Support Effect of 160%.",
         "active": "For 7s, Score UP 120%. Every 20s with a Medium Probability chance.",
         "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
@@ -362,7 +362,7 @@
         "total": 235
       },
       "skills": {
-        "outfit": "With 2 or more Cute Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+        "outfit": "With 2 or more Cute Type Members, Grants All Stats UP 30% to all. With 2 or more Cute Type Members, Grants Score Support Effect of 25% to all.",
         "special": "For 14s, Grants Score Support Effect of 115%.",
         "active": "For 12s, Score UP 105%. Every 30s with a Medium Probability chance.",
         "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self."
@@ -661,7 +661,7 @@
         "total": 240
       },
       "skills": {
-        "outfit": "With 2 or more Pure Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+        "outfit": "With 2 or more Pure Type Members, Grants All Stats UP 30% to all. With 2 or more Pure Type Members, Grants Score Support Effect of 25% to all.",
         "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
         "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
         "passive": "With 2 or more Pure Type Members, grants Sense UP 43% to 2 Pure Type Members."
@@ -1310,6 +1310,140 @@
         "leader": null,
         "isActive": false
       }
+    ],
+    "dev_sm4kwox3slsq6lg6ul1x": [
+      {
+        "id": "preset_1",
+        "name": "Preset 1",
+        "team": [
+          "akaihaato",
+          "akirosenthal",
+          "airaniiofifteen",
+          "tokinosora",
+          "azki"
+        ],
+        "leader": "akaihaato",
+        "isActive": true
+      },
+      {
+        "id": "preset_2",
+        "name": "Preset 2",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_3",
+        "name": "Preset 3",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_4",
+        "name": "Preset 4",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_5",
+        "name": "Preset 5",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      }
+    ],
+    "dev_jep9vr0wc1a5zdhl8mjibi": [
+      {
+        "id": "preset_1",
+        "name": "Preset 1",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": true
+      },
+      {
+        "id": "preset_2",
+        "name": "Preset 2",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_3",
+        "name": "Preset 3",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_4",
+        "name": "Preset 4",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_5",
+        "name": "Preset 5",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      }
     ]
   },
   "roster": {
@@ -1326,6 +1460,70 @@
       "natsuiromatsuri",
       "oozorasubaru",
       "yuzukichoco"
+    ],
+    "dev_sm4kwox3slsq6lg6ul1x": [
+      "tokinosora",
+      "moonahoshinova",
+      "airaniiofifteen",
+      "shirakamifubuki",
+      "natsuiromatsuri",
+      "ayundarisu"
+    ],
+    "dev_jep9vr0wc1a5zdhl8mjibi": [
+      "tokinosora",
+      "robocosan",
+      "azki",
+      "sakuramiko",
+      "hoshimachisuisei",
+      "akirosenthal",
+      "akaihaato",
+      "shirakamifubuki",
+      "natsuiromatsuri",
+      "nakiriayame",
+      "yuzukichoco",
+      "oozorasubaru",
+      "ookamimio",
+      "nekomataokayu",
+      "inugamikorone",
+      "usadapekora",
+      "shiranuiflare",
+      "shiroganenoel",
+      "houshoumarine",
+      "tsunomakiwatame",
+      "tokoyamitowa",
+      "himemoriluna",
+      "yukihanalamy",
+      "momosuzunene",
+      "shishirobotan",
+      "omarupolka",
+      "laplusdarknesss",
+      "takanelui",
+      "hakuikoyori",
+      "kazamairoha",
+      "ayundarisu",
+      "moonahoshinova",
+      "airaniiofifteen",
+      "kureijiollie",
+      "anyamelfissa",
+      "pavoliareine",
+      "vestiazeta",
+      "kaelakovalskia",
+      "kobokanaeru",
+      "calliopemori",
+      "takanashikiara",
+      "ninomaeinanis",
+      "irys",
+      "ourokronii",
+      "hakosbaelz",
+      "shiorinovella",
+      "kosekibijou",
+      "nerissaravencroft",
+      "fuwawaabyssgard",
+      "mococoabyssgard",
+      "otonosekanade",
+      "ichijouririka",
+      "juufuuteiraden",
+      "todorokihajime"
     ]
   },
   "guides": [

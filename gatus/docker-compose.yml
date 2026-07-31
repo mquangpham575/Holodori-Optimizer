@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  gatus:
+    image: twin/gatus:latest
+    container_name: gatus-status-page
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.yaml:/config/config.yaml
+      - gatus-data:/data
+    restart: always
+
+volumes:
+  gatus-data:
+    driver: local

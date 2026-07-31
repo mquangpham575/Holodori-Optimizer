@@ -22,6 +22,10 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
   // Guide Form Modal State
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [editingGuide, setEditingGuide] = useState(null);
+  const [syncOptions, setSyncOptions] = useState({ skills: true, stats: false, bio: false });
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState('');
+  const [syncSuccess, setSyncSuccess] = useState('');
   const [guideForm, setGuideForm] = useState({
     id: '', title: '', summary: '', category: 'General', readTime: '5 min read',
     author: 'Admin', date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
@@ -244,6 +248,35 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
   };
 
   // Open Modal for Guide
+  const handlePerformSync = async () => {
+    setIsSyncing(true);
+    setSyncError('');
+    setSyncSuccess('');
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/sync-from-file`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': password
+        },
+        body: JSON.stringify(syncOptions)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to sync database');
+      }
+      if (data.characters) {
+        setCharacters(data.characters);
+      }
+      setSyncSuccess('Database synchronized successfully!');
+      setTimeout(() => setSyncSuccess(''), 4000);
+    } catch (err) {
+      setSyncError(err.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const openGuideModal = (guide = null) => {
     if (guide) {
       setEditingGuide(guide);
@@ -381,6 +414,12 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
         >
           <FileText size={16} /> Manage Guides ({guides.length})
         </button>
+        <button 
+          className={`admin-tab-btn ${activeTab === 'sync' ? 'active' : ''}`}
+          onClick={() => setActiveTab('sync')}
+        >
+          <Key size={16} /> Selective Sync
+        </button>
       </div>
 
       {/* Characters Management Tab */}
@@ -501,6 +540,101 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Selective Sync Tab */}
+      {activeTab === 'sync' && (
+        <div className="admin-tab-content glass" style={{ padding: '2.5rem 2rem' }}>
+          <div className="db-sync-container" style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Key className="text-gold" size={24} />
+              Selective Database Sync
+            </h2>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
+              Synchronize character definitions from the static <code>data.js</code> codebase file directly into your cloud/local database. Select which specific properties you want to overwrite. All other unselected parameters will remain completely untouched.
+            </p>
+
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '2rem' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Select Properties to Overwrite</h4>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={syncOptions.skills} 
+                    onChange={(e) => setSyncOptions(prev => ({ ...prev, skills: e.target.checked }))}
+                    style={{ width: '17px', height: '17px', accentColor: 'var(--accent-color)', marginTop: '2px' }}
+                  />
+                  <div>
+                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Skills Only</strong>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Outfit, Special, Active, and Passive skills descriptions</div>
+                  </div>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={syncOptions.stats} 
+                    onChange={(e) => setSyncOptions(prev => ({ ...prev, stats: e.target.checked }))}
+                    style={{ width: '17px', height: '17px', accentColor: 'var(--accent-color)', marginTop: '2px' }}
+                  />
+                  <div>
+                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Stats Only</strong>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Sense, Technique, Performance, and Total stats</div>
+                  </div>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={syncOptions.bio} 
+                    onChange={(e) => setSyncOptions(prev => ({ ...prev, bio: e.target.checked }))}
+                    style={{ width: '17px', height: '17px', accentColor: 'var(--accent-color)', marginTop: '2px' }}
+                  />
+                  <div>
+                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Profile Bio Only</strong>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Name, Title, Rarity, Group, Type, Accent Color, Image path, and Avatar text</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {syncError && (
+              <div className="login-error" style={{ marginBottom: '1.5rem', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem' }}>
+                {syncError}
+              </div>
+            )}
+            {syncSuccess && (
+              <div style={{ color: '#10b981', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1.5rem', fontWeight: 600 }}>
+                {syncSuccess}
+              </div>
+            )}
+
+            <button 
+              onClick={handlePerformSync} 
+              disabled={isSyncing || (!syncOptions.skills && !syncOptions.stats && !syncOptions.bio)}
+              style={{
+                width: '100%',
+                padding: '0.85rem',
+                borderRadius: '6px',
+                background: 'var(--accent-color)',
+                color: 'white',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                opacity: (isSyncing || (!syncOptions.skills && !syncOptions.stats && !syncOptions.bio)) ? 0.5 : 1,
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              {isSyncing ? 'Synchronizing cloud database...' : 'Perform Database Sync'}
+            </button>
           </div>
         </div>
       )}

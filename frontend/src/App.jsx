@@ -257,7 +257,7 @@ function App() {
         </div>
       )}
 
-      <Navbar />
+      <Navbar API_BASE={API_BASE} />
 
       <main className="main-content-layout">
         <Routes>

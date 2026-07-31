@@ -1,3 +1,4 @@
+import { useLanguage } from '../context/LanguageContext';
 import React from 'react';
 import { Gamepad2, Shield, Calendar, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +8,7 @@ import './Home.css';
  * Home - Displays landing info, editable personal showcase, and links to guides/characters.
  */
 export default function Home({ activeTeam, activeLeader, characters = [], guides = [] }) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const leaderChar = characters.find(c => c.id === activeLeader);
@@ -29,17 +31,17 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
       {/* Hero Banner */}
       <section className="hero-section glass glow-card">
         <div className="hero-content">
-          <span className="hero-badge"><Gamepad2 size={14} /> NEW RPG FAN-GAME</span>
-          <h1 className="hero-title">HOLOLIVE DREAMS</h1>
+          <span className="hero-badge"><Gamepad2 size={14} /> {t('new_rpg_fan_game')}</span>
+          <h1 className="hero-title">{t('hero_title')}</h1>
           <p className="hero-subtitle">
-            Embark on a colorful dreamscape alongside your favorite VTubers. Explore detailed stats, build optimal teams, and customize your showcase profile.
+            {t('hero_subtitle')}
           </p>
           <div className="hero-actions">
             <button className="btn-primary" onClick={() => navigate('/characters')}>
-              View Characters
+              {t('view_characters')}
             </button>
             <button className="btn-secondary" onClick={() => navigate('/guides')}>
-              View Guides <ArrowRight size={16} />
+              {t('view_guides')} <ArrowRight size={16} />
             </button>
           </div>
         </div>
@@ -50,7 +52,7 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
       </section>
 
       <div className="showcase-container">
-        {/* Active Party Card */}
+        {/* {t('active_presets_title')} Card */}
         <section className="showcase-card glass">
           <div className="card-header">
             <h2 className="section-title"><Shield className="title-icon" /> Active Party</h2>
@@ -67,7 +69,7 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
                       style={{ '--char-color': char.accentColor }}
                       onClick={() => navigate('/builder')}
                     >
-                      {activeLeader === char.id && <span className="home-leader-badge">LEADER</span>}
+                      {activeLeader === char.id && <span className="home-leader-badge">{t('leader_tag')}</span>}
                       {char.image ? (
                         <img src={char.image} alt={char.name} className="home-team-char-img" />
                       ) : (
@@ -80,7 +82,7 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
                 </>
               ) : (
                 <div className="empty-team-placeholder" onClick={() => navigate('/builder')}>
-                  <p>No active team. Click to build your team!</p>
+                  <p>{t('no_active_team')}</p>
                 </div>
               )}
             </div>
@@ -91,9 +93,9 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
       {/* Guides highlight */}
       <section className="latest-articles glass">
         <div className="articles-header">
-          <h2 className="section-title"><Calendar className="title-icon" /> Latest Articles & Guides</h2>
+          <h2 className="section-title"><Calendar className="title-icon" /> {t('guides_title')}</h2>
           <button className="link-btn" onClick={() => navigate('/guides')}>
-            View all articles <ArrowRight size={16} />
+            {t('view_all_articles')} <ArrowRight size={16} />
           </button>
         </div>
         <div className="articles-grid">
@@ -103,9 +105,9 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
               <h3 className="article-title">{guide.title}</h3>
               <p className="article-summary">{guide.summary}</p>
               <div className="article-meta">
-                <span>By {guide.author}</span>
+                <span>{t('by_author', { author: guide.author })}</span>
                 <span>•</span>
-                <span>{guide.readTime}</span>
+                <span>{t('read_time', { time: guide.readTime })}</span>
               </div>
             </div>
           ))}

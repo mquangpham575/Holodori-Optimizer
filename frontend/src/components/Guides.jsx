@@ -1,8 +1,10 @@
+import { useLanguage } from '../context/LanguageContext';
 import React, { useState } from 'react';
 import { X, BookOpen, User, Clock, Calendar } from 'lucide-react';
 import './Guides.css';
 
 export default function Guides({ guides = [] }) {
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [activeGuide, setActiveGuide] = useState(null);
 
@@ -137,7 +139,7 @@ export default function Guides({ guides = [] }) {
       <div className="guides-filter glass">
         {categories.map((cat) => (
           <button
-            key={cat}
+            key={cat === 'All' ? t('all') : cat}
             className={`filter-btn ${selectedCategory === cat ? 'active' : ''}`}
             onClick={() => setSelectedCategory(cat)}
           >

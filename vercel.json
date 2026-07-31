@@ -2,6 +2,14 @@
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://site--hololive-dream--mv2hgs5fgpjc.code.run/api/:path*"
+    },
+    {
+      "source": "/images/:path*",
+      "destination": "https://site--hololive-dream--mv2hgs5fgpjc.code.run/images/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

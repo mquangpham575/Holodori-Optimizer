@@ -1,13 +1,12 @@
+import { useLanguage } from '../context/LanguageContext';
 import React, { useState } from 'react';
-import { Trash2, Users, AlertCircle, CheckCircle2, ShieldAlert, Award, Leaf, Heart, Sun, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Users, AlertCircle, CheckCircle2, Award, Leaf, Heart, Sun, Sparkles, X, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import './TeamBuilder.css';
 import './CharacterDB.css';
-
 const GROUPS = [
   "Gen 0", "Gen 1", "Gen 2", "GAMERS", "Gen 3", "Gen 4", "Gen 5", "holoX",
   "ID Gen 1", "ID Gen 2", "ID Gen 3", "Myth", "Promise", "Advent", "ReGLOSS"
 ];
-
 const getPassiveCount = (team, leader, characters) => {
   const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
   let activeCount = 0;
@@ -17,16 +16,16 @@ const getPassiveCount = (team, leader, characters) => {
     const char = characters.find(c => c.id === id);
     if (char && char.skills && char.skills.passive) {
       const passiveText = char.skills.passive;
-      const matchOrMore = passiveText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
-      if (!matchOrMore) {
+        const match = passiveText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
+      if (!match) {
         activeCount++;
       } else {
-        const requiredCount = parseInt(matchOrMore[1]) || 2;
-        const rawTarget = matchOrMore[2].trim().toUpperCase();
+        const requiredCount = parseInt(match[1] || match[2]) || 2;
+        const rawTarget = match[3].trim().toUpperCase();
         const condTarget = rawTarget
           .replace(/[[\]]/g, '')
           .replace(/\bTYPE\b/g, '')
-          .replace(/\bMEMBERS?\b/g, '')
+          
           .trim();
         
         let count = 0;
@@ -45,22 +44,21 @@ const getPassiveCount = (team, leader, characters) => {
       }
     }
   });
-
   // 2. Evaluate Leader Passive (Outfit Skill)
   if (leader) {
     const leaderChar = characters.find(c => c.id === leader);
     if (leaderChar && leaderChar.skills && leaderChar.skills.outfit) {
       const outfitText = leaderChar.skills.outfit;
-      const matchOrMore = outfitText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
-      if (!matchOrMore) {
+        const match = outfitText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
+      if (!match) {
         activeCount++;
       } else {
-        const requiredCount = parseInt(matchOrMore[1]) || 2;
-        const rawTarget = matchOrMore[2].trim().toUpperCase();
+        const requiredCount = parseInt(match[1] || match[2]) || 2;
+        const rawTarget = match[3].trim().toUpperCase();
         const condTarget = rawTarget
           .replace(/[[\]]/g, '')
           .replace(/\bTYPE\b/g, '')
-          .replace(/\bMEMBERS?\b/g, '')
+          
           .trim();
         
         let count = 0;
@@ -79,10 +77,8 @@ const getPassiveCount = (team, leader, characters) => {
       }
     }
   }
-
   return activeCount;
 };
-
 const recommendBestTeam = (ownedIds, characters) => {
   if (ownedIds.length < 5) return null;
   
@@ -143,40 +139,36 @@ const recommendBestTeam = (ownedIds, characters) => {
   
   return { team: bestTeam, leader: bestLeader, passiveCount: maxScore };
 };
-
 export default function TeamBuilder({ presets, selectedPresetId, setSelectedPresetId, onUpdatePreset, onSavePresets, ownedRoster = [], onUpdateOwnedRoster, characters = [] }) {
+  const { t } = useLanguage();
+  const [isActiveExpanded, setIsActiveExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSlotIndex, setActiveSlotIndex] = useState(null); // 'leader' or 0, 1, 2, 3, 4 or null
   const [isEditingName, setIsEditingName] = useState(false);
   const [newNameInput, setNewNameInput] = useState('');
   const [isRosterExpanded, setIsRosterExpanded] = useState(false);
   const [showRecommendationModal, setShowRecommendationModal] = useState(false);
+  const [isRecSkillsExpanded, setIsRecSkillsExpanded] = useState(false);
   const [recommendedTeamResult, setRecommendedTeamResult] = useState(null);
-
   const currentPreset = presets.find(p => p.id === selectedPresetId) || presets[0];
   const activeTeam = currentPreset.team;
   const activeLeader = currentPreset.leader;
-
   const setActiveTeam = (newTeam) => {
     onUpdatePreset(selectedPresetId, { team: newTeam });
   };
-
   const setActiveLeader = (newLeader) => {
     onUpdatePreset(selectedPresetId, { leader: newLeader });
   };
-
   const handleStartRename = () => {
     setNewNameInput(currentPreset.name);
     setIsEditingName(true);
   };
-
   const handleSaveRename = () => {
     if (newNameInput.trim()) {
       onUpdatePreset(selectedPresetId, { name: newNameInput.trim() });
     }
     setIsEditingName(false);
   };
-
   // Drag and Drop handlers for Team Units and Leader slot
   const handleDragStart = (e, sourceType, index) => {
     e.dataTransfer.setData('sourceType', sourceType);
@@ -184,20 +176,16 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       e.dataTransfer.setData('sourceIndex', index.toString());
     }
   };
-
   const handleDragOver = (e) => {
     e.preventDefault(); // Required to allow drop!
   };
-
   const handleDropOnTeamSlot = (e, targetIndex) => {
     e.preventDefault();
     const sourceType = e.dataTransfer.getData('sourceType');
     const sourceIndexStr = e.dataTransfer.getData('sourceIndex');
-
     if (sourceType === 'team') {
       const sourceIndex = parseInt(sourceIndexStr);
       if (sourceIndex === targetIndex) return;
-
       const newTeam = [...activeTeam];
       const temp = newTeam[targetIndex];
       newTeam[targetIndex] = newTeam[sourceIndex];
@@ -221,12 +209,10 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       }
     }
   };
-
   const handleDropOnLeaderSlot = (e) => {
     e.preventDefault();
     const sourceType = e.dataTransfer.getData('sourceType');
     const sourceIndexStr = e.dataTransfer.getData('sourceIndex');
-
     if (sourceType === 'team') {
       const sourceIndex = parseInt(sourceIndexStr);
       const charId = activeTeam[sourceIndex];
@@ -246,7 +232,6 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       }
     }
   };
-
   const handleToggleOwned = (charId) => {
     if (ownedRoster.includes(charId)) {
       onUpdateOwnedRoster(ownedRoster.filter(id => id !== charId));
@@ -254,17 +239,16 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       onUpdateOwnedRoster([...ownedRoster, charId]);
     }
   };
-
   const handleGenerateRecommendation = () => {
     const result = recommendBestTeam(ownedRoster, characters);
     if (result) {
       setRecommendedTeamResult(result);
+      setIsRecSkillsExpanded(false);
       setShowRecommendationModal(true);
     } else {
       alert("Please check at least 5 characters in your owned roster to generate a recommendation!");
     }
   };
-
   const handleApplyRecommendation = () => {
     if (recommendedTeamResult) {
       onUpdatePreset(selectedPresetId, {
@@ -274,13 +258,11 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       setShowRecommendationModal(false);
     }
   };
-
   const typeDisplayMap = {
     'PURE': 'Pure Type',
     'CUTE': 'Cute Type',
     'HAPPY': 'Happy Type'
   };
-
   const getTypeIcon = (type) => {
     switch (type) {
       case 'PURE': return <Leaf size={11} />;
@@ -289,7 +271,6 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       default: return null;
     }
   };
-
   const getTypeColor = (type) => {
     switch (type) {
       case 'PURE': return '#4caf50'; // Green
@@ -298,17 +279,14 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       default: return 'var(--text-primary)';
     }
   };
-
   const handleSelectCharacter = (charId) => {
     // Check if character is already in team units
     const existingIdx = activeTeam.indexOf(charId);
-
     if (activeSlotIndex === 'leader') {
       setActiveLeader(charId);
       setActiveSlotIndex(null);
       return;
     }
-
     if (activeSlotIndex !== null) {
       // Placing in a specific slot (0 to 4)
       const newTeam = [...activeTeam];
@@ -341,93 +319,40 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       }
     }
   };
-
   const handleClearSlot = (index, e) => {
     e.stopPropagation(); // Prevent activating the slot focus
     const newTeam = [...activeTeam];
     newTeam[index] = null;
     setActiveTeam(newTeam);
   };
-
   const handleClearLeader = (e) => {
     e.stopPropagation(); // Prevent activating slot focus
     setActiveLeader(null);
   };
-
   // Find active synergies by checking verbatim character passive skills
-  const getActiveSynergies = () => {
-    const synergies = [];
+  // Evaluate both active and inactive synergies
+  const getSynergiesState = () => {
+    const active = [];
+    const inactive = [];
     const uniqueActiveIds = Array.from(new Set([...activeTeam, activeLeader].filter(Boolean)));
-    
-    // 1. Evaluate normal passives
-    uniqueActiveIds.forEach(id => {
-      const char = characters.find(c => c.id === id);
-      if (char && char.skills && char.skills.passive) {
-        const passiveText = char.skills.passive;
-        let isActivated = false;
-        
-        // Match condition like "With 2 or more GEN 0 members"
-        const matchOrMore = passiveText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
-        
-        if (!matchOrMore) {
-          isActivated = true;
-        } else {
-          const match = matchOrMore;
-          const requiredCount = parseInt(match[1]) || 2;
-          const rawTarget = match[2].trim().toUpperCase();
-          const condTarget = rawTarget
-            .replace(/[[\]]/g, '')
-            .replace(/\bTYPE\b/g, '')
-            .replace(/\bMEMBERS?\b/g, '')
-            .trim();
-          
-          let count = 0;
-          uniqueActiveIds.forEach(activeId => {
-            const activeChar = characters.find(c => c.id === activeId);
-            if (activeChar) {
-              if (activeChar.group.toUpperCase().includes(condTarget) || 
-                  activeChar.type.toUpperCase() === condTarget) {
-                count++;
-              }
-            }
-          });
-          
-          if (count >= requiredCount) {
-            isActivated = true;
-          }
-        }
-        
-        if (isActivated) {
-          synergies.push({
-            charId: char.id,
-            charName: char.name,
-            accentColor: char.accentColor,
-            bonus: `${char.name} (Passive)`,
-            desc: passiveText
-          });
-        }
-      }
-    });
-
-    // 2. Evaluate Leader Passive (Outfit Skill)
+    // 1. Evaluate Leader Passive (Outfit Skill)
     if (activeLeader) {
       const leaderChar = characters.find(c => c.id === activeLeader);
       if (leaderChar && leaderChar.skills && leaderChar.skills.outfit) {
         const outfitText = leaderChar.skills.outfit;
         let isActivated = false;
         
-        const matchOrMore = outfitText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
+        const match = outfitText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
         
-        if (!matchOrMore) {
+        if (!match) {
           isActivated = true;
         } else {
-          const match = matchOrMore;
-          const requiredCount = parseInt(match[1]) || 2;
-          const rawTarget = match[2].trim().toUpperCase();
+          const requiredCount = parseInt(match[1] || match[2]) || 2;
+          const rawTarget = match[3].trim().toUpperCase();
           const condTarget = rawTarget
             .replace(/[[\]]/g, '')
             .replace(/\bTYPE\b/g, '')
-            .replace(/\bMEMBERS?\b/g, '')
+            
             .trim();
           
           let count = 0;
@@ -446,43 +371,39 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
           }
         }
         
+        const item = {
+          charId: leaderChar.id,
+          charName: leaderChar.name,
+          accentColor: '#ffb703',
+          desc: outfitText,
+          isLeader: true
+        };
+        
         if (isActivated) {
-          synergies.push({
-            charId: leaderChar.id,
-            charName: leaderChar.name,
-            accentColor: '#ffb703', // Use Leader Gold color!
-            bonus: `${leaderChar.name} (Leader Passive)`,
-            desc: outfitText
-          });
+          active.push(item);
+        } else {
+          inactive.push(item);
         }
       }
     }
-
-    return synergies;
-  };
-
-  const getRecommendedSynergies = () => {
-    if (!recommendedTeamResult) return [];
-    const synergies = [];
-    const uniqueActiveIds = Array.from(new Set([...recommendedTeamResult.team, recommendedTeamResult.leader].filter(Boolean)));
-    
+    // 2. Evaluate normal passives
     uniqueActiveIds.forEach(id => {
       const char = characters.find(c => c.id === id);
       if (char && char.skills && char.skills.passive) {
         const passiveText = char.skills.passive;
         let isActivated = false;
         
-        const matchOrMore = passiveText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
+        const match = passiveText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
         
-        if (!matchOrMore) {
+        if (!match) {
           isActivated = true;
         } else {
-          const requiredCount = parseInt(matchOrMore[1]) || 2;
-          const rawTarget = matchOrMore[2].trim().toUpperCase();
+          const requiredCount = parseInt(match[1] || match[2]) || 2;
+          const rawTarget = match[3].trim().toUpperCase();
           const condTarget = rawTarget
             .replace(/[[\]]/g, '')
             .replace(/\bTYPE\b/g, '')
-            .replace(/\bMEMBERS?\b/g, '')
+            
             .trim();
           
           let count = 0;
@@ -501,18 +422,35 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
           }
         }
         
+        const item = {
+          charId: char.id,
+          charName: char.name,
+          accentColor: char.accentColor,
+          desc: passiveText,
+          isLeader: false
+        };
+        
         if (isActivated) {
-          synergies.push({
-            charId: char.id,
-            charName: char.name,
-            accentColor: char.accentColor,
-            desc: passiveText
-          });
+          active.push(item);
+        } else {
+          inactive.push(item);
         }
       }
     });
-
-    // 2. Evaluate Leader Passive (Outfit Skill) for recommendations
+    // Sort active so leader skill is ALWAYS first
+    active.sort((a, b) => {
+      if (a.isLeader && !b.isLeader) return -1;
+      if (!a.isLeader && b.isLeader) return 1;
+      return 0;
+    });
+    return { active, inactive };
+  };
+  const getRecommendedSynergies = () => {
+    if (!recommendedTeamResult) return [];
+    const synergies = [];
+    const uniqueActiveIds = Array.from(new Set([...recommendedTeamResult.team, recommendedTeamResult.leader].filter(Boolean)));
+    
+    // 1. Leader Outfit Skill first
     const recLeader = recommendedTeamResult.leader;
     if (recLeader) {
       const leaderChar = characters.find(c => c.id === recLeader);
@@ -520,18 +458,17 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
         const outfitText = leaderChar.skills.outfit;
         let isActivated = false;
         
-        const matchOrMore = outfitText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
+        const match = outfitText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
         
-        if (!matchOrMore) {
+        if (!match) {
           isActivated = true;
         } else {
-          const match = matchOrMore;
-          const requiredCount = parseInt(match[1]) || 2;
-          const rawTarget = match[2].trim().toUpperCase();
+          const requiredCount = parseInt(match[1] || match[2]) || 2;
+          const rawTarget = match[3].trim().toUpperCase();
           const condTarget = rawTarget
             .replace(/[[\]]/g, '')
             .replace(/\bTYPE\b/g, '')
-            .replace(/\bMEMBERS?\b/g, '')
+            
             .trim();
           
           let count = 0;
@@ -555,35 +492,87 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
             charId: leaderChar.id,
             charName: leaderChar.name,
             accentColor: '#ffb703', // Use Leader Gold color!
-            desc: outfitText
+            desc: outfitText,
+            isLeader: true
           });
         }
       }
     }
+    // 2. Normal Passives
+    uniqueActiveIds.forEach(id => {
+      const char = characters.find(c => c.id === id);
+      if (char && char.skills && char.skills.passive) {
+        const passiveText = char.skills.passive;
+        let isActivated = false;
+        
+        const match = passiveText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
+        
+        if (!match) {
+          isActivated = true;
+        } else {
+          const requiredCount = parseInt(match[1] || match[2]) || 2;
+          const rawTarget = match[3].trim().toUpperCase();
+          const condTarget = rawTarget
+            .replace(/[[\]]/g, '')
+            .replace(/\bTYPE\b/g, '')
+            
+            .trim();
+          
+          let count = 0;
+          uniqueActiveIds.forEach(activeId => {
+            const activeChar = characters.find(c => c.id === activeId);
+            if (activeChar) {
+              if (activeChar.group.toUpperCase().includes(condTarget) || 
+                  activeChar.type.toUpperCase() === condTarget) {
+                count++;
+              }
+            }
+          });
+          
+          if (count >= requiredCount) {
+            isActivated = true;
+          }
+        }
+        
+        if (isActivated) {
+          synergies.push({
+            charId: char.id,
+            charName: char.name,
+            accentColor: char.accentColor,
+            desc: passiveText,
+            isLeader: false
+          });
+        }
+      }
+    });
     
     return synergies;
   };
-
-  const activeSynergies = getActiveSynergies();
-  const selectedChars = characters.filter(c => activeTeam.includes(c.id));
+  const { active: activeSynergies } = getSynergiesState();
   const filteredRoster = characters.filter(char => char.name.toLowerCase().includes(searchQuery.toLowerCase()));
   
   const leaderChar = characters.find(c => c.id === activeLeader);
   const isLeaderInTeam = activeTeam.includes(activeLeader);
-
-
+  const activeCharsCount = [activeLeader, ...activeTeam].filter(Boolean).reduce((acc, charId, idx) => {
+    if (charId === activeLeader && idx > 0) return acc;
+    const isLeader = charId === activeLeader;
+    const char = characters.find(c => c.id === charId);
+    if (!char) return acc;
+    const isActivePassive = activeSynergies.some(s => s.charId === char.id && !s.isLeader);
+    const isLeaderSkillActive = !isLeader || activeSynergies.some(s => s.charId === char.id && s.isLeader);
+    return (isActivePassive && isLeaderSkillActive) ? acc + 1 : acc;
+  }, 0);
   return (
     <div className="team-builder-page animate-fade-in">
       <div className="builder-header">
-        <h1 className="page-title">Team Builder</h1>
-        <p className="page-subtitle">Click on any slot to assign members or the Leader. Match VTuber requirements to trigger Passive Skills.</p>
+        <h1 className="page-title">{t('builder_title')}</h1>
+        <p className="page-subtitle">{t('builder_desc')}</p>
       </div>
-
       {/* Presets Manager */}
       <div className="presets-manager glass">
         <div className="presets-header">
-          <h3 className="section-title-small">Presets Manager</h3>
-          <span className="presets-info-text">Switch presets or activate one as your primary deck (Active Party)</span>
+          <h3 className="section-title-small">{t('presets_manager')}</h3>
+          <span className="presets-info-text">{t('presets_desc')}</span>
         </div>
         
         <div className="presets-list-bar">
@@ -601,7 +590,6 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
             </button>
           ))}
         </div>
-
         <div className="preset-actions-bar">
           <div className="preset-meta-info">
             {isEditingName ? (
@@ -619,31 +607,30 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                   }}
                 />
                 <button className="btn-rename-save" onClick={handleSaveRename}>Save</button>
-                <button className="btn-rename-cancel" onClick={() => setIsEditingName(false)}>Cancel</button>
+                <button className="btn-rename-cancel" onClick={() => setIsEditingName(false)}>{t('cancel')}</button>
               </div>
             ) : (
               <div className="preset-name-display">
-                <span className="current-preset-label">Editing:</span>
+                <span className="current-preset-label">{t('editing_label')}</span>
                 <strong className="current-preset-value">{currentPreset.name}</strong>
                 <button className="btn-icon-rename" onClick={handleStartRename} title="Rename preset">
-                  Rename
+                  {t('rename_preset')}
                 </button>
               </div>
             )}
           </div>
-
           <div className="preset-control-buttons">
             {!currentPreset.isActive && (
               <button 
                 className="btn-activate-preset" 
                 onClick={() => onUpdatePreset(selectedPresetId, { isActive: true })}
               >
-                Set as Active Party
+                {t('make_active')}
               </button>
             )}
             {currentPreset.isActive && (
               <span className="active-party-badge">
-                <CheckCircle2 size={12} className="text-green" /> Primary Active Party
+                <CheckCircle2 size={12} className="text-green" /> {t('primary_active_party')}
               </span>
             )}
             <button 
@@ -654,34 +641,32 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                 }
               }}
             >
-              Clear Slots
+              {t('clear_slots')}
             </button>
           </div>
         </div>
       </div>
-
       {/* Owned Roster Manager */}
       <div className="roster-manager glass">
         <div className="roster-header" onClick={() => setIsRosterExpanded(!isRosterExpanded)}>
           <div className="roster-header-title-block">
-            <h3 className="section-title-small">My Character Roster</h3>
+            <h3 className="section-title-small">{t('my_character_roster')}</h3>
             <span className="presets-info-text">
-              Configure which characters you own ({ownedRoster.length}/{characters.length}). The recommendation engine will only suggest teams using checked characters.
+              {t('roster_desc', { owned: ownedRoster.length, total: characters.length })}
             </span>
           </div>
           <button className="btn-toggle-roster">
             {isRosterExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
         </div>
-
         {isRosterExpanded && (
           <div className="roster-body animate-slide-down">
             <div className="roster-controls">
               <button className="btn-icon-rename" onClick={() => onUpdateOwnedRoster(characters.map(c => c.id))}>
-                Select All
+                {t('select_all')}
               </button>
               <button className="btn-icon-rename" onClick={() => onUpdateOwnedRoster([])}>
-                Deselect All
+                {t('deselect_all')}
               </button>
               <button 
                 className="btn-activate-preset" 
@@ -689,10 +674,9 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                 disabled={ownedRoster.length < 5}
                 style={{ opacity: ownedRoster.length < 5 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
               >
-                <Sparkles size={12} /> Generate Smart Team
+                <Sparkles size={12} /> {t('smart_suggest')}
               </button>
             </div>
-
             <div className="roster-groups-container">
               {GROUPS.map(groupName => {
                 const groupMembers = characters.filter(c => c.group === groupName);
@@ -737,26 +721,23 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
           </div>
         )}
       </div>
-
       {/* Recommendation Modal */}
       {showRecommendationModal && recommendedTeamResult && (
         <div className="modal-overlay" onClick={() => setShowRecommendationModal(false)}>
           <div className="modal-content glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '850px' }}>
             <div className="modal-header">
-              <div className="modal-header-title">
+              <div className="modal-header-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={20} className="text-gold animate-pulse" />
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Smart Team Recommendation</h2>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Smart Team Recommendation</h2>
               </div>
               <button className="btn-close-modal" onClick={() => setShowRecommendationModal(false)}>
                 <X size={18} />
               </button>
             </div>
-
             <div className="modal-body">
               <p className="recommendation-desc">
                 We analyzed your owned roster and generated the team with the highest possible active synergies (<strong>{recommendedTeamResult.passiveCount} passives</strong> triggered).
               </p>
-
               <h3 className="modal-section-title">Recommended Party</h3>
               <div className="recommended-team-slots">
                 {recommendedTeamResult.team.map((charId) => {
@@ -786,25 +767,104 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                   );
                 })}
               </div>
-
-              <h3 className="modal-section-title">Activated Passives</h3>
-              <div className="recommended-passives-list">
-                {getRecommendedSynergies().map((syn, idx) => (
-                  <div key={idx} className="synergy-bonus-item border-gold">
-                    <div className="synergy-header">
-                      <span className="synergy-badge-title" style={{ background: syn.accentColor, color: '#000' }}>
-                        {syn.charName} (Passive)
-                      </span>
-                    </div>
-                    <p className="synergy-desc">{syn.desc}</p>
+              {/* Collapsible Dropdown for Recommended Team Skills */}
+              <div className="roster-manager glass" style={{ marginTop: '1.25rem', width: '100%' }}>
+                <div 
+                  className="roster-header" 
+                  onClick={() => setIsRecSkillsExpanded(!isRecSkillsExpanded)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="roster-header-title-block">
+                    <h3 className="section-title-small" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CheckCircle2 size={16} className="text-green" />
+                      {t('active_passives')} ({(() => {
+                      const recSynergies = getRecommendedSynergies();
+                      return recommendedTeamResult.team.filter(Boolean).reduce((acc, charId) => {
+                        const isLeader = charId === recommendedTeamResult.leader;
+                        const char = characters.find(c => c.id === charId);
+                        if (!char) return acc;
+                        const isActivePassive = recSynergies.some(s => s.charId === char.id && !s.isLeader);
+                        const isLeaderSkillActive = !isLeader || recSynergies.some(s => s.charId === char.id && s.isLeader);
+                        return (isActivePassive && isLeaderSkillActive) ? acc + 1 : acc;
+                      }, 0);
+                    })()}/5 {t('characters')})
+                    </h3>
+                    <span className="presets-info-text">
+                      Detailed active, special, and passive skill overview for recommended team members
+                    </span>
                   </div>
-                ))}
+                  <button className="btn-toggle-roster" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                    {isRecSkillsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  </button>
+                </div>
+                
+                {isRecSkillsExpanded && (
+                  <div className="roster-body animate-slide-down" style={{ marginTop: '1rem' }}>
+                    <div className="recommended-passives-list" style={{ maxHeight: '350px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {recommendedTeamResult.team.map((charId) => {
+                        const char = characters.find(c => c.id === charId);
+                        if (!char) return null;
+                        
+                        const isLeader = charId === recommendedTeamResult.leader;
+                        const recSynergies = getRecommendedSynergies();
+                        const isActivePassive = recSynergies.some(s => s.charId === char.id && !s.isLeader);
+                        const passiveText = char.skills.passive;
+                        return (
+                          <div key={char.id} className="synergy-bonus-item glass" style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '0.5rem', display: 'block' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: char.accentColor }} />
+                                <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{char.name}</strong>
+                                <span style={{ fontSize: '0.7rem', color: isLeader ? '#ffb703' : 'var(--text-muted)', fontWeight: 700 }}>
+                                  {isLeader ? `(${t('leader_tag')})` : `(${t('member_tag')})`}
+                                </span>
+                              </div>
+                              
+                              {passiveText && (
+                                <span style={{ 
+                                  fontSize: '0.65rem', 
+                                  fontWeight: 700, 
+                                  padding: '1px 6px', 
+                                  borderRadius: '4px',
+                                  background: isActivePassive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                                  color: isActivePassive ? '#10b981' : 'var(--text-muted)',
+                                  border: isActivePassive ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border-color)'
+                                }}>
+                                  {isActivePassive ? 'ALL SKILLS ACTIVE' : 'SKILLS INACTIVE'}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: passiveText ? '0.65rem' : 0 }}>
+                              <div style={{ background: 'rgba(255,255,255,0.01)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>{t('special_skill')}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{char.skills.special}</div>
+                              </div>
+                              <div style={{ background: 'rgba(255,255,255,0.01)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>{t('active_skill')}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{char.skills.active}</div>
+                              </div>
+                            </div>
+                            {passiveText && (
+                              <div style={{ background: isActivePassive ? 'rgba(16, 185, 129, 0.02)' : 'rgba(255, 255, 255, 0.01)', padding: '6px 8px', borderRadius: '6px', border: isActivePassive ? '1px solid rgba(16, 185, 129, 0.1)' : '1px solid rgba(255, 255, 255, 0.04)' }}>
+                                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>
+                                  {t('passive_skill')}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: isActivePassive ? 'var(--text-primary)' : 'var(--text-muted)', lineHeight: '1.4' }}>
+                                  {passiveText}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-
+            </div> {/* Closing modal-body */}
             <div className="modal-footer" style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
               <button className="btn-clear-preset" onClick={() => setShowRecommendationModal(false)}>
-                Cancel
+                {t('cancel')}
               </button>
               <button className="btn-activate-preset" onClick={handleApplyRecommendation}>
                 Apply to {currentPreset.name}
@@ -813,16 +873,15 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
           </div>
         </div>
       )}
-
       <div className="builder-single-column-layout">
         {/* Row 1: Team Configuration Container */}
         <div className="slots-container glass">
           <h2 className="section-title"><Users className="title-icon" /> Current Team</h2>
           
           <div className="config-grid">
-            {/* Leader Slot */}
+            {/* {t('leader_slot_title')} */}
             <div className="leader-config-block">
-              <h4 className="config-block-title"><Award size={14} className="text-gold" /> Leader Slot</h4>
+              <h4 className="config-block-title"><Award size={14} className="text-gold" /> {t('leader_slot_title')}</h4>
               
               <div 
                 className={`leader-slot glass ${leaderChar ? 'occupied border-gold' : 'empty'} ${activeSlotIndex === 'leader' ? 'active-focused-slot' : ''}`}
@@ -863,11 +922,10 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                 ) : (
                   <div className="slot-placeholder text-gold">
                     <span className="plus-sign">★</span>
-                    <span>{activeSlotIndex === 'leader' ? 'Selecting Leader...' : 'Click to Select Leader'}</span>
+                    <span>{activeSlotIndex === 'leader' ? t('selecting_leader_placeholder') : t('empty_leader_placeholder')}</span>
                   </div>
                 )}
               </div>
-
               {activeLeader && (
                 <div className="recommendation-badge-container">
                   {isLeaderInTeam ? (
@@ -881,22 +939,34 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                   )}
                 </div>
               )}
-
-              {activeLeader && leaderChar && (
-                <div className="leader-skill-box glass animate-slide-down" style={{ marginTop: '0.75rem', padding: '0.85rem', borderRadius: '10px', border: '1px solid rgba(255, 183, 3, 0.2)', background: 'rgba(255, 183, 3, 0.03)', textAlign: 'left' }}>
-                  <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: '#ffb703', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
-                    <Award size={13} /> Leader Skill (Outfit Skill)
-                  </h5>
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.45' }}>
-                    {leaderChar.skills.outfit}
-                  </p>
-                </div>
-              )}
+              {activeLeader && leaderChar && (() => {
+                const isLeaderSkillActive = activeSynergies.some(s => s.charId === activeLeader && s.isLeader);
+                return (
+                  <div 
+                    className="leader-skill-box glass animate-slide-down" 
+                    style={{ 
+                      marginTop: '0.75rem', 
+                      padding: '0.85rem', 
+                      borderRadius: '10px', 
+                      border: isLeaderSkillActive ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)', 
+                      background: isLeaderSkillActive ? 'rgba(16, 185, 129, 0.02)' : 'rgba(239, 68, 68, 0.02)', 
+                      textAlign: 'left' 
+                    }}
+                  >
+                    <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: isLeaderSkillActive ? '#10b981' : '#ef4444', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                      {isLeaderSkillActive ? <CheckCircle2 size={13} style={{ color: '#10b981' }} /> : <AlertTriangle size={13} style={{ color: '#ef4444' }} />}
+                      {t('leader_skill')} (Outfit Skill)
+                    </h5>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: isLeaderSkillActive ? 'var(--text-primary)' : 'var(--text-muted)', lineHeight: '1.45' }}>
+                      {leaderChar.skills.outfit}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
-
             {/* Members Slots Grid */}
             <div className="members-config-block">
-              <h4 className="config-block-title"><Users size={14} /> Team Units (Max 5)</h4>
+              <h4 className="config-block-title"><Users size={14} /> {t('team_units_title')}</h4>
               <div className="slots-grid five-slots">
                 {[0, 1, 2, 3, 4].map((index) => {
                   const charId = activeTeam[index];
@@ -945,7 +1015,7 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                       ) : (
                         <div className="slot-placeholder">
                           <span className="plus-sign">+</span>
-                          <span>{isSlotFocused ? `Selecting Slot ${index + 1}...` : `Slot ${index + 1}: Click to Select`}</span>
+                          <span>{isSlotFocused ? t('selecting_slot_placeholder', { num: index + 1 }) : t('empty_slot_placeholder', { num: index + 1 })}</span>
                         </div>
                       )}
                     </div>
@@ -954,59 +1024,113 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
               </div>
             </div>
           </div>
-
           <button 
             className="btn-primary w-full mt-4" 
             onClick={() => onSavePresets()}
             disabled={activeTeam.filter(Boolean).length === 0}
             style={{ opacity: activeTeam.filter(Boolean).length === 0 ? 0.5 : 1 }}
           >
-            Save Presets Configuration
+            {t('save_presets')}
           </button>
         </div>
-
-        {/* Row 2: Active Passives (Full Width) */}
-        <div className="synergy-card glass">
-          <h3 className="section-title">Active Passive Skills</h3>
-          {activeSynergies.length > 0 ? (
-            <div className="synergies-grid-layout">
-              <div className="synergies-grid">
-                {activeSynergies.map((syn, idx) => (
-                  <div 
-                    key={idx} 
-                    className="synergy-bonus-item glass"
-                    style={{ borderColor: syn.accentColor, background: `${syn.accentColor}06`, borderWidth: '1px', borderStyle: 'solid' }}
-                  >
-                    <div className="synergy-header">
-                      <span className="synergy-badge-title" style={{ color: syn.accentColor, background: `${syn.accentColor}12` }}>{syn.bonus}</span>
-                    </div>
-                    <p className="synergy-desc">{syn.desc}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="synergy-success mt-4">
+        {/* Row 2: Unified Active Skills List styled like Roster Manager */}
+        <div className="roster-manager glass" style={{ marginTop: '1.25rem', width: '100%' }}>
+          <div 
+            className="roster-header" 
+            onClick={() => setIsActiveExpanded(!isActiveExpanded)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="roster-header-title-block">
+              <h3 className="section-title-small" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CheckCircle2 size={16} className="text-green" />
-                <span>Successfully activated {activeSynergies.length} Passive Skills!</span>
-              </div>
+                {t('active_passives')} ({activeCharsCount}/5 {t('characters')})
+              </h3>
+              <span className="presets-info-text">
+                {activeTeam.filter(Boolean).length > 0 || activeLeader
+                  ? 'Detailed active, special, and passive skill overview for current team members'
+                  : t('add_members_msg')
+                }
+              </span>
             </div>
-          ) : (
-            <div className="empty-analytics">
-              {selectedChars.length >= 2 ? (
-                <>
-                  <ShieldAlert size={24} className="text-orange" />
-                  <p>Current team does not meet any Passive Skill activation requirements.</p>
-                </>
+            <button className="btn-toggle-roster" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              {isActiveExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          </div>
+          
+          {isActiveExpanded && (
+            <div className="roster-body animate-slide-down" style={{ marginTop: '1rem' }}>
+              {(activeTeam.filter(Boolean).length > 0 || activeLeader) ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {/* Leader first */}
+                  {[activeLeader, ...activeTeam].filter(Boolean).map((charId, idx) => {
+                    // Avoid duplicate rendering if leader is also in team units
+                    if (charId === activeLeader && idx > 0) return null;
+                    const isLeader = charId === activeLeader;
+                    const char = characters.find(c => c.id === charId);
+                    if (!char) return null;
+                    
+                    const isActivePassive = activeSynergies.some(s => s.charId === char.id && !s.isLeader);
+                    const passiveText = char.skills.passive;
+                    
+                    return (
+                      <div key={char.id} className="synergy-bonus-item glass" style={{ padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'block' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: char.accentColor }} />
+                            <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{char.name}</strong>
+                            <span style={{ fontSize: '0.72rem', color: isLeader ? '#ffb703' : 'var(--text-muted)', fontWeight: 700 }}>
+                              {isLeader ? `(${t('leader_tag')})` : `(${t('member_tag')})`}
+                            </span>
+                          </div>
+                          
+                          {/* Passive status indicator */}
+                          {passiveText && (
+                            <span style={{ 
+                              fontSize: '0.7rem', 
+                              fontWeight: 700, 
+                              padding: '2px 8px', 
+                              borderRadius: '4px',
+                              background: isActivePassive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 183, 3, 0.05)',
+                              color: isActivePassive ? '#10b981' : 'var(--text-muted)',
+                              border: isActivePassive ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border-color)'
+                            }}>
+                              {isActivePassive ? 'ALL SKILLS ACTIVE' : 'SKILLS INACTIVE'}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: passiveText ? '0.75rem' : 0 }}>
+                          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>{t('special_skill')}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{char.skills.special}</div>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>{t('active_skill')}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{char.skills.active}</div>
+                          </div>
+                        </div>
+                        {passiveText && (
+                          <div style={{ background: isActivePassive ? 'rgba(16, 185, 129, 0.02)' : 'rgba(255,255,255,0.01)', padding: '8px 10px', borderRadius: '6px', border: isActivePassive ? '1px solid rgba(16, 185, 129, 0.1)' : '1px solid rgba(255,255,255,0.04)' }}>
+                            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>
+                              {t('passive_skill')}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: isActivePassive ? 'var(--text-primary)' : 'var(--text-muted)', lineHeight: '1.4' }}>
+                              {passiveText}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               ) : (
-                <>
+                <div className="empty-analytics" style={{ padding: '2rem 1rem' }}>
                   <AlertCircle size={24} className="text-muted" />
-                  <p>Add members to the team to check for active Passive Skills</p>
-                </>
+                  <p>{t('add_members_msg')}</p>
+                </div>
               )}
             </div>
           )}
         </div>
-
-
       </div>
       {/* Roster Character Selection Popup Modal */}
       {activeSlotIndex !== null && (
@@ -1034,7 +1158,7 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                 </p>
                 <input
                   type="text"
-                  placeholder="Search characters..."
+                  placeholder={t('search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="roster-search-input glass"
@@ -1042,7 +1166,6 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                   autoFocus
                 />
               </div>
-
               <div className="character-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(225px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
                 {filteredRoster.map((char) => {
                   const isSelected = activeTeam.includes(char.id);

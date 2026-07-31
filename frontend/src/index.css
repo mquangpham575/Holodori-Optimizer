@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
   /* Colors */
@@ -17,7 +17,7 @@
   --accent-glow-strong: rgba(0, 195, 255, 0.5);
 
   /* Fonts */
-  --font-title: 'Outfit', sans-serif;
+  --font-title: 'Be Vietnam Pro', sans-serif;
   --font-body: 'Inter', sans-serif;
 }
 
@@ -139,3 +139,36 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+/* Light Theme Mode Overrides */
+body.theme-light {
+  --bg-dark: #f0f2f5;
+  --bg-card: rgba(255, 255, 255, 0.7);
+  --bg-card-hover: rgba(255, 255, 255, 0.85);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.16);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  background-color: #f3f4f6;
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(219, 234, 254, 0.6) 0px, transparent 50%),
+    radial-gradient(at 90% 80%, rgba(238, 242, 255, 0.6) 0px, transparent 50%);
+}
+
+body.theme-light .glass {
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.06);
+}
+
+body.theme-light .nav-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+body.theme-light .status-btn {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light .status-dropdown-panel {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+}
