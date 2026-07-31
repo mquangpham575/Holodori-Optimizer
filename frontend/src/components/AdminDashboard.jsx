@@ -396,11 +396,6 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       {success && <div className="admin-toast toast-success glass"><Check size={16} /> <span>{success}</span></div>}
       {error && <div className="admin-toast toast-error glass"><X size={16} /> <span>{error}</span></div>}
 
-      <div className="db-header">
-        <h1 className="page-title">Owner Control Panel</h1>
-        <p className="page-subtitle">Add VTubers, adjust dynamic stats, edit outfits, or compose markdown guides directly in the cloud database.</p>
-      </div>
-
       {/* Tabs Switcher */}
       <div className="admin-tabs-bar glass">
         <button 
@@ -719,7 +714,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       {/* Character Form Modal */}
       {charModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content glass admin-modal">
+          <div className="modal-content glass admin-modal wide">
             <div className="modal-header">
               <h2>{editingChar ? 'Edit VTuber Card' : 'Add New VTuber'}</h2>
               <button className="modal-close" onClick={() => setCharModalOpen(false)}>
@@ -839,18 +834,22 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                   <div className="stats-inputs-block">
                     <h4>Max Stats Values</h4>
                     <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                      {['sense', 'technique', 'performance'].map((stat) => (
-                        <div key={stat} className="input-group stat-col">
-                          <label>{stat.toUpperCase()}</label>
+                      {[
+                        { key: 'sense', label: 'SENSE' },
+                        { key: 'technique', label: 'TECH' },
+                        { key: 'performance', label: 'PERF' }
+                      ].map((item) => (
+                        <div key={item.key} className="input-group stat-col">
+                          <label>{item.label}</label>
                           <input
                             type="number"
                             min="1"
                             max="999999"
                             required
-                            value={charForm.stats[stat]}
+                            value={charForm.stats[item.key]}
                             onChange={(e) => setCharForm({
                               ...charForm,
-                              stats: { ...charForm.stats, [stat]: parseInt(e.target.value) || 8000 }
+                              stats: { ...charForm.stats, [item.key]: parseInt(e.target.value) || 8000 }
                             })}
                           />
                         </div>

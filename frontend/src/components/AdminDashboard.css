@@ -104,7 +104,10 @@
 
 /* Dashboard Controls */
 .admin-dashboard-page {
-  padding: 20px 0 40px 0;
+  width: 100%;
+  max-width: 1440px;
+  margin: 90px auto 40px auto;
+  padding: 0 2rem;
 }
 
 .admin-tabs-bar {
@@ -301,6 +304,7 @@
   padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
 }
 
 .actions-cell {
@@ -523,4 +527,11 @@
     flex-direction: column;
     gap: 15px;
   }
+}
+
+
+.stat-col input {
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+  text-align: center;
 }
