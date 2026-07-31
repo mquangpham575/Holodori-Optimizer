@@ -96,7 +96,7 @@ export default function Navbar({ API_BASE = '' }) {
   };
 
   const banner = getBannerInfo();
-  const STATUS_PAGE_URL = import.meta.env.VITE_STATUS_PAGE_URL || 'https://status.hololive-dream.vercel.app';
+  const STATUS_PAGE_URL = import.meta.env.VITE_STATUS_PAGE_URL || 'https://p01--hololive-dream-status--mv2hgs5fgpjc.code.run';
 
   const navItems = [
     { path: '/characters', labelKey: 'characters', icon: Users },
@@ -315,7 +315,7 @@ export default function Navbar({ API_BASE = '' }) {
                       const val = srv.val || healthStatus.services[srv.key];
                       const srvColor = getStatusColor(val);
                       const isClickable = !!srv.link;
-                      const resolvedLink = srv.link ? (API_BASE ? `${API_BASE}${srv.link}` : srv.link) : null;
+                      const resolvedLink = srv.link;
                       return (
                         <div 
                           key={idx} 
