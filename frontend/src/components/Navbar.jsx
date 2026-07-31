@@ -316,9 +316,13 @@ export default function Navbar({ API_BASE = '' }) {
                       const srvColor = getStatusColor(val);
                       const isClickable = !!srv.link;
                       const resolvedLink = srv.link;
+                      const ItemComponent = isClickable ? 'a' : 'div';
                       return (
-                        <div 
-                          key={idx} 
+                        <ItemComponent 
+                          key={idx}
+                          href={isClickable ? resolvedLink : undefined}
+                          target={isClickable ? '_blank' : undefined}
+                          rel={isClickable ? 'noreferrer' : undefined}
                           style={{ 
                             display: 'flex', 
                             justifyContent: 'space-between', 
@@ -328,12 +332,9 @@ export default function Navbar({ API_BASE = '' }) {
                             padding: '4px 6px',
                             borderRadius: '6px',
                             margin: '0 -6px',
-                            transition: 'background 0.2s'
-                          }}
-                          onClick={() => {
-                            if (isClickable && resolvedLink) {
-                              window.open(resolvedLink, '_blank');
-                            }
+                            transition: 'background 0.2s',
+                            textDecoration: 'none',
+                            color: 'inherit'
                           }}
                           onMouseEnter={(e) => {
                             if (isClickable) {
@@ -351,7 +352,7 @@ export default function Navbar({ API_BASE = '' }) {
                             {srv.name}
                           </div>
                           <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>{srv.cat}</span>
-                        </div>
+                        </ItemComponent>
                       );
                     })}
                   </div>
