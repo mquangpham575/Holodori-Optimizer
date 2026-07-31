@@ -1,13 +1,119 @@
 import React, { useState } from 'react';
-import { Trash2, Users, AlertCircle, CheckCircle2, ShieldAlert, Award, Leaf, Heart, Sun } from 'lucide-react';
-import { CHARACTERS } from '../data';
+import { Trash2, Users, AlertCircle, CheckCircle2, ShieldAlert, Award, Leaf, Heart, Sun, Sparkles, X, ChevronDown, ChevronUp } from 'lucide-react';
 import './TeamBuilder.css';
 
-export default function TeamBuilder({ presets, selectedPresetId, setSelectedPresetId, onUpdatePreset, onSavePresets }) {
+const GROUPS = [
+  "Gen 0", "Gen 1", "Gen 2", "GAMERS", "Gen 3", "Gen 4", "Gen 5", "holoX",
+  "ID Gen 1", "ID Gen 2", "ID Gen 3", "Myth", "Promise", "Advent", "ReGLOSS"
+];
+
+const getPassiveCount = (team, leader, characters) => {
+  const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
+  let activeCount = 0;
+  uniqueActiveIds.forEach(id => {
+    const char = characters.find(c => c.id === id);
+    if (char && char.skills && char.skills.passive) {
+      const passiveText = char.skills.passive;
+      const matchOrMore = passiveText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
+      if (!matchOrMore) {
+        activeCount++;
+      } else {
+        const requiredCount = parseInt(matchOrMore[1]) || 2;
+        const rawTarget = matchOrMore[2].trim().toUpperCase();
+        const condTarget = rawTarget
+          .replace(/[[\]]/g, '')
+          .replace(/\bTYPE\b/g, '')
+          .replace(/\bMEMBERS?\b/g, '')
+          .trim();
+        
+        let count = 0;
+        uniqueActiveIds.forEach(activeId => {
+          const activeChar = characters.find(c => c.id === activeId);
+          if (activeChar) {
+            if (activeChar.group.toUpperCase().includes(condTarget) || 
+                activeChar.type.toUpperCase() === condTarget) {
+              count++;
+            }
+          }
+        });
+        if (count >= requiredCount) {
+          activeCount++;
+        }
+      }
+    }
+  });
+  return activeCount;
+};
+
+const recommendBestTeam = (ownedIds, characters) => {
+  if (ownedIds.length < 5) return null;
+  
+  const charScores = ownedIds.map(id => {
+    const char = characters.find(c => c.id === id);
+    if (!char) return { id, score: 0 };
+    
+    const sameGenCount = ownedIds.filter(oid => {
+      const ochar = characters.find(c => c.id === oid);
+      return ochar && ochar.id !== id && ochar.group === char.group;
+    }).length;
+    
+    const sameTypeCount = ownedIds.filter(oid => {
+      const ochar = characters.find(c => c.id === oid);
+      return ochar && ochar.id !== id && ochar.type === char.type;
+    }).length;
+    
+    const score = (sameGenCount * 3) + sameTypeCount;
+    return { id, score };
+  });
+  
+  charScores.sort((a, b) => b.score - a.score);
+  const candidates = charScores.slice(0, 13).map(c => c.id);
+  
+  const getCombinations = (arr, k) => {
+    const result = [];
+    const helper = (start, combo) => {
+      if (combo.length === k) {
+        result.push([...combo]);
+        return;
+      }
+      for (let i = start; i < arr.length; i++) {
+        combo.push(arr[i]);
+        helper(i + 1, combo);
+        combo.pop();
+      }
+    };
+    helper(0, []);
+    return result;
+  };
+  
+  const combos = getCombinations(candidates, 5);
+  
+  let bestTeam = null;
+  let bestLeader = null;
+  let maxScore = -1;
+  
+  combos.forEach(team => {
+    team.forEach(leader => {
+      const score = getPassiveCount(team, leader, characters);
+      if (score > maxScore) {
+        maxScore = score;
+        bestTeam = team;
+        bestLeader = leader;
+      }
+    });
+  });
+  
+  return { team: bestTeam, leader: bestLeader, passiveCount: maxScore };
+};
+
+export default function TeamBuilder({ presets, selectedPresetId, setSelectedPresetId, onUpdatePreset, onSavePresets, ownedRoster = [], onUpdateOwnedRoster, characters = [] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSlotIndex, setActiveSlotIndex] = useState(null); // 'leader' or 0, 1, 2, 3, 4 or null
   const [isEditingName, setIsEditingName] = useState(false);
   const [newNameInput, setNewNameInput] = useState('');
+  const [isRosterExpanded, setIsRosterExpanded] = useState(false);
+  const [showRecommendationModal, setShowRecommendationModal] = useState(false);
+  const [recommendedTeamResult, setRecommendedTeamResult] = useState(null);
 
   const currentPreset = presets.find(p => p.id === selectedPresetId) || presets[0];
   const activeTeam = currentPreset.team;
@@ -31,6 +137,34 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       onUpdatePreset(selectedPresetId, { name: newNameInput.trim() });
     }
     setIsEditingName(false);
+  };
+
+  const handleToggleOwned = (charId) => {
+    if (ownedRoster.includes(charId)) {
+      onUpdateOwnedRoster(ownedRoster.filter(id => id !== charId));
+    } else {
+      onUpdateOwnedRoster([...ownedRoster, charId]);
+    }
+  };
+
+  const handleGenerateRecommendation = () => {
+    const result = recommendBestTeam(ownedRoster);
+    if (result) {
+      setRecommendedTeamResult(result);
+      setShowRecommendationModal(true);
+    } else {
+      alert("Please check at least 5 characters in your owned roster to generate a recommendation!");
+    }
+  };
+
+  const handleApplyRecommendation = () => {
+    if (recommendedTeamResult) {
+      onUpdatePreset(selectedPresetId, {
+        team: recommendedTeamResult.team,
+        leader: recommendedTeamResult.leader
+      });
+      setShowRecommendationModal(false);
+    }
   };
 
   const typeDisplayMap = {
@@ -118,24 +252,23 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
     const uniqueActiveIds = Array.from(new Set([...activeTeam, activeLeader].filter(Boolean)));
     
     uniqueActiveIds.forEach(id => {
-      const char = CHARACTERS.find(c => c.id === id);
+      const char = characters.find(c => c.id === id);
       if (char && char.skills && char.skills.passive) {
         const passiveText = char.skills.passive;
         let isActivated = false;
         
-        // Match condition like "2 or higher GEN 0" or "to 2 [HAPPY] members"
-        const matchOrMore = passiveText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-\+]+)/i);
-        const matchToMembers = passiveText.match(/to\s+(\d+)\s+\[?([A-Za-z0-9\s\-\+]+)\]?\s+members/i);
+        // Match condition like "With 2 or more GEN 0 members"
+        const matchOrMore = passiveText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
         
-        if (!matchOrMore && !matchToMembers) {
+        if (!matchOrMore) {
           // No condition -> always active
           isActivated = true;
         } else {
-          const match = matchOrMore || matchToMembers;
+          const match = matchOrMore;
           const requiredCount = parseInt(match[1]) || 2;
           const rawTarget = match[2].trim().toUpperCase();
           const condTarget = rawTarget
-            .replace(/[\[\]]/g, '')
+            .replace(/[[\]]/g, '')
             .replace(/\bTYPE\b/g, '')
             .replace(/\bMEMBERS?\b/g, '')
             .trim();
@@ -143,7 +276,7 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
           // Count matching members in uniqueActiveIds
           let count = 0;
           uniqueActiveIds.forEach(activeId => {
-            const activeChar = CHARACTERS.find(c => c.id === activeId);
+            const activeChar = characters.find(c => c.id === activeId);
             if (activeChar) {
               if (activeChar.group.toUpperCase().includes(condTarget) || 
                   activeChar.type.toUpperCase() === condTarget) {
@@ -172,11 +305,65 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
     return synergies;
   };
 
+  const getRecommendedSynergies = () => {
+    if (!recommendedTeamResult) return [];
+    const synergies = [];
+    const uniqueActiveIds = Array.from(new Set([...recommendedTeamResult.team, recommendedTeamResult.leader].filter(Boolean)));
+    
+    uniqueActiveIds.forEach(id => {
+      const char = characters.find(c => c.id === id);
+      if (char && char.skills && char.skills.passive) {
+        const passiveText = char.skills.passive;
+        let isActivated = false;
+        
+        const matchOrMore = passiveText.match(/(\d+)\s+or\s+(?:more|higher)\s+([A-Za-z0-9\s\-++]+)/i);
+        
+        if (!matchOrMore) {
+          isActivated = true;
+        } else {
+          const requiredCount = parseInt(matchOrMore[1]) || 2;
+          const rawTarget = matchOrMore[2].trim().toUpperCase();
+          const condTarget = rawTarget
+            .replace(/[[\]]/g, '')
+            .replace(/\bTYPE\b/g, '')
+            .replace(/\bMEMBERS?\b/g, '')
+            .trim();
+          
+          let count = 0;
+          uniqueActiveIds.forEach(activeId => {
+            const activeChar = characters.find(c => c.id === activeId);
+            if (activeChar) {
+              if (activeChar.group.toUpperCase().includes(condTarget) || 
+                  activeChar.type.toUpperCase() === condTarget) {
+                count++;
+              }
+            }
+          });
+          
+          if (count >= requiredCount) {
+            isActivated = true;
+          }
+        }
+        
+        if (isActivated) {
+          synergies.push({
+            charId: char.id,
+            charName: char.name,
+            accentColor: char.accentColor,
+            desc: passiveText
+          });
+        }
+      }
+    });
+    
+    return synergies;
+  };
+
   const activeSynergies = getActiveSynergies();
-  const selectedChars = CHARACTERS.filter(c => activeTeam.includes(c.id));
-  const filteredRoster = CHARACTERS.filter(char => char.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const selectedChars = characters.filter(c => activeTeam.includes(c.id));
+  const filteredRoster = characters.filter(char => char.name.toLowerCase().includes(searchQuery.toLowerCase()));
   
-  const leaderChar = CHARACTERS.find(c => c.id === activeLeader);
+  const leaderChar = characters.find(c => c.id === activeLeader);
   const isLeaderInTeam = activeTeam.includes(activeLeader);
 
   // Check if all team slots are full
@@ -270,6 +457,146 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
         </div>
       </div>
 
+      {/* Owned Roster Manager */}
+      <div className="roster-manager glass">
+        <div className="roster-header" onClick={() => setIsRosterExpanded(!isRosterExpanded)}>
+          <div className="roster-header-title-block">
+            <h3 className="section-title-small">My Character Roster</h3>
+            <span className="presets-info-text">
+              Configure which characters you own ({ownedRoster.length}/{characters.length}). The recommendation engine will only suggest teams using checked characters.
+            </span>
+          </div>
+          <button className="btn-toggle-roster">
+            {isRosterExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+        </div>
+
+        {isRosterExpanded && (
+          <div className="roster-body animate-slide-down">
+            <div className="roster-controls">
+              <button className="btn-icon-rename" onClick={() => onUpdateOwnedRoster(characters.map(c => c.id))}>
+                Select All
+              </button>
+              <button className="btn-icon-rename" onClick={() => onUpdateOwnedRoster([])}>
+                Deselect All
+              </button>
+              <button 
+                className="btn-activate-preset" 
+                onClick={handleGenerateRecommendation}
+                disabled={ownedRoster.length < 5}
+                style={{ opacity: ownedRoster.length < 5 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              >
+                <Sparkles size={12} /> Generate Smart Team
+              </button>
+            </div>
+
+            <div className="roster-groups-container">
+              {GROUPS.map(groupName => {
+                const groupMembers = characters.filter(c => c.group === groupName);
+                if (groupMembers.length === 0) return null;
+                return (
+                  <div key={groupName} className="roster-group-section">
+                    <h5 className="roster-group-title">{groupName}</h5>
+                    <div className="roster-group-grid">
+                      {groupMembers.map(char => {
+                        const isOwned = ownedRoster.includes(char.id);
+                        return (
+                          <div 
+                            key={char.id} 
+                            className={`roster-char-item ${isOwned ? 'owned' : 'not-owned'}`}
+                            onClick={() => handleToggleOwned(char.id)}
+                          >
+                            <input 
+                              type="checkbox" 
+                              checked={isOwned} 
+                              readOnly 
+                              className="roster-char-checkbox"
+                            />
+                            <div className="roster-char-avatar-mini" style={{ borderLeft: `3px solid ${char.accentColor}` }}>
+                              {char.avatar}
+                            </div>
+                            <span className="roster-char-name">{char.name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Recommendation Modal */}
+      {showRecommendationModal && recommendedTeamResult && (
+        <div className="modal-backdrop">
+          <div className="recommendation-modal glass animate-scale-up">
+            <div className="modal-header">
+              <div className="modal-header-title">
+                <Sparkles size={20} className="text-gold animate-pulse" />
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Smart Team Recommendation</h2>
+              </div>
+              <button className="btn-close-modal" onClick={() => setShowRecommendationModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p className="recommendation-desc">
+                We analyzed your owned roster and generated the team with the highest possible active synergies (**{recommendedTeamResult.passiveCount} passives** triggered).
+              </p>
+
+              <h3 className="modal-section-title">Recommended Party</h3>
+              <div className="recommended-team-slots">
+                {recommendedTeamResult.team.map((charId) => {
+                  const char = characters.find(c => c.id === charId);
+                  const isLeader = charId === recommendedTeamResult.leader;
+                  if (!char) return null;
+                  return (
+                    <div key={charId} className={`recommended-slot-card ${isLeader ? 'border-gold' : ''}`}>
+                      {isLeader && <span className="leader-tag-mini">L</span>}
+                      <div className="recommended-avatar-circle" style={{ border: `2px solid ${char.accentColor}` }}>
+                        <span className="recommended-avatar-text">{char.avatar}</span>
+                      </div>
+                      <div className="recommended-slot-info">
+                        <strong className="recommended-char-name">{char.name}</strong>
+                        <span className="recommended-char-meta" style={{ color: getTypeColor(char.type) }}>
+                          {getTypeIcon(char.type)} {typeDisplayMap[char.type] || char.type} • {char.group}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <h3 className="modal-section-title">Activated Passives</h3>
+              <div className="recommended-passives-list">
+                {getRecommendedSynergies().map((syn, idx) => (
+                  <div key={idx} className="synergy-bonus-item border-gold">
+                    <div className="synergy-header">
+                      <span className="synergy-badge-title" style={{ background: syn.accentColor, color: '#000' }}>
+                        {syn.charName} (Passive)
+                      </span>
+                    </div>
+                    <p className="synergy-desc">{syn.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-clear-preset" onClick={() => setShowRecommendationModal(false)}>
+                Cancel
+              </button>
+              <button className="btn-activate-preset" onClick={handleApplyRecommendation}>
+                Apply to {currentPreset.name}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="builder-single-column-layout">
         {/* Row 1: Team Configuration Container */}
         <div className="slots-container glass">
@@ -340,7 +667,7 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
               <div className="slots-grid five-slots">
                 {[0, 1, 2, 3, 4].map((index) => {
                   const charId = activeTeam[index];
-                  const char = CHARACTERS.find(c => c.id === charId);
+                  const char = characters.find(c => c.id === charId);
                   const isSlotFocused = activeSlotIndex === index;
                   return (
                     <div 

@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Edit2, Save, Trophy, Award, Gamepad2, CheckCircle2, Shield, Calendar, ArrowRight } from 'lucide-react';
+import React from 'react';
+import { Gamepad2, Shield, Calendar, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { CHARACTERS, GUIDES } from '../data';
+import { GUIDES } from '../data';
 import './Home.css';
 
 /**
  * Home - Displays landing info, editable personal showcase, and links to guides/characters.
  */
-export default function Home({ activeTeam, activeLeader }) {
+export default function Home({ activeTeam, activeLeader, characters = [] }) {
   const navigate = useNavigate();
 
-  const leaderChar = CHARACTERS.find(c => c.id === activeLeader);
+  const leaderChar = characters.find(c => c.id === activeLeader);
   
   // Build character display list: Leader first, then remaining team units
   let displayCharacters = [];
@@ -19,7 +19,7 @@ export default function Home({ activeTeam, activeLeader }) {
   }
   
   activeTeam.forEach(id => {
-    const char = CHARACTERS.find(c => c.id === id);
+    const char = characters.find(c => c.id === id);
     if (char && char.id !== activeLeader) {
       displayCharacters.push(char);
     }

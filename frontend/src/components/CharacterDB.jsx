@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { X, Shield, Swords, Sparkles, Zap, Heart, Leaf, Sun, Paintbrush, Users } from 'lucide-react';
-import { CHARACTERS } from '../data';
+import { X, Heart, Leaf, Sun, Paintbrush, Users } from 'lucide-react';
 import './CharacterDB.css';
 
-export default function CharacterDB({ onAccentChange, currentAccent }) {
+export default function CharacterDB({ onAccentChange, currentAccent, characters = [] }) {
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,7 +17,7 @@ export default function CharacterDB({ onAccentChange, currentAccent }) {
     'HAPPY': 'Happy Type'
   };
 
-  const filteredCharacters = CHARACTERS.filter((char) => {
+  const filteredCharacters = characters.filter((char) => {
     const matchesGroup = selectedGroup === 'All' || char.group === selectedGroup;
     const matchesType = selectedType === 'All' || char.type === selectedType;
     const matchesSearch = char.name.toLowerCase().includes(searchQuery.toLowerCase());

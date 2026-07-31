@@ -131,7 +131,7 @@
 /* Roster Selector */
 .roster-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
   gap: 0.85rem;
   margin-top: 1.25rem;
 }
@@ -183,14 +183,14 @@
 }
 
 .roster-item-name {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
 .roster-item-role {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
-  margin-top: 0.1rem;
+  margin-top: 0.15rem;
 }
 
 /* Average Stats */
@@ -376,15 +376,15 @@
 }
 
 .roster-item-media {
-  width: 45px;
-  height: 45px;
-  border-radius: 6px;
+  width: 65px;
+  height: 65px;
+  border-radius: 8px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.2);
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.5rem;
   border: 1px solid var(--border-color);
 }
 
@@ -978,6 +978,291 @@
   background: #ef4444;
   color: #fff;
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+/* Roster Manager */
+.roster-manager {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.roster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.01);
+  transition: background 0.2s;
+}
+
+.roster-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.roster-header-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.btn-toggle-roster {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.roster-body {
+  padding: 1.25rem;
+  border-top: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.roster-controls {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+
+.roster-groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+/* Custom Scrollbar for Roster */
+.roster-groups-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.roster-groups-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+.roster-groups-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.roster-groups-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.roster-group-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.roster-group-title {
+  font-family: var(--font-title);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  border-left: 2px solid var(--accent-color);
+  padding-left: 0.5rem;
+  text-align: left;
+}
+
+.roster-group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.65rem;
+}
+
+.roster-char-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.roster-char-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-hover);
+}
+
+.roster-char-item.owned {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.roster-char-item.not-owned {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.roster-char-checkbox {
+  cursor: pointer;
+  accent-color: var(--accent-color);
+}
+
+.roster-char-avatar-mini {
+  width: 26px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.roster-char-item.owned .roster-char-avatar-mini {
+  background: var(--accent-glow);
+  color: var(--text-primary);
+}
+
+.roster-char-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Recommendation Modal styling */
+.recommendation-modal {
+  position: relative;
+  width: 100%;
+  max-width: 700px;
+  background: rgba(18, 18, 29, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  padding: 1.5rem;
+  text-align: left;
+}
+
+.recommendation-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.modal-section-title {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.85rem;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.recommended-team-slots {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.65rem;
+  margin-bottom: 1.75rem;
+}
+
+.recommended-slot-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.85rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.recommended-slot-card.border-gold {
+  border-color: #ffb703;
+  box-shadow: 0 0 10px rgba(255, 183, 3, 0.15);
+}
+
+.recommended-avatar-circle {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.65rem;
+}
+
+.recommended-avatar-text {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.recommended-slot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  width: 100%;
+}
+
+.recommended-char-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recommended-char-meta {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+.recommended-passives-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+/* Custom Scrollbar for passives list */
+.recommended-passives-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.recommended-passives-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+}
+
+.recommended-passives-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
 }
 
 

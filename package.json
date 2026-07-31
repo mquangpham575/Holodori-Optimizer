@@ -4,13 +4,20 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "start": "node backend/server.js",
+    "dev": "concurrently \"node backend/server.js\" \"vite frontend\"",
+    "server": "node backend/server.js",
+    "client": "vite frontend",
+    "build": "vite build frontend",
     "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
+    "concurrently": "^10.0.4",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "lucide-react": "^1.28.0",
+    "pg": "^8.22.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"

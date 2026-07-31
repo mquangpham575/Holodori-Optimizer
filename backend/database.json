@@ -1,0 +1,1318 @@
+{
+  "characters": [
+    {
+      "id": "tokinosora",
+      "name": "Tokino Sora",
+      "title": "Rainbow's Devotion",
+      "rarity": "5-Star",
+      "group": "Gen 0",
+      "type": "HAPPY",
+      "accentColor": "#3a86ff",
+      "image": "/images/tokinosora.webp",
+      "avatar": "T",
+      "stats": {
+        "sense": 80,
+        "technique": 76,
+        "performance": 85,
+        "support": 93
+      },
+      "skills": {
+        "outfit": "With 2 or more Gen 0 Members, grants All Stats UP 50% to all.",
+        "special": "For 10s, Grants Score Support Effect of 160%.",
+        "active": "For 10s, Score UP 100%. Every 24s with a Medium Probability chance.",
+        "passive": "With 2 or more Gen 0 Members, grants All Stats UP 33% to Self."
+      }
+    },
+    {
+      "id": "robocosan",
+      "name": "Robocosan",
+      "title": "High-Tech Victory V",
+      "rarity": "5-Star",
+      "group": "Gen 0",
+      "type": "HAPPY",
+      "accentColor": "#a2d2ff",
+      "image": "/images/robocosan.webp",
+      "avatar": "R",
+      "stats": {
+        "sense": 75,
+        "technique": 80,
+        "performance": 92,
+        "support": 95
+      },
+      "skills": {
+        "outfit": "With 2 or more Happy Type Members, grants Performance UP 130% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
+        "active": "For 8s, Score UP 90%. Every 18s with a High Probability chance.",
+        "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      }
+    },
+    {
+      "id": "azki",
+      "name": "AZKi",
+      "title": "A Flower in Full Bloom",
+      "rarity": "5-Star",
+      "group": "Gen 0",
+      "type": "PURE",
+      "accentColor": "#ff007f",
+      "image": "/images/azki.webp",
+      "avatar": "A",
+      "stats": {
+        "sense": 90,
+        "technique": 94,
+        "performance": 85,
+        "support": 77
+      },
+      "skills": {
+        "outfit": "Grants Sense UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 7s, Score UP 60%. Every 20s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
+        "passive": "Grants Sense UP 43% to 2 Gen 0 Members."
+      }
+    },
+    {
+      "id": "sakuramiko",
+      "name": "Sakura Miko",
+      "title": "Sakura Bloom",
+      "rarity": "5-Star",
+      "group": "Gen 0",
+      "type": "HAPPY",
+      "accentColor": "#ff85a2",
+      "image": "/images/sakuramiko.webp",
+      "avatar": "S",
+      "stats": {
+        "sense": 85,
+        "technique": 77,
+        "performance": 86,
+        "support": 77
+      },
+      "skills": {
+        "outfit": "Grants Sense UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With a Combo of 40 or more, Score UP 110%.",
+        "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      }
+    },
+    {
+      "id": "hoshimachisuisei",
+      "name": "Hoshimachi Suisei",
+      "title": "Comet Heart Stealer",
+      "rarity": "5-Star",
+      "group": "Gen 0",
+      "type": "PURE",
+      "accentColor": "#00c3ff",
+      "image": "/images/hoshimachisuisei.webp",
+      "avatar": "H",
+      "stats": {
+        "sense": 78,
+        "technique": 81,
+        "performance": 76,
+        "support": 85
+      },
+      "skills": {
+        "outfit": "Grants Technique UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
+        "passive": "Grants Technique UP 41% to 2 Pure Type Members."
+      }
+    },
+    {
+      "id": "akirosenthal",
+      "name": "Aki Rosenthal",
+      "title": "Ethereal Half-Elf",
+      "rarity": "5-Star",
+      "group": "Gen 1",
+      "type": "PURE",
+      "accentColor": "#e2e200",
+      "image": "/images/akirosenthal.webp",
+      "avatar": "A",
+      "stats": {
+        "sense": 86,
+        "technique": 93,
+        "performance": 79,
+        "support": 86
+      },
+      "skills": {
+        "outfit": "Grants Sense UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 8s, Score UP 100%. Every 21s with a Medium Probability chance. When LIFE is 600 or higher, Score UP 115%.",
+        "passive": "Grants Sense UP 43% to 2 Gen 1 Members."
+      }
+    },
+    {
+      "id": "akaihaato",
+      "name": "Akai Haato",
+      "title": "Snack-Time Rebel",
+      "rarity": "5-Star",
+      "group": "Gen 1",
+      "type": "PURE",
+      "accentColor": "#ff4d4d",
+      "image": "/images/akaihaato.webp",
+      "avatar": "A",
+      "stats": {
+        "sense": 79,
+        "technique": 86,
+        "performance": 93,
+        "support": 84
+      },
+      "skills": {
+        "outfit": "Grants Technique UP 120% to all.",
+        "special": "For 12s, Grants Score Support Effect of 135%.",
+        "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With a Combo of 40 or more, Score UP 120%.",
+        "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
+      }
+    },
+    {
+      "id": "shirakamifubuki",
+      "name": "Shirakami Fubuki",
+      "title": "Kitsune's Rite",
+      "rarity": "5-Star",
+      "group": "Gen 1",
+      "type": "PURE",
+      "accentColor": "#8ecae6",
+      "image": "/images/shirakamifubuki.webp",
+      "avatar": "S",
+      "stats": {
+        "sense": 80,
+        "technique": 76,
+        "performance": 85,
+        "support": 82
+      },
+      "skills": {
+        "outfit": "With 2 or more Gen 1 Members, grants All Stats UP 50% to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
+        "passive": "With 2 or more Gen 1 Members, grants Performance UP 45% to 2 Gen 1 Members."
+      }
+    },
+    {
+      "id": "natsuiromatsuri",
+      "name": "Natsuiro Matsuri",
+      "title": "Vivid Cheer Spirit",
+      "rarity": "5-Star",
+      "group": "Gen 1",
+      "type": "PURE",
+      "accentColor": "#ffb703",
+      "image": "/images/natsuiromatsuri.webp",
+      "avatar": "N",
+      "stats": {
+        "sense": 89,
+        "technique": 94,
+        "performance": 85,
+        "support": 82
+      },
+      "skills": {
+        "outfit": "Grants Performance UP 120% to ALL.",
+        "special": "For 11s, Grants Score Support Effect of 145%.",
+        "active": "For 10s, Score UP 60%. Every 23s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
+        "passive": "Grants Performance UP 43% to 2 Gen 1 Members."
+      }
+    },
+    {
+      "id": "nakiriayame",
+      "name": "Nakiri Ayame",
+      "title": "Spirit Realm Lantern",
+      "rarity": "5-Star",
+      "group": "Gen 2",
+      "type": "PURE",
+      "accentColor": "#d90429",
+      "image": "/images/nakiriayame.webp",
+      "avatar": "N",
+      "stats": {
+        "sense": 85,
+        "technique": 88,
+        "performance": 78,
+        "support": 86
+      },
+      "skills": {
+        "outfit": "Grants Score Support Effect of 60% to all.",
+        "special": "For 10s, Grants Score Support Effect of 160%.",
+        "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With 2 or more Pure Type Members, Score UP 120%.",
+        "passive": "Grants Performance UP 41% to 2 Pure Type Members."
+      }
+    },
+    {
+      "id": "yuzukichoco",
+      "name": "Yuzuki Choco",
+      "title": "Fatal Temptation",
+      "rarity": "5-Star",
+      "group": "Gen 2",
+      "type": "HAPPY",
+      "accentColor": "#f7d08a",
+      "image": "/images/yuzukichoco.webp",
+      "avatar": "Y",
+      "stats": {
+        "sense": 94,
+        "technique": 85,
+        "performance": 77,
+        "support": 91
+      },
+      "skills": {
+        "outfit": "With 2 or more Happy Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+        "special": "For 10s, Grants Score Support Effect of 160%.",
+        "active": "For 7s, Score UP 120%. Every 20s with a Medium Probability chance.",
+        "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      }
+    },
+    {
+      "id": "oozorasubaru",
+      "name": "Oozora Subaru",
+      "title": "Duckling Noon Jam",
+      "rarity": "5-Star",
+      "group": "Gen 2",
+      "type": "PURE",
+      "accentColor": "#fcd34d",
+      "image": "/images/oozorasubaru.webp",
+      "avatar": "O",
+      "stats": {
+        "sense": 95,
+        "technique": 80,
+        "performance": 92,
+        "support": 89
+      },
+      "skills": {
+        "outfit": "With 2 or more Gen 2 Members, grants All Stats UP 50% to all.",
+        "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+        "active": "For 12s, Score UP 115%. Every 34s with a High Probability chance.",
+        "passive": "With 2 or more Gen 2 Members, grants Performance UP 45% to 2 Gen 2 Members."
+      }
+    },
+    {
+      "id": "ookamimio",
+      "name": "Ookami Mio",
+      "title": "Calming Nightscape",
+      "rarity": "5-Star",
+      "group": "GAMERS",
+      "type": "PURE",
+      "accentColor": "#333333",
+      "image": "/images/ookamimio.webp",
+      "avatar": "O",
+      "stats": {
+        "sense": 82,
+        "technique": 82,
+        "performance": 87,
+        "support": 78
+      },
+      "skills": {
+        "outfit": "With 2 or more Gamers Members, grants +50% Stats to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 9s, Score UP 120%. Every 27s with a High Probability chance.",
+        "passive": "With 2 or more Gamers Members, grants Score Support Effect of 12% to 2 Gamers Members."
+      }
+    },
+    {
+      "id": "nekomataokayu",
+      "name": "Nekomata Okayu",
+      "title": "Secret Post-Feast",
+      "rarity": "5-Star",
+      "group": "GAMERS",
+      "type": "CUTE",
+      "accentColor": "#b388ff",
+      "image": "/images/nekomataokayu.webp",
+      "avatar": "N",
+      "stats": {
+        "sense": 93,
+        "technique": 90,
+        "performance": 78,
+        "support": 91
+      },
+      "skills": {
+        "outfit": "Grants Technique UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 160%.",
+        "active": "For 10s, Score UP 55%. Every 25s with a Medium Probability chance. When LIFE is 600 or higher, Score UP 110%.",
+        "passive": "Grants Technique UP 41% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "inugamikorone",
+      "name": "Inugami Korone",
+      "title": "Vibrant Skater",
+      "rarity": "5-Star",
+      "group": "GAMERS",
+      "type": "HAPPY",
+      "accentColor": "#e0a96d",
+      "image": "/images/inugamikorone.webp",
+      "avatar": "I",
+      "stats": {
+        "sense": 87,
+        "technique": 93,
+        "performance": 79,
+        "support": 86
+      },
+      "skills": {
+        "outfit": "With 2 or more Happy Type Members, grants Sense UP 130% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
+        "active": "For 6s, Score UP 120%. Every 17s with a Medium Probability chance.",
+        "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      }
+    },
+    {
+      "id": "usadapekora",
+      "name": "Usada Pekora",
+      "title": "Playful Rabbit Field",
+      "rarity": "5-Star",
+      "group": "Gen 3",
+      "type": "CUTE",
+      "accentColor": "#f77f00",
+      "image": "/images/usadapekora.webp",
+      "avatar": "U",
+      "stats": {
+        "sense": 79,
+        "technique": 76,
+        "performance": 80,
+        "support": 92
+      },
+      "skills": {
+        "outfit": "With 2 or more Cute Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 12s, Score UP 105%. Every 30s with a Medium Probability chance.",
+        "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self."
+      }
+    },
+    {
+      "id": "shiranuiflare",
+      "name": "Shiranui Flare",
+      "title": "Elven Gale Gondola",
+      "rarity": "5-Star",
+      "group": "Gen 3",
+      "type": "PURE",
+      "accentColor": "#ff9f1c",
+      "image": "/images/shiranuiflare.webp",
+      "avatar": "S",
+      "stats": {
+        "sense": 93,
+        "technique": 95,
+        "performance": 85,
+        "support": 93
+      },
+      "skills": {
+        "outfit": "Grants Performance UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
+        "passive": "Grants Performance UP 43% to 2 Gen 3 Members."
+      }
+    },
+    {
+      "id": "shiroganenoel",
+      "name": "Shirogane Noel",
+      "title": "Gentle Breeze Knight",
+      "rarity": "5-Star",
+      "group": "Gen 3",
+      "type": "HAPPY",
+      "accentColor": "#b5e2fa",
+      "image": "/images/shiroganenoel.webp",
+      "avatar": "S",
+      "stats": {
+        "sense": 86,
+        "technique": 88,
+        "performance": 83,
+        "support": 82
+      },
+      "skills": {
+        "outfit": "Grants Score Support Effect of 60% to all.",
+        "special": "For 10s, Grants Score Support Effect of 160%.",
+        "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With 2 or more Happy Type Members, Score UP 120%.",
+        "passive": "With 2 or more Happy Type Members, grants All Stats UP 32% to Self."
+      }
+    },
+    {
+      "id": "houshoumarine",
+      "name": "Houshou Marine",
+      "title": "Siren Marine Blue",
+      "rarity": "5-Star",
+      "group": "Gen 3",
+      "type": "HAPPY",
+      "accentColor": "#e63946",
+      "image": "/images/houshoumarine.webp",
+      "avatar": "H",
+      "stats": {
+        "sense": 76,
+        "technique": 91,
+        "performance": 84,
+        "support": 82
+      },
+      "skills": {
+        "outfit": "With 2 or more Gen 3 Members, grants All Stats UP 50% to all.",
+        "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+        "active": "For 10s, Score UP 115%. Every 23s with a High Probability chance.",
+        "passive": "With 2 or more Gen 3 Members, grants Score Support Effect of 12% to 2 Gen 3 Members."
+      }
+    },
+    {
+      "id": "tsunomakiwatame",
+      "name": "Tsunomaki Watame",
+      "title": "Woolly Smile Festival",
+      "rarity": "5-Star",
+      "group": "Gen 4",
+      "type": "CUTE",
+      "accentColor": "#fff3b0",
+      "image": "/images/tsunomakiwatame.webp",
+      "avatar": "T",
+      "stats": {
+        "sense": 92,
+        "technique": 95,
+        "performance": 85,
+        "support": 82
+      },
+      "skills": {
+        "outfit": "Grants All Stats UP 45% to all.",
+        "special": "For 11s, Grants Score Support Effect of 145%.",
+        "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 110%.",
+        "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "tokoyamitowa",
+      "name": "Tokoyami Towa",
+      "title": "Eternal Night Out",
+      "rarity": "5-Star",
+      "group": "Gen 4",
+      "type": "PURE",
+      "accentColor": "#a855f7",
+      "image": "/images/tokoyamitowa.webp",
+      "avatar": "T",
+      "stats": {
+        "sense": 87,
+        "technique": 93,
+        "performance": 90,
+        "support": 94
+      },
+      "skills": {
+        "outfit": "With 2 or more Gen 4 Members, grants All Stats UP 50% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 8s, Score UP 95%. Every 19s with a High Probability chance.",
+        "passive": "With 2 or more Gen 4 Members, grants Sense UP 45% to 2 Gen 4 Members."
+      }
+    },
+    {
+      "id": "himemoriluna",
+      "name": "Himemori Luna",
+      "title": "Royal Loyal Noon",
+      "rarity": "5-Star",
+      "group": "Gen 4",
+      "type": "CUTE",
+      "accentColor": "#ffc6ff",
+      "image": "/images/himemoriluna.webp",
+      "avatar": "H",
+      "stats": {
+        "sense": 89,
+        "technique": 83,
+        "performance": 82,
+        "support": 87
+      },
+      "skills": {
+        "outfit": "Grants Technique UP 120% to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
+        "passive": "Grants Technique UP 43% to 2 Gen 4 Members."
+      }
+    },
+    {
+      "id": "yukihanalamy",
+      "name": "Yukihana Lamy",
+      "title": "Lonely Snow Heiress",
+      "rarity": "5-Star",
+      "group": "Gen 5",
+      "type": "PURE",
+      "accentColor": "#a2d2ff",
+      "image": "/images/yukihanalamy.webp",
+      "avatar": "Y",
+      "stats": {
+        "sense": 81,
+        "technique": 81,
+        "performance": 76,
+        "support": 91
+      },
+      "skills": {
+        "outfit": "With 2 or more Gen 5 Members, grants All Stats UP 50% to all.",
+        "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+        "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
+        "passive": "With 2 or more Gen 5 Members, grants All Stats UP 33% to Self."
+      }
+    },
+    {
+      "id": "momosuzunene",
+      "name": "Momosuzu Nene",
+      "title": "Pureheart Song",
+      "rarity": "5-Star",
+      "group": "Gen 5",
+      "type": "CUTE",
+      "accentColor": "#ffb3c6",
+      "image": "/images/momosuzunene.webp",
+      "avatar": "M",
+      "stats": {
+        "sense": 80,
+        "technique": 76,
+        "performance": 91,
+        "support": 84
+      },
+      "skills": {
+        "outfit": "Grants Performance UP 120% to all.",
+        "special": "For 11s, Grants Score Support Effect of 145%.",
+        "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
+        "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "shishirobotan",
+      "name": "Shishiro Botan",
+      "title": "Lion's Deadeye",
+      "rarity": "5-Star",
+      "group": "Gen 5",
+      "type": "HAPPY",
+      "accentColor": "#a5a58d",
+      "image": "/images/shishirobotan.webp",
+      "avatar": "S",
+      "stats": {
+        "sense": 81,
+        "technique": 81,
+        "performance": 92,
+        "support": 84
+      },
+      "skills": {
+        "outfit": "Grants All Stats UP 45% to all.",
+        "special": "For 10s, Grants Score Support Effect of 160%.",
+        "active": "For 9s, Score UP 60%. Every 27s with a High Probability chance. With 2 or more Happy Type Members, Score UP 125%.",
+        "passive": "With 2 or more Happy Type Members, grants Performance UP 43% to 2 Happy Type Members."
+      }
+    },
+    {
+      "id": "omarupolka",
+      "name": "Omaru Polka",
+      "title": "Polka's Phantasm",
+      "rarity": "5-Star",
+      "group": "Gen 5",
+      "type": "HAPPY",
+      "accentColor": "#ff477e",
+      "image": "/images/omarupolka.webp",
+      "avatar": "O",
+      "stats": {
+        "sense": 81,
+        "technique": 87,
+        "performance": 88,
+        "support": 88
+      },
+      "skills": {
+        "outfit": "Grants All Stats UP 45% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 8s, Score UP 55%. Every 21s with a Medium Probability chance. With 2 or more Happy Type Members, Score UP 115%.",
+        "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      }
+    },
+    {
+      "id": "laplusdarknesss",
+      "name": "La+ Darknesss",
+      "title": "Commanding Genius",
+      "rarity": "5-Star",
+      "group": "holoX",
+      "type": "PURE",
+      "accentColor": "#6f2dbd",
+      "image": "/images/laplusdarknesss.webp",
+      "avatar": "L",
+      "stats": {
+        "sense": 90,
+        "technique": 94,
+        "performance": 79,
+        "support": 81
+      },
+      "skills": {
+        "outfit": "With 2 or more holoX Members, grants All Stats UP 50% to all.",
+        "special": "For 12s, Grants Score Support Effect of 135%.",
+        "active": "For 6s, Score UP 125%. Every 18s with a Medium Probability chance.",
+        "passive": "With 2 or more holoX Members, grants All Stats UP 33% to Self."
+      }
+    },
+    {
+      "id": "takanelui",
+      "name": "Takane Lui",
+      "title": "Iron Executive",
+      "rarity": "5-Star",
+      "group": "holoX",
+      "type": "CUTE",
+      "accentColor": "#800000",
+      "image": "/images/takanelui.webp",
+      "avatar": "T",
+      "stats": {
+        "sense": 77,
+        "technique": 91,
+        "performance": 84,
+        "support": 82
+      },
+      "skills": {
+        "outfit": "Grants All Stats UP 45% to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 8s, Score UP 55%. Every 21s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 115%.",
+        "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self."
+      }
+    },
+    {
+      "id": "hakuikoyori",
+      "name": "Hakui Koyori",
+      "title": "Assistant's Muse",
+      "rarity": "5-Star",
+      "group": "holoX",
+      "type": "PURE",
+      "accentColor": "#ff80df",
+      "image": "/images/hakuikoyori.webp",
+      "avatar": "H",
+      "stats": {
+        "sense": 82,
+        "technique": 82,
+        "performance": 76,
+        "support": 85
+      },
+      "skills": {
+        "outfit": "With 2 or more Pure Type Members, grants All Stats UP 30% to all and +25% Support to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
+        "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
+        "passive": "With 2 or more Pure Type Members, grants Sense UP 43% to 2 Pure Type Members."
+      }
+    },
+    {
+      "id": "kazamairoha",
+      "name": "Kazama Iroha",
+      "title": "Blade Flash",
+      "rarity": "5-Star",
+      "group": "holoX",
+      "type": "CUTE",
+      "accentColor": "#2ec4b6",
+      "image": "/images/kazamairoha.webp",
+      "avatar": "K",
+      "stats": {
+        "sense": 80,
+        "technique": 92,
+        "performance": 84,
+        "support": 87
+      },
+      "skills": {
+        "outfit": "With 2 or more Cute Type Members, grants Technique UP 130% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
+        "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
+        "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "ayundarisu",
+      "name": "Ayunda Risu",
+      "title": "いたずらたくらむ木漏れ日の森",
+      "rarity": "5-Star",
+      "group": "Gen 1",
+      "type": "HAPPY",
+      "accentColor": "#d4a373",
+      "image": "/images/ayundarisu.webp",
+      "avatar": "A",
+      "stats": {
+        "sense": 91,
+        "technique": 79,
+        "performance": 81,
+        "support": 87
+      },
+      "skills": {
+        "outfit": "With 2 or more Happy Type Members, grants Technique UP 130% to all.",
+        "special": "For 12s, Grants Score Support Effect of 120%. When LIFE is 1000 or higher, Skill Activation Rate UP 45%.",
+        "active": "For 15s, Score UP 90%. Every 34s with a High Probability chance.",
+        "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      }
+    },
+    {
+      "id": "moonahoshinova",
+      "name": "Moona Hoshinova",
+      "title": "Lunar Songstress",
+      "rarity": "5-Star",
+      "group": "Gen 1",
+      "type": "PURE",
+      "accentColor": "#48cae4",
+      "image": "/images/moonahoshinova.webp",
+      "avatar": "M",
+      "stats": {
+        "sense": 75,
+        "technique": 80,
+        "performance": 92,
+        "support": 79
+      },
+      "skills": {
+        "outfit": "With 2 or more ID Gen 1 Members, grants All Stats UP 50% to all.",
+        "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+        "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
+        "passive": "With 2 or more ID Gen 1 Members, grants Sense UP 45% to 2 ID Gen 1 Members."
+      }
+    },
+    {
+      "id": "airaniiofifteen",
+      "name": "Airani Iofifteen",
+      "title": "陽光射すCosmos Palette",
+      "rarity": "5-Star",
+      "group": "Gen 1",
+      "type": "PURE",
+      "accentColor": "#ccd5ae",
+      "image": "/images/airaniiofifteen.webp",
+      "avatar": "A",
+      "stats": {
+        "sense": 75,
+        "technique": 75,
+        "performance": 85,
+        "support": 88
+      },
+      "skills": {
+        "outfit": "With 2 or more Pure Type Members, grants Technique UP 130% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
+        "active": "For 6s, Score UP 120%. Every 17s with a Medium Probability chance.",
+        "passive": "Grants Technique UP 41% to 2 Pure Type Members."
+      }
+    },
+    {
+      "id": "kureijiollie",
+      "name": "Kureiji Ollie",
+      "title": "Z nonstop talker",
+      "rarity": "5-Star",
+      "group": "Gen 2",
+      "type": "PURE",
+      "accentColor": "#e63946",
+      "image": "/images/kureijiollie.webp",
+      "avatar": "K",
+      "stats": {
+        "sense": 90,
+        "technique": 89,
+        "performance": 94,
+        "support": 90
+      },
+      "skills": {
+        "outfit": "Grants All Stats UP 45% to all.",
+        "special": "For 12s, Grants Score Support Effect of 135%.",
+        "active": "For 10s, Score UP 55%. Every 25s with a Medium Probability chance. With 2 or more Pure Type Members, Score UP 110%.",
+        "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
+      }
+    },
+    {
+      "id": "anyamelfissa",
+      "name": "Anya Melfissa",
+      "title": "ソファに沈んでまったりゲーム",
+      "rarity": "5-Star",
+      "group": "Gen 2",
+      "type": "PURE",
+      "accentColor": "#9b2226",
+      "image": "/images/anyamelfissa.webp",
+      "avatar": "A",
+      "stats": {
+        "sense": 75,
+        "technique": 80,
+        "performance": 92,
+        "support": 79
+      },
+      "skills": {
+        "outfit": "With 2 or more ID Gen 2 Members, grants All Stats UP 50% to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 10s, Score UP 100%. Every 24s with a Medium Probability chance.",
+        "passive": "With 2 or more ID Gen 2 Members, grants All Stats UP 33% to Self."
+      }
+    },
+    {
+      "id": "pavoliareine",
+      "name": "Pavolia Reine",
+      "title": "おすまし孔雀と嗜む一杯",
+      "rarity": "5-Star",
+      "group": "Gen 2",
+      "type": "HAPPY",
+      "accentColor": "#0077b6",
+      "image": "/images/pavoliareine.webp",
+      "avatar": "P",
+      "stats": {
+        "sense": 77,
+        "technique": 86,
+        "performance": 88,
+        "support": 83
+      },
+      "skills": {
+        "outfit": "Grants Score Support Effect of 60% to all.",
+        "special": "For 10s, Grants Score Support Effect of 160%.",
+        "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With 2 or more Happy Type Members, Score UP 120%.",
+        "passive": "Grants Technique UP 41% to 2 Happy Type Members."
+      }
+    },
+    {
+      "id": "vestiazeta",
+      "name": "Vestia Zeta",
+      "title": "陽だまりとネコと構成員",
+      "rarity": "5-Star",
+      "group": "Gen 3",
+      "type": "PURE",
+      "accentColor": "#e5e5e5",
+      "image": "/images/vestiazeta.webp",
+      "avatar": "V",
+      "stats": {
+        "sense": 93,
+        "technique": 90,
+        "performance": 89,
+        "support": 78
+      },
+      "skills": {
+        "outfit": "With 2 or more ID Gen 3 Members, grants All Stats UP 50% to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 11s, Score UP 90%. Every 25s with a High Probability chance.",
+        "passive": "With 2 or more ID Gen 3 Members, grants All Stats UP 33% to Self."
+      }
+    },
+    {
+      "id": "kaelakovalskia",
+      "name": "Kaela Kovalskia",
+      "title": "こころ強さは鍛冶場で研ぐ",
+      "rarity": "5-Star",
+      "group": "Gen 3",
+      "type": "CUTE",
+      "accentColor": "#b8c0ff",
+      "image": "/images/kaelakovalskia.webp",
+      "avatar": "K",
+      "stats": {
+        "sense": 79,
+        "technique": 86,
+        "performance": 88,
+        "support": 83
+      },
+      "skills": {
+        "outfit": "Grants Score Support Effect of 60% to all.",
+        "special": "For 12s, Grants Score Support Effect of 135%.",
+        "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 120%.",
+        "passive": "Grants Technique UP 41% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "kobokanaeru",
+      "name": "Kobo Kanaeru",
+      "title": "あめ上がりの雨喜雨喜シャーマン",
+      "rarity": "5-Star",
+      "group": "Gen 3",
+      "type": "PURE",
+      "accentColor": "#2a9d8f",
+      "image": "/images/kobokanaeru.webp",
+      "avatar": "K",
+      "stats": {
+        "sense": 94,
+        "technique": 79,
+        "performance": 81,
+        "support": 81
+      },
+      "skills": {
+        "outfit": "Grants All Stats UP 45% to all.",
+        "special": "For 12s, Grants Score Support Effect of 135%.",
+        "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With 2 or more Pure Type Members, Score UP 110%.",
+        "passive": "With 2 or more Pure Type Members, grants All Stats UP 32% to Self."
+      }
+    },
+    {
+      "id": "calliopemori",
+      "name": "Calliope Mori",
+      "title": "Grim Reaper's Melody",
+      "rarity": "5-Star",
+      "group": "Myth",
+      "type": "PURE",
+      "accentColor": "#ff477e",
+      "image": "/images/calliopemori.webp",
+      "avatar": "C",
+      "stats": {
+        "sense": 76,
+        "technique": 85,
+        "performance": 82,
+        "support": 87
+      },
+      "skills": {
+        "outfit": "With 2 or more Myth Members, grants All Stats UP 50% to all.",
+        "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
+        "active": "For 11s, Score UP 120%. Every 33s with a High Probability chance.",
+        "passive": "With 2 or more Myth Members, grants Score Support Effect of 12% to 2 Myth Members."
+      }
+    },
+    {
+      "id": "takanashikiara",
+      "name": "Takanashi Kiara",
+      "title": "Lovely Phoenixダイナー",
+      "rarity": "5-Star",
+      "group": "Myth",
+      "type": "CUTE",
+      "accentColor": "#f77f00",
+      "image": "/images/takanashikiara.webp",
+      "avatar": "T",
+      "stats": {
+        "sense": 78,
+        "technique": 75,
+        "performance": 80,
+        "support": 92
+      },
+      "skills": {
+        "outfit": "With 2 or more Cute Type Members, grants Performance UP 130% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
+        "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
+        "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "ninomaeinanis",
+      "name": "Ninomae Ina’nis",
+      "title": "ぽかぽかチャージなひととき",
+      "rarity": "5-Star",
+      "group": "Myth",
+      "type": "PURE",
+      "accentColor": "#00c3ff",
+      "image": "/images/ninomaeinanis.webp",
+      "avatar": "N",
+      "stats": {
+        "sense": 95,
+        "technique": 80,
+        "performance": 81,
+        "support": 76
+      },
+      "skills": {
+        "outfit": "Grants Score Support Effect of 60% to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 14s, Score UP 45%. Every 32s with a High Probability chance. With 2 or more Pure Type Members, Score UP 95%.",
+        "passive": "With 2 or more Pure Type Members, grants All Stats UP 32% to Self."
+      }
+    },
+    {
+      "id": "irys",
+      "name": "IRyS",
+      "title": "nephilim sonority",
+      "rarity": "5-Star",
+      "group": "Promise",
+      "type": "PURE",
+      "accentColor": "#b5179e",
+      "image": "/images/irys.webp",
+      "avatar": "I",
+      "stats": {
+        "sense": 81,
+        "technique": 81,
+        "performance": 81,
+        "support": 87
+      },
+      "skills": {
+        "outfit": "With 2 or more Promise Members, grants All Stats UP 50% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
+        "active": "For 11s, Score UP 95%. Every 25s with a Medium Probability chance.",
+        "passive": "Grants Technique UP 43% to 2 Promise Members."
+      }
+    },
+    {
+      "id": "ourokronii",
+      "name": "Ouro Kronii",
+      "title": "Clock Tower Warden",
+      "rarity": "5-Star",
+      "group": "Promise",
+      "type": "CUTE",
+      "accentColor": "#0077b6",
+      "image": "/images/ourokronii.webp",
+      "avatar": "O",
+      "stats": {
+        "sense": 89,
+        "technique": 78,
+        "performance": 81,
+        "support": 87
+      },
+      "skills": {
+        "outfit": "Grants Score Support Effect of 60% to all.",
+        "special": "For 14s, Grants Score Support Effect of 115%.",
+        "active": "For 12s, Score UP 55%. Every 33s with a High Probability chance. With 2 or more Cute Type Members, Score UP 115%.",
+        "passive": "Grants Sense UP 41% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "hakosbaelz",
+      "name": "Hakos Baelz",
+      "title": "Chaotic Powerful Rat",
+      "rarity": "5-Star",
+      "group": "Promise",
+      "type": "PURE",
+      "accentColor": "#d90429",
+      "image": "/images/hakosbaelz.webp",
+      "avatar": "H",
+      "stats": {
+        "sense": 95,
+        "technique": 80,
+        "performance": 92,
+        "support": 95
+      },
+      "skills": {
+        "outfit": "With 2 or more Pure Type Members, grants Performance UP 130% to all.",
+        "special": "For 12s, Grants Score Support Effect of 135%.",
+        "active": "For 11s, Score UP 90%. Every 25s with a High Probability chance.",
+        "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
+      }
+    },
+    {
+      "id": "shiorinovella",
+      "name": "Shiori Novella",
+      "title": "書庫ではぐくむ探究心",
+      "rarity": "5-Star",
+      "group": "Advent",
+      "type": "PURE",
+      "accentColor": "#a2d2ff",
+      "image": "/images/shiorinovella.webp",
+      "avatar": "S",
+      "stats": {
+        "sense": 91,
+        "technique": 94,
+        "performance": 95,
+        "support": 95
+      },
+      "skills": {
+        "outfit": "Grants Performance UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 11s, Score UP 60%. Every 32s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
+        "passive": "Grants Performance UP 43% to 2 Advent Members."
+      }
+    },
+    {
+      "id": "kosekibijou",
+      "name": "Koseki Bijou",
+      "title": "Prism Crystal Realm",
+      "rarity": "5-Star",
+      "group": "Advent",
+      "type": "PURE",
+      "accentColor": "#e2e2e2",
+      "image": "/images/kosekibijou.webp",
+      "avatar": "K",
+      "stats": {
+        "sense": 83,
+        "technique": 87,
+        "performance": 78,
+        "support": 75
+      },
+      "skills": {
+        "outfit": "Grants Sense UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 9s, Score UP 65%. Every 27s with a Medium Probability chance. With a Combo of 40 or more, Score UP 130%.",
+        "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
+      }
+    },
+    {
+      "id": "nerissaravencroft",
+      "name": "Nerissa Ravencroft",
+      "title": "Echoes of Nocturne",
+      "rarity": "5-Star",
+      "group": "Advent",
+      "type": "PURE",
+      "accentColor": "#4361ee",
+      "image": "/images/nerissaravencroft.webp",
+      "avatar": "N",
+      "stats": {
+        "sense": 94,
+        "technique": 79,
+        "performance": 76,
+        "support": 75
+      },
+      "skills": {
+        "outfit": "With 2 or more Advent Members, grants All Stats UP 50% to all.",
+        "special": "For 12s, Grants Score Support Effect of 135%.",
+        "active": "For 7s, Score UP 90%. Every 15s with a Medium Probability chance.",
+        "passive": "With 2 or more Advent Members, grants All Stats UP 33% to Self."
+      }
+    },
+    {
+      "id": "fuwawaabyssgard",
+      "name": "Fuwawa Abyssgard",
+      "title": "Fluffy Donut Feast",
+      "rarity": "5-Star",
+      "group": "Advent",
+      "type": "CUTE",
+      "accentColor": "#ccd5ae",
+      "image": "/images/fuwawaabyssgard.webp",
+      "avatar": "F",
+      "stats": {
+        "sense": 82,
+        "technique": 76,
+        "performance": 80,
+        "support": 92
+      },
+      "skills": {
+        "outfit": "Grants Technique UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 8s, Score UP 55%. Every 20s with a Medium Probability chance. With a Combo of 40 or more, Score UP 110%.",
+        "passive": "Grants Technique UP 41% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "mococoabyssgard",
+      "name": "Mococo Abyssgard",
+      "title": "のほほんドーナツパーティー♪",
+      "rarity": "5-Star",
+      "group": "Advent",
+      "type": "CUTE",
+      "accentColor": "#ffccd5",
+      "image": "/images/mococoabyssgard.webp",
+      "avatar": "M",
+      "stats": {
+        "sense": 89,
+        "technique": 78,
+        "performance": 81,
+        "support": 87
+      },
+      "skills": {
+        "outfit": "With 2 or more Cute Type Members, grants Sense UP 130% to all.",
+        "special": "For 11s, Grants Score Support Effect of 130%. With a Combo of 100 or more, Skill Activation Rate UP 50%.",
+        "active": "For 8s, Score UP 125%. Every 25s with a High Probability chance.",
+        "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      }
+    },
+    {
+      "id": "otonosekanade",
+      "name": "Otonose Kanade",
+      "title": "パレードで笑顔をお届け",
+      "rarity": "5-Star",
+      "group": "ReGLOSS",
+      "type": "PURE",
+      "accentColor": "#ff9f1c",
+      "image": "/images/otonosekanade.webp",
+      "avatar": "O",
+      "stats": {
+        "sense": 86,
+        "technique": 93,
+        "performance": 90,
+        "support": 78
+      },
+      "skills": {
+        "outfit": "With 2 or more Pure Type Members, grants Sense UP 130% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
+        "active": "For 12s, Score UP 90%. Every 27s with a High Probability chance.",
+        "passive": "Grants Sense UP 43% to 2 ReGLOSS Members."
+      }
+    },
+    {
+      "id": "ichijouririka",
+      "name": "Ichijou Ririka",
+      "title": "深夜にひと息、CEOの限界飯",
+      "rarity": "5-Star",
+      "group": "ReGLOSS",
+      "type": "PURE",
+      "accentColor": "#ffb703",
+      "image": "/images/ichijouririka.webp",
+      "avatar": "I",
+      "stats": {
+        "sense": 86,
+        "technique": 93,
+        "performance": 84,
+        "support": 82
+      },
+      "skills": {
+        "outfit": "With 2 or more ReGLOSS Members, grants All Stats UP 50% to all.",
+        "special": "For 12s, Grants Score Support Effect of 135%.",
+        "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
+        "passive": "With 2 or more ReGLOSS Members, grants Performance UP 45% to 2 ReGLOSS Members."
+      }
+    },
+    {
+      "id": "juufuuteiraden",
+      "name": "Juufuutei Raden",
+      "title": "叡智を灯し、アートに導く",
+      "rarity": "5-Star",
+      "group": "ReGLOSS",
+      "type": "PURE",
+      "accentColor": "#f4a261",
+      "image": "/images/juufuuteiraden.webp",
+      "avatar": "J",
+      "stats": {
+        "sense": 77,
+        "technique": 80,
+        "performance": 92,
+        "support": 95
+      },
+      "skills": {
+        "outfit": "Grants Sense UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 8s, Score UP 55%. Every 22s with a High Probability chance. When LIFE is 600 or higher, Score UP 115%.",
+        "passive": "Grants Sense UP 43% to 2 ReGLOSS Members."
+      }
+    },
+    {
+      "id": "todorokihajime",
+      "name": "Todoroki Hajime",
+      "title": "ガーリー番長のお裾分け",
+      "rarity": "5-Star",
+      "group": "ReGLOSS",
+      "type": "CUTE",
+      "accentColor": "#8d99ae",
+      "image": "/images/todorokihajime.webp",
+      "avatar": "T",
+      "stats": {
+        "sense": 95,
+        "technique": 95,
+        "performance": 80,
+        "support": 86
+      },
+      "skills": {
+        "outfit": "Grants Performance UP 120% to all.",
+        "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
+        "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
+        "passive": "Grants Performance UP 41% to 2 Cute Type Members."
+      }
+    }
+  ],
+  "presets": [
+    {
+      "id": "preset_1",
+      "name": "Preset 1",
+      "team": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "leader": null,
+      "isActive": true
+    },
+    {
+      "id": "preset_2",
+      "name": "Preset 2",
+      "team": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "leader": null,
+      "isActive": false
+    },
+    {
+      "id": "preset_3",
+      "name": "Preset 3",
+      "team": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "leader": null,
+      "isActive": false
+    },
+    {
+      "id": "preset_4",
+      "name": "Preset 4",
+      "team": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "leader": null,
+      "isActive": false
+    },
+    {
+      "id": "preset_5",
+      "name": "Preset 5",
+      "team": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "leader": null,
+      "isActive": false
+    }
+  ],
+  "roster": [
+    "tokinosora",
+    "azki",
+    "sakuramiko"
+  ]
+}
