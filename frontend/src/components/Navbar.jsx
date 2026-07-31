@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Users, Layers, BookOpen, Sparkles, Sun, Moon, ChevronDown, ExternalLink, Globe } from 'lucide-react';
+import { Users, Layers, BookOpen, Sparkles, Sun, Moon, ChevronDown, ExternalLink, Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import './Navbar.css';
@@ -99,7 +99,6 @@ export default function Navbar({ API_BASE = '' }) {
   const STATUS_PAGE_URL = import.meta.env.VITE_STATUS_PAGE_URL || 'https://status.hololive-dream.vercel.app';
 
   const navItems = [
-    { path: '/home', labelKey: 'home', icon: Home },
     { path: '/characters', labelKey: 'characters', icon: Users },
     { path: '/builder', labelKey: 'builder', icon: Layers },
     { path: '/guides', labelKey: 'guides', icon: BookOpen }
@@ -108,7 +107,7 @@ export default function Navbar({ API_BASE = '' }) {
   return (
     <header className="navbar glass">
       <div className="nav-container">
-        <div className="brand" onClick={() => navigate('/home')}>
+        <div className="brand" onClick={() => navigate('/')}>
           <Sparkles className="brand-icon" />
           <span className="brand-title">HoloDreams <span className="title-glow">Showcase</span></span>
         </div>
@@ -316,6 +315,7 @@ export default function Navbar({ API_BASE = '' }) {
                       const val = srv.val || healthStatus.services[srv.key];
                       const srvColor = getStatusColor(val);
                       const isClickable = !!srv.link;
+                      const resolvedLink = srv.link ? (API_BASE ? `${API_BASE}${srv.link}` : srv.link) : null;
                       return (
                         <div 
                           key={idx} 
@@ -331,8 +331,8 @@ export default function Navbar({ API_BASE = '' }) {
                             transition: 'background 0.2s'
                           }}
                           onClick={() => {
-                            if (isClickable) {
-                              window.open(srv.link, '_blank');
+                            if (isClickable && resolvedLink) {
+                              window.open(resolvedLink, '_blank');
                             }
                           }}
                           onMouseEnter={(e) => {

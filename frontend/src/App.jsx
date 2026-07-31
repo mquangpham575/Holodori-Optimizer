@@ -262,7 +262,7 @@ function App() {
       <main className="main-content-layout">
         <Routes>
           <Route 
-            path="/home" 
+            path="/" 
             element={
               <Home 
                 activeTeam={activePreset.team} 
@@ -310,8 +310,8 @@ function App() {
               />
             } 
           />
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route path="*" element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
