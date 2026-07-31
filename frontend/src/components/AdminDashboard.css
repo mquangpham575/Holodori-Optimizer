@@ -428,6 +428,11 @@
   outline: none;
 }
 
+.admin-form select option {
+  background-color: #ffffff !important;
+  color: #121123 !important;
+}
+
 .stats-inputs-block {
   background: rgba(0, 0, 0, 0.15);
   padding: 15px;

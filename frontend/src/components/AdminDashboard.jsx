@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Plus, Edit2, Trash2, X, FileText, Sparkles, Key, Check } from 'lucide-react';
 import './AdminDashboard.css';
+import { CHARACTERS } from '../data';
 
 export default function AdminDashboard({ characters = [], setCharacters, guides = [], setGuides, API_BASE }) {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -267,7 +268,17 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
         throw new Error(data.error || 'Failed to sync database');
       }
       if (data.characters) {
-        setCharacters(data.characters);
+        const sorted = [...data.characters];
+        const originalOrder = CHARACTERS.map(c => c.id);
+        sorted.sort((a, b) => {
+          const idxA = originalOrder.indexOf(a.id);
+          const idxB = originalOrder.indexOf(b.id);
+          if (idxA === -1 && idxB === -1) return 0;
+          if (idxA === -1) return 1;
+          if (idxB === -1) return -1;
+          return idxA - idxB;
+        });
+        setCharacters(sorted);
       }
       setSyncSuccess('Database synchronized successfully!');
       setTimeout(() => setSyncSuccess(''), 4000);
@@ -436,7 +447,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                   <th>Title / Rarity</th>
                   <th>Group / Type</th>
                   <th>Accent Color</th>
-                  <th>Stats (S/T/P/S)</th>
+                  <th>Stats (P/T/S/T)</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -468,7 +479,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                     </td>
                     <td>
                       <code className="td-stats-list">
-                        S: {char.stats.sense} / T: {char.stats.technique} / P: {char.stats.performance} (Total: {char.stats.total || ((parseInt(char.stats.sense) || 0) + (parseInt(char.stats.technique) || 0) + (parseInt(char.stats.performance) || 0))})
+                        P: {char.stats.performance} / T: {char.stats.technique} / S: {char.stats.sense} (Total: {char.stats.total || ((parseInt(char.stats.sense) || 0) + (parseInt(char.stats.technique) || 0) + (parseInt(char.stats.performance) || 0))})
                       </code>
                     </td>
                     <td>
