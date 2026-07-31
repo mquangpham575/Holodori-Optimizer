@@ -1,6 +1,6 @@
-storage:
-  type: sqlite
-  path: /data/data.db
+# storage:
+#   type: sqlite
+#   path: /data/data.db
 
 endpoints:
   - name: frontend
