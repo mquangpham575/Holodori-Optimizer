@@ -400,7 +400,7 @@
 /* Responsive tweaks and 5-member slot updates */
 .config-grid {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 1.5rem;
   margin-top: 1rem;
 }
