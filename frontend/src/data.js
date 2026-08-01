@@ -1,4 +1,3 @@
-// Auto-generated Hololive Dreams database containing 54 characters
 export const CHARACTERS = [
   {
     "id": "tokinosora",
@@ -11,16 +10,16 @@ export const CHARACTERS = [
     "image": "/images/tokinosora.webp",
     "avatar": "T",
     "stats": {
-      "sense": 80,
-      "technique": 76,
-      "performance": 85,
-      "total": 241
+      "sense": 7844,
+      "total": 25974,
+      "technique": 7221,
+      "performance": 10909
     },
     "skills": {
-      "outfit": "With 2 or more Gen 0 Members, grants All Stats UP 50% to all.",
-      "special": "For 10s, Grants Score Support Effect of 160%.",
       "active": "For 10s, Score UP 100%. Every 24s with a Medium Probability chance.",
-      "passive": "With 2 or more Gen 0 Members, grants All Stats UP 33% to Self."
+      "outfit": "With 2 or more Gen 0 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more Gen 0 Members, grants All Stats UP 33% to Self.",
+      "special": "For 10s, Grants Score Support Effect of 160%."
     }
   },
   {
@@ -34,16 +33,16 @@ export const CHARACTERS = [
     "image": "/images/robocosan.webp",
     "avatar": "R",
     "stats": {
-      "sense": 75,
-      "technique": 80,
-      "performance": 92,
-      "total": 247
+      "sense": 6947,
+      "total": 25920,
+      "technique": 7828,
+      "performance": 11145
     },
     "skills": {
-      "outfit": "With 2 or more Happy Type Members, grants Performance UP 130% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
       "active": "For 8s, Score UP 90%. Every 18s with a High Probability chance.",
-      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      "outfit": "With 2 or more Happy Type Members, grants Performance UP 130% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%."
     }
   },
   {
@@ -57,16 +56,16 @@ export const CHARACTERS = [
     "image": "/images/azki.webp",
     "avatar": "A",
     "stats": {
-      "sense": 90,
-      "technique": 94,
-      "performance": 85,
-      "total": 269
+      "sense": 11380,
+      "total": 25865,
+      "technique": 7682,
+      "performance": 6803
     },
     "skills": {
-      "outfit": "Grants Sense UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 7s, Score UP 60%. Every 20s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
-      "passive": "Grants Sense UP 43% to 2 Gen 0 Members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "passive": "Grants Sense UP 43% to 2 Gen 0 Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -80,16 +79,16 @@ export const CHARACTERS = [
     "image": "/images/sakuramiko.webp",
     "avatar": "S",
     "stats": {
-      "sense": 85,
-      "technique": 77,
-      "performance": 86,
-      "total": 248
+      "sense": 11380,
+      "total": 25865,
+      "technique": 6803,
+      "performance": 7682
     },
     "skills": {
-      "outfit": "Grants Sense UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With a Combo of 40 or more, Score UP 110%.",
-      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -103,16 +102,16 @@ export const CHARACTERS = [
     "image": "/images/hoshimachisuisei.webp",
     "avatar": "H",
     "stats": {
-      "sense": 78,
-      "technique": 81,
-      "performance": 76,
-      "total": 235
+      "sense": 7682,
+      "technique": 11380,
+      "performance": 6803,
+      "total": 25865
     },
     "skills": {
-      "outfit": "Grants Technique UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
-      "passive": "Grants Technique UP 41% to 2 Pure Type Members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "passive": "Grants Technique UP 41% to 2 Pure Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -126,16 +125,16 @@ export const CHARACTERS = [
     "image": "/images/akirosenthal.webp",
     "avatar": "A",
     "stats": {
-      "sense": 86,
-      "technique": 93,
-      "performance": 79,
-      "total": 258
+      "sense": 11380,
+      "technique": 7682,
+      "performance": 6803,
+      "total": 25865
     },
     "skills": {
-      "outfit": "Grants Sense UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 8s, Score UP 100%. Every 21s with a Medium Probability chance. When LIFE is 600 or higher, Score UP 115%.",
-      "passive": "Grants Sense UP 43% to 2 Gen 1 Members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "passive": "Grants Sense UP 43% to 2 Gen 1 Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -149,16 +148,16 @@ export const CHARACTERS = [
     "image": "/images/akaihaato.webp",
     "avatar": "A",
     "stats": {
-      "sense": 79,
-      "technique": 86,
-      "performance": 93,
-      "total": 258
+      "sense": 6803,
+      "technique": 11380,
+      "performance": 7682,
+      "total": 25865
     },
     "skills": {
-      "outfit": "Grants Technique UP 120% to all.",
-      "special": "For 12s, Grants Score Support Effect of 135%.",
       "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With a Combo of 40 or more, Score UP 120%.",
-      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members.",
+      "special": "For 12s, Grants Score Support Effect of 135%."
     }
   },
   {
@@ -172,16 +171,16 @@ export const CHARACTERS = [
     "image": "/images/shirakamifubuki.webp",
     "avatar": "S",
     "stats": {
-      "sense": 80,
-      "technique": 76,
-      "performance": 85,
-      "total": 241
+      "sense": 7844,
+      "technique": 7221,
+      "performance": 10909,
+      "total": 25974
     },
     "skills": {
-      "outfit": "With 2 or more Gen 1 Members, grants All Stats UP 50% to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
-      "passive": "With 2 or more Gen 1 Members, grants Performance UP 45% to 2 Gen 1 Members."
+      "outfit": "With 2 or more Gen 1 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more Gen 1 Members, grants Performance UP 45% to 2 Gen 1 Members.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -195,16 +194,16 @@ export const CHARACTERS = [
     "image": "/images/natsuiromatsuri.webp",
     "avatar": "N",
     "stats": {
-      "sense": 89,
-      "technique": 94,
-      "performance": 85,
-      "total": 268
+      "sense": 6803,
+      "technique": 7682,
+      "performance": 11380,
+      "total": 25865
     },
     "skills": {
-      "outfit": "Grants Performance UP 120% to ALL.",
-      "special": "For 11s, Grants Score Support Effect of 145%.",
       "active": "For 10s, Score UP 60%. Every 23s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
-      "passive": "Grants Performance UP 43% to 2 Gen 1 Members."
+      "outfit": "Grants Performance UP 120% to ALL.",
+      "passive": "Grants Performance UP 43% to 2 Gen 1 Members.",
+      "special": "For 11s, Grants Score Support Effect of 145%."
     }
   },
   {
@@ -218,16 +217,16 @@ export const CHARACTERS = [
     "image": "/images/nakiriayame.webp",
     "avatar": "N",
     "stats": {
-      "sense": 85,
-      "technique": 88,
-      "performance": 78,
-      "total": 251
+      "sense": 7981,
+      "technique": 7668,
+      "performance": 10433,
+      "total": 26082
     },
     "skills": {
-      "outfit": "Grants Score Support Effect of 60% to all.",
-      "special": "For 10s, Grants Score Support Effect of 160%.",
       "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With 2 or more Pure Type Members, Score UP 120%.",
-      "passive": "Grants Performance UP 41% to 2 Pure Type Members."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "passive": "Grants Performance UP 41% to 2 Pure Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 160%."
     }
   },
   {
@@ -241,16 +240,16 @@ export const CHARACTERS = [
     "image": "/images/yuzukichoco.webp",
     "avatar": "Y",
     "stats": {
-      "sense": 94,
-      "technique": 85,
-      "performance": 77,
-      "total": 256
+      "sense": 10672,
+      "technique": 7991,
+      "performance": 7366,
+      "total": 26029
     },
     "skills": {
-      "outfit": "With 2 or more Happy Type Members, Grants All Stats UP 30% to all. With 2 or more Happy Type Members, Grants Score Support Effect of 25% to all.",
-      "special": "For 10s, Grants Score Support Effect of 160%.",
       "active": "For 7s, Score UP 120%. Every 20s with a Medium Probability chance.",
-      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      "outfit": "With 2 or more Happy Type Members, Grants All Stats UP 30% to all. With 2 or more Happy Type Members, Grants Score Support Effect of 25% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 160%."
     }
   },
   {
@@ -264,16 +263,16 @@ export const CHARACTERS = [
     "image": "/images/oozorasubaru.webp",
     "avatar": "O",
     "stats": {
-      "sense": 95,
-      "technique": 80,
-      "performance": 92,
-      "total": 267
+      "sense": 7844,
+      "technique": 7221,
+      "performance": 10909,
+      "total": 25974
     },
     "skills": {
-      "outfit": "With 2 or more Gen 2 Members, grants All Stats UP 50% to all.",
-      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
       "active": "For 12s, Score UP 115%. Every 34s with a High Probability chance.",
-      "passive": "With 2 or more Gen 2 Members, grants Performance UP 45% to 2 Gen 2 Members."
+      "outfit": "With 2 or more Gen 2 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more Gen 2 Members, grants Performance UP 45% to 2 Gen 2 Members.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%."
     }
   },
   {
@@ -288,15 +287,15 @@ export const CHARACTERS = [
     "avatar": "O",
     "stats": {
       "sense": 10909,
+      "total": 25974,
       "technique": 7221,
-      "performance": 7844,
-      "total": 25974
+      "performance": 7844
     },
     "skills": {
-      "outfit": "With 2 or more Gamers Members, grants +50% Stats to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 9s, Score UP 120%. Every 27s with a High Probability chance.",
-      "passive": "With 2 or more Gamers Members, grants Score Support Effect of 12% to 2 Gamers Members."
+      "outfit": "With 2 or more Gamers Members, grants +50% Stats to all.",
+      "passive": "With 2 or more Gamers Members, grants Score Support Effect of 12% to 2 Gamers Members.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -311,15 +310,15 @@ export const CHARACTERS = [
     "avatar": "N",
     "stats": {
       "sense": 6803,
+      "total": 25865,
       "technique": 11380,
-      "performance": 7682,
-      "total": 25865
+      "performance": 7682
     },
     "skills": {
-      "outfit": "Grants Technique UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 160%.",
       "active": "For 10s, Score UP 55%. Every 25s with a Medium Probability chance. When LIFE is 600 or higher, Score UP 110%.",
-      "passive": "Grants Technique UP 41% to 2 Cute Type Members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "passive": "Grants Technique UP 41% to 2 Cute Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 160%."
     }
   },
   {
@@ -334,15 +333,15 @@ export const CHARACTERS = [
     "avatar": "I",
     "stats": {
       "sense": 11145,
+      "total": 25920,
       "technique": 6947,
-      "performance": 7828,
-      "total": 25920
+      "performance": 7828
     },
     "skills": {
-      "outfit": "With 2 or more Happy Type Members, grants Sense UP 130% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
       "active": "For 6s, Score UP 120%. Every 17s with a Medium Probability chance.",
-      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      "outfit": "With 2 or more Happy Type Members, grants Sense UP 130% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%."
     }
   },
   {
@@ -357,15 +356,15 @@ export const CHARACTERS = [
     "avatar": "U",
     "stats": {
       "sense": 7991,
+      "total": 26029,
       "technique": 10672,
-      "performance": 7366,
-      "total": 26029
+      "performance": 7366
     },
     "skills": {
-      "outfit": "With 2 or more Cute Type Members, Grants All Stats UP 30% to all. With 2 or more Cute Type Members, Grants Score Support Effect of 25% to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 12s, Score UP 105%. Every 30s with a Medium Probability chance.",
-      "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self."
+      "outfit": "With 2 or more Cute Type Members, Grants All Stats UP 30% to all. With 2 or more Cute Type Members, Grants Score Support Effect of 25% to all.",
+      "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -380,15 +379,15 @@ export const CHARACTERS = [
     "avatar": "S",
     "stats": {
       "sense": 7682,
+      "total": 25865,
       "technique": 6803,
-      "performance": 11380,
-      "total": 25865
+      "performance": 11380
     },
     "skills": {
-      "outfit": "Grants Performance UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
-      "passive": "Grants Performance UP 43% to 2 Gen 3 Members."
+      "outfit": "Grants Performance UP 120% to all.",
+      "passive": "Grants Performance UP 43% to 2 Gen 3 Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -403,15 +402,15 @@ export const CHARACTERS = [
     "avatar": "S",
     "stats": {
       "sense": 10433,
+      "total": 26082,
       "technique": 7981,
-      "performance": 7668,
-      "total": 26082
+      "performance": 7668
     },
     "skills": {
-      "outfit": "Grants Score Support Effect of 60% to all.",
-      "special": "For 10s, Grants Score Support Effect of 160%.",
       "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With 2 or more Happy Type Members, Score UP 120%.",
-      "passive": "With 2 or more Happy Type Members, grants All Stats UP 32% to Self."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "passive": "With 2 or more Happy Type Members, grants All Stats UP 32% to Self.",
+      "special": "For 10s, Grants Score Support Effect of 160%."
     }
   },
   {
@@ -426,15 +425,15 @@ export const CHARACTERS = [
     "avatar": "H",
     "stats": {
       "sense": 7844,
+      "total": 25974,
       "technique": 10909,
-      "performance": 7221,
-      "total": 25974
+      "performance": 7221
     },
     "skills": {
-      "outfit": "With 2 or more Gen 3 Members, grants All Stats UP 50% to all.",
-      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
       "active": "For 10s, Score UP 115%. Every 23s with a High Probability chance.",
-      "passive": "With 2 or more Gen 3 Members, grants Score Support Effect of 12% to 2 Gen 3 Members."
+      "outfit": "With 2 or more Gen 3 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more Gen 3 Members, grants Score Support Effect of 12% to 2 Gen 3 Members.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%."
     }
   },
   {
@@ -449,15 +448,15 @@ export const CHARACTERS = [
     "avatar": "T",
     "stats": {
       "sense": 7366,
+      "total": 26029,
       "technique": 7991,
-      "performance": 10672,
-      "total": 26029
+      "performance": 10672
     },
     "skills": {
-      "outfit": "Grants All Stats UP 45% to all.",
-      "special": "For 11s, Grants Score Support Effect of 145%.",
       "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 110%.",
-      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members.",
+      "special": "For 11s, Grants Score Support Effect of 145%."
     }
   },
   {
@@ -472,15 +471,15 @@ export const CHARACTERS = [
     "avatar": "T",
     "stats": {
       "sense": 10909,
+      "total": 25974,
       "technique": 7221,
-      "performance": 7844,
-      "total": 25974
+      "performance": 7844
     },
     "skills": {
-      "outfit": "With 2 or more Gen 4 Members, grants All Stats UP 50% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 8s, Score UP 95%. Every 19s with a High Probability chance.",
-      "passive": "With 2 or more Gen 4 Members, grants Sense UP 45% to 2 Gen 4 Members."
+      "outfit": "With 2 or more Gen 4 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more Gen 4 Members, grants Sense UP 45% to 2 Gen 4 Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -495,15 +494,15 @@ export const CHARACTERS = [
     "avatar": "H",
     "stats": {
       "sense": 6803,
+      "total": 25865,
       "technique": 11380,
-      "performance": 7682,
-      "total": 25865
+      "performance": 7682
     },
     "skills": {
-      "outfit": "Grants Technique UP 120% to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
-      "passive": "Grants Technique UP 43% to 2 Gen 4 Members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "passive": "Grants Technique UP 43% to 2 Gen 4 Members.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -518,15 +517,15 @@ export const CHARACTERS = [
     "avatar": "Y",
     "stats": {
       "sense": 10909,
+      "total": 25974,
       "technique": 7844,
-      "performance": 7221,
-      "total": 25974
+      "performance": 7221
     },
     "skills": {
-      "outfit": "With 2 or more Gen 5 Members, grants All Stats UP 50% to all.",
-      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
       "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
-      "passive": "With 2 or more Gen 5 Members, grants All Stats UP 33% to Self."
+      "outfit": "With 2 or more Gen 5 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more Gen 5 Members, grants All Stats UP 33% to Self.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%."
     }
   },
   {
@@ -541,15 +540,15 @@ export const CHARACTERS = [
     "avatar": "M",
     "stats": {
       "sense": 7682,
+      "total": 25865,
       "technique": 6803,
-      "performance": 11380,
-      "total": 25865
+      "performance": 11380
     },
     "skills": {
-      "outfit": "Grants Performance UP 120% to all.",
-      "special": "For 11s, Grants Score Support Effect of 145%.",
       "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. When LIFE is 600 or higher, Score UP 120%.",
-      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      "outfit": "Grants Performance UP 120% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members.",
+      "special": "For 11s, Grants Score Support Effect of 145%."
     }
   },
   {
@@ -564,15 +563,15 @@ export const CHARACTERS = [
     "avatar": "S",
     "stats": {
       "sense": 7366,
+      "total": 26029,
       "technique": 7991,
-      "performance": 10672,
-      "total": 26029
+      "performance": 10672
     },
     "skills": {
-      "outfit": "Grants All Stats UP 45% to all.",
-      "special": "For 10s, Grants Score Support Effect of 160%.",
       "active": "For 9s, Score UP 60%. Every 27s with a High Probability chance. With 2 or more Happy Type Members, Score UP 125%.",
-      "passive": "With 2 or more Happy Type Members, grants Performance UP 43% to 2 Happy Type Members."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "passive": "With 2 or more Happy Type Members, grants Performance UP 43% to 2 Happy Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 160%."
     }
   },
   {
@@ -587,15 +586,15 @@ export const CHARACTERS = [
     "avatar": "O",
     "stats": {
       "sense": 10672,
+      "total": 26029,
       "technique": 7991,
-      "performance": 7366,
-      "total": 26029
+      "performance": 7366
     },
     "skills": {
-      "outfit": "Grants All Stats UP 45% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 8s, Score UP 55%. Every 21s with a Medium Probability chance. With 2 or more Happy Type Members, Score UP 115%.",
-      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -610,15 +609,15 @@ export const CHARACTERS = [
     "avatar": "L",
     "stats": {
       "sense": 7844,
+      "total": 25974,
       "technique": 10909,
-      "performance": 7221,
-      "total": 25974
+      "performance": 7221
     },
     "skills": {
-      "outfit": "With 2 or more holoX Members, grants All Stats UP 50% to all.",
-      "special": "For 12s, Grants Score Support Effect of 135%.",
       "active": "For 6s, Score UP 125%. Every 18s with a Medium Probability chance.",
-      "passive": "With 2 or more holoX Members, grants All Stats UP 33% to Self."
+      "outfit": "With 2 or more holoX Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more holoX Members, grants All Stats UP 33% to Self.",
+      "special": "For 12s, Grants Score Support Effect of 135%."
     }
   },
   {
@@ -633,15 +632,15 @@ export const CHARACTERS = [
     "avatar": "T",
     "stats": {
       "sense": 7366,
+      "total": 26029,
       "technique": 10672,
-      "performance": 7991,
-      "total": 26029
+      "performance": 7991
     },
     "skills": {
-      "outfit": "Grants All Stats UP 45% to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 8s, Score UP 55%. Every 21s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 115%.",
-      "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "passive": "With 2 or more Cute Type Members, grants All Stats UP 32% to Self.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -656,15 +655,15 @@ export const CHARACTERS = [
     "avatar": "H",
     "stats": {
       "sense": 10672,
+      "total": 26029,
       "technique": 7366,
-      "performance": 7991,
-      "total": 26029
+      "performance": 7991
     },
     "skills": {
-      "outfit": "With 2 or more Pure Type Members, Grants All Stats UP 30% to all. With 2 or more Pure Type Members, Grants Score Support Effect of 25% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
       "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
-      "passive": "With 2 or more Pure Type Members, grants Sense UP 43% to 2 Pure Type Members."
+      "outfit": "With 2 or more Pure Type Members, Grants All Stats UP 30% to all. With 2 or more Pure Type Members, Grants Score Support Effect of 25% to all.",
+      "passive": "With 2 or more Pure Type Members, grants Sense UP 43% to 2 Pure Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%."
     }
   },
   {
@@ -679,15 +678,15 @@ export const CHARACTERS = [
     "avatar": "K",
     "stats": {
       "sense": 7828,
+      "total": 25920,
       "technique": 11145,
-      "performance": 6947,
-      "total": 25920
+      "performance": 6947
     },
     "skills": {
-      "outfit": "With 2 or more Cute Type Members, grants Technique UP 130% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
       "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
-      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      "outfit": "With 2 or more Cute Type Members, grants Technique UP 130% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%."
     }
   },
   {
@@ -702,15 +701,15 @@ export const CHARACTERS = [
     "avatar": "A",
     "stats": {
       "sense": 7828,
+      "total": 25920,
       "technique": 11145,
-      "performance": 6947,
-      "total": 25920
+      "performance": 6947
     },
     "skills": {
-      "outfit": "With 2 or more Happy Type Members, grants Technique UP 130% to all.",
-      "special": "For 12s, Grants Score Support Effect of 120%. When LIFE is 1000 or higher, Skill Activation Rate UP 45%.",
       "active": "For 15s, Score UP 90%. Every 34s with a High Probability chance.",
-      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members."
+      "outfit": "With 2 or more Happy Type Members, grants Technique UP 130% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Happy Type Members.",
+      "special": "For 12s, Grants Score Support Effect of 120%. When LIFE is 1000 or higher, Skill Activation Rate UP 45%."
     }
   },
   {
@@ -725,15 +724,15 @@ export const CHARACTERS = [
     "avatar": "M",
     "stats": {
       "sense": 10909,
+      "total": 25974,
       "technique": 7844,
-      "performance": 7221,
-      "total": 25974
+      "performance": 7221
     },
     "skills": {
-      "outfit": "With 2 or more ID Gen 1 Members, grants All Stats UP 50% to all.",
-      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
       "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
-      "passive": "With 2 or more ID Gen 1 Members, grants Sense UP 45% to 2 ID Gen 1 Members."
+      "outfit": "With 2 or more ID Gen 1 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more ID Gen 1 Members, grants Sense UP 45% to 2 ID Gen 1 Members.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%."
     }
   },
   {
@@ -748,15 +747,15 @@ export const CHARACTERS = [
     "avatar": "A",
     "stats": {
       "sense": 6947,
+      "total": 25920,
       "technique": 11145,
-      "performance": 7828,
-      "total": 25920
+      "performance": 7828
     },
     "skills": {
-      "outfit": "With 2 or more Pure Type Members, grants Technique UP 130% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
       "active": "For 6s, Score UP 120%. Every 17s with a Medium Probability chance.",
-      "passive": "Grants Technique UP 41% to 2 Pure Type Members."
+      "outfit": "With 2 or more Pure Type Members, grants Technique UP 130% to all.",
+      "passive": "Grants Technique UP 41% to 2 Pure Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%."
     }
   },
   {
@@ -771,15 +770,15 @@ export const CHARACTERS = [
     "avatar": "K",
     "stats": {
       "sense": 7366,
+      "total": 26029,
       "technique": 10672,
-      "performance": 7991,
-      "total": 26029
+      "performance": 7991
     },
     "skills": {
-      "outfit": "Grants All Stats UP 45% to all.",
-      "special": "For 12s, Grants Score Support Effect of 135%.",
       "active": "For 10s, Score UP 55%. Every 25s with a Medium Probability chance. With 2 or more Pure Type Members, Score UP 110%.",
-      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members.",
+      "special": "For 12s, Grants Score Support Effect of 135%."
     }
   },
   {
@@ -794,15 +793,15 @@ export const CHARACTERS = [
     "avatar": "A",
     "stats": {
       "sense": 10909,
+      "total": 25974,
       "technique": 7844,
-      "performance": 7221,
-      "total": 25974
+      "performance": 7221
     },
     "skills": {
-      "outfit": "With 2 or more ID Gen 2 Members, grants All Stats UP 50% to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 10s, Score UP 100%. Every 24s with a Medium Probability chance.",
-      "passive": "With 2 or more ID Gen 2 Members, grants All Stats UP 33% to Self."
+      "outfit": "With 2 or more ID Gen 2 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more ID Gen 2 Members, grants All Stats UP 33% to Self.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -817,15 +816,15 @@ export const CHARACTERS = [
     "avatar": "P",
     "stats": {
       "sense": 7981,
+      "total": 26082,
       "technique": 10433,
-      "performance": 7668,
-      "total": 26082
+      "performance": 7668
     },
     "skills": {
-      "outfit": "Grants Score Support Effect of 60% to all.",
-      "special": "For 10s, Grants Score Support Effect of 160%.",
       "active": "For 10s, Score UP 60%. Every 29s with a High Probability chance. With 2 or more Happy Type Members, Score UP 120%.",
-      "passive": "Grants Technique UP 41% to 2 Happy Type Members."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "passive": "Grants Technique UP 41% to 2 Happy Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 160%."
     }
   },
   {
@@ -840,15 +839,15 @@ export const CHARACTERS = [
     "avatar": "V",
     "stats": {
       "sense": 7221,
+      "total": 25974,
       "technique": 7844,
-      "performance": 10909,
-      "total": 25974
+      "performance": 10909
     },
     "skills": {
-      "outfit": "With 2 or more ID Gen 3 Members, grants All Stats UP 50% to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 11s, Score UP 90%. Every 25s with a High Probability chance.",
-      "passive": "With 2 or more ID Gen 3 Members, grants All Stats UP 33% to Self."
+      "outfit": "With 2 or more ID Gen 3 Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more ID Gen 3 Members, grants All Stats UP 33% to Self.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -863,15 +862,15 @@ export const CHARACTERS = [
     "avatar": "K",
     "stats": {
       "sense": 7668,
+      "total": 26082,
       "technique": 10433,
-      "performance": 7981,
-      "total": 26082
+      "performance": 7981
     },
     "skills": {
-      "outfit": "Grants Score Support Effect of 60% to all.",
-      "special": "For 12s, Grants Score Support Effect of 135%.",
       "active": "For 7s, Score UP 60%. Every 19s with a Medium Probability chance. With 2 or more Cute Type Members, Score UP 120%.",
-      "passive": "Grants Technique UP 41% to 2 Cute Type Members."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "passive": "Grants Technique UP 41% to 2 Cute Type Members.",
+      "special": "For 12s, Grants Score Support Effect of 135%."
     }
   },
   {
@@ -886,15 +885,15 @@ export const CHARACTERS = [
     "avatar": "K",
     "stats": {
       "sense": 7991,
+      "total": 26029,
       "technique": 7366,
-      "performance": 10672,
-      "total": 26029
+      "performance": 10672
     },
     "skills": {
-      "outfit": "Grants All Stats UP 45% to all.",
-      "special": "For 12s, Grants Score Support Effect of 135%.",
       "active": "For 6s, Score UP 55%. Every 15s with a Medium Probability chance. With 2 or more Pure Type Members, Score UP 110%.",
-      "passive": "With 2 or more Pure Type Members, grants All Stats UP 32% to Self."
+      "outfit": "Grants All Stats UP 45% to all.",
+      "passive": "With 2 or more Pure Type Members, grants All Stats UP 32% to Self.",
+      "special": "For 12s, Grants Score Support Effect of 135%."
     }
   },
   {
@@ -909,15 +908,15 @@ export const CHARACTERS = [
     "avatar": "C",
     "stats": {
       "sense": 7844,
+      "total": 25974,
       "technique": 7221,
-      "performance": 10909,
-      "total": 25974
+      "performance": 10909
     },
     "skills": {
-      "outfit": "With 2 or more Myth Members, grants All Stats UP 50% to all.",
-      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%.",
       "active": "For 11s, Score UP 120%. Every 33s with a High Probability chance.",
-      "passive": "With 2 or more Myth Members, grants Score Support Effect of 12% to 2 Myth Members."
+      "outfit": "With 2 or more Myth Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more Myth Members, grants Score Support Effect of 12% to 2 Myth Members.",
+      "special": "For 12s, Grants Score Support Effect of 120%. Skill Activation Rate UP 40%."
     }
   },
   {
@@ -932,15 +931,15 @@ export const CHARACTERS = [
     "avatar": "T",
     "stats": {
       "sense": 7828,
+      "total": 25920,
       "technique": 6947,
-      "performance": 11145,
-      "total": 25920
+      "performance": 11145
     },
     "skills": {
-      "outfit": "With 2 or more Cute Type Members, grants Performance UP 130% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
       "active": "For 8s, Score UP 115%. Every 23s with a High Probability chance.",
-      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      "outfit": "With 2 or more Cute Type Members, grants Performance UP 130% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%."
     }
   },
   {
@@ -955,15 +954,15 @@ export const CHARACTERS = [
     "avatar": "N",
     "stats": {
       "sense": 7981,
+      "total": 26082,
       "technique": 10433,
-      "performance": 7668,
-      "total": 26082
+      "performance": 7668
     },
     "skills": {
-      "outfit": "Grants Score Support Effect of 60% to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 14s, Score UP 45%. Every 32s with a High Probability chance. With 2 or more Pure Type Members, Score UP 95%.",
-      "passive": "With 2 or more Pure Type Members, grants All Stats UP 32% to Self."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "passive": "With 2 or more Pure Type Members, grants All Stats UP 32% to Self.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -978,15 +977,15 @@ export const CHARACTERS = [
     "avatar": "I",
     "stats": {
       "sense": 7844,
+      "total": 25974,
       "technique": 10909,
-      "performance": 7221,
-      "total": 25974
+      "performance": 7221
     },
     "skills": {
-      "outfit": "With 2 or more Promise Members, grants All Stats UP 50% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%.",
       "active": "For 11s, Score UP 95%. Every 25s with a Medium Probability chance.",
-      "passive": "Grants Technique UP 43% to 2 Promise Members."
+      "outfit": "With 2 or more Promise Members, grants All Stats UP 50% to all.",
+      "passive": "Grants Technique UP 43% to 2 Promise Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. When LIFE is 1000 or higher, Skill Activation Rate UP 55%."
     }
   },
   {
@@ -1001,15 +1000,15 @@ export const CHARACTERS = [
     "avatar": "O",
     "stats": {
       "sense": 10433,
+      "total": 26082,
       "technique": 7981,
-      "performance": 7668,
-      "total": 26082
+      "performance": 7668
     },
     "skills": {
-      "outfit": "Grants Score Support Effect of 60% to all.",
-      "special": "For 14s, Grants Score Support Effect of 115%.",
       "active": "For 12s, Score UP 55%. Every 33s with a High Probability chance. With 2 or more Cute Type Members, Score UP 115%.",
-      "passive": "Grants Sense UP 41% to 2 Cute Type Members."
+      "outfit": "Grants Score Support Effect of 60% to all.",
+      "passive": "Grants Sense UP 41% to 2 Cute Type Members.",
+      "special": "For 14s, Grants Score Support Effect of 115%."
     }
   },
   {
@@ -1024,15 +1023,15 @@ export const CHARACTERS = [
     "avatar": "H",
     "stats": {
       "sense": 6947,
+      "total": 25920,
       "technique": 7828,
-      "performance": 11145,
-      "total": 25920
+      "performance": 11145
     },
     "skills": {
-      "outfit": "With 2 or more Pure Type Members, grants Performance UP 130% to all.",
-      "special": "For 12s, Grants Score Support Effect of 135%.",
       "active": "For 11s, Score UP 90%. Every 25s with a High Probability chance.",
-      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
+      "outfit": "With 2 or more Pure Type Members, grants Performance UP 130% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members.",
+      "special": "For 12s, Grants Score Support Effect of 135%."
     }
   },
   {
@@ -1047,15 +1046,15 @@ export const CHARACTERS = [
     "avatar": "S",
     "stats": {
       "sense": 7682,
+      "total": 25865,
       "technique": 6803,
-      "performance": 11380,
-      "total": 25865
+      "performance": 11380
     },
     "skills": {
-      "outfit": "Grants Performance UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 11s, Score UP 60%. Every 32s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
-      "passive": "Grants Performance UP 43% to 2 Advent Members."
+      "outfit": "Grants Performance UP 120% to all.",
+      "passive": "Grants Performance UP 43% to 2 Advent Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -1070,15 +1069,15 @@ export const CHARACTERS = [
     "avatar": "K",
     "stats": {
       "sense": 11380,
+      "total": 25865,
       "technique": 7682,
-      "performance": 6803,
-      "total": 25865
+      "performance": 6803
     },
     "skills": {
-      "outfit": "Grants Sense UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 9s, Score UP 65%. Every 27s with a Medium Probability chance. With a Combo of 40 or more, Score UP 130%.",
-      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Pure Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -1093,15 +1092,15 @@ export const CHARACTERS = [
     "avatar": "N",
     "stats": {
       "sense": 7221,
+      "total": 25974,
       "technique": 10909,
-      "performance": 7844,
-      "total": 25974
+      "performance": 7844
     },
     "skills": {
-      "outfit": "With 2 or more Advent Members, grants All Stats UP 50% to all.",
-      "special": "For 12s, Grants Score Support Effect of 135%.",
       "active": "For 7s, Score UP 90%. Every 15s with a Medium Probability chance.",
-      "passive": "With 2 or more Advent Members, grants All Stats UP 33% to Self."
+      "outfit": "With 2 or more Advent Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more Advent Members, grants All Stats UP 33% to Self.",
+      "special": "For 12s, Grants Score Support Effect of 135%."
     }
   },
   {
@@ -1116,15 +1115,15 @@ export const CHARACTERS = [
     "avatar": "F",
     "stats": {
       "sense": 6803,
+      "total": 25865,
       "technique": 11380,
-      "performance": 7682,
-      "total": 25865
+      "performance": 7682
     },
     "skills": {
-      "outfit": "Grants Technique UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 8s, Score UP 55%. Every 20s with a Medium Probability chance. With a Combo of 40 or more, Score UP 110%.",
-      "passive": "Grants Technique UP 41% to 2 Cute Type Members."
+      "outfit": "Grants Technique UP 120% to all.",
+      "passive": "Grants Technique UP 41% to 2 Cute Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -1139,15 +1138,15 @@ export const CHARACTERS = [
     "avatar": "M",
     "stats": {
       "sense": 11145,
+      "total": 25920,
       "technique": 6947,
-      "performance": 7828,
-      "total": 25920
+      "performance": 7828
     },
     "skills": {
-      "outfit": "With 2 or more Cute Type Members, grants Sense UP 130% to all.",
-      "special": "For 11s, Grants Score Support Effect of 130%. With a Combo of 100 or more, Skill Activation Rate UP 50%.",
       "active": "For 8s, Score UP 125%. Every 25s with a High Probability chance.",
-      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members."
+      "outfit": "With 2 or more Cute Type Members, grants Sense UP 130% to all.",
+      "passive": "Grants Score Support Effect of 11% to 2 Cute Type Members.",
+      "special": "For 11s, Grants Score Support Effect of 130%. With a Combo of 100 or more, Skill Activation Rate UP 50%."
     }
   },
   {
@@ -1162,15 +1161,15 @@ export const CHARACTERS = [
     "avatar": "O",
     "stats": {
       "sense": 11145,
+      "total": 25920,
       "technique": 6947,
-      "performance": 7828,
-      "total": 25920
+      "performance": 7828
     },
     "skills": {
-      "outfit": "With 2 or more Pure Type Members, grants Sense UP 130% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%.",
       "active": "For 12s, Score UP 90%. Every 27s with a High Probability chance.",
-      "passive": "Grants Sense UP 43% to 2 ReGLOSS Members."
+      "outfit": "With 2 or more Pure Type Members, grants Sense UP 130% to all.",
+      "passive": "Grants Sense UP 43% to 2 ReGLOSS Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. With a Combo of 100 or more, Skill Activation Rate UP 55%."
     }
   },
   {
@@ -1185,15 +1184,15 @@ export const CHARACTERS = [
     "avatar": "I",
     "stats": {
       "sense": 7221,
+      "total": 25974,
       "technique": 7844,
-      "performance": 10909,
-      "total": 25974
+      "performance": 10909
     },
     "skills": {
-      "outfit": "With 2 or more ReGLOSS Members, grants All Stats UP 50% to all.",
-      "special": "For 12s, Grants Score Support Effect of 135%.",
       "active": "For 11s, Score UP 110%. Every 30s with a High Probability chance.",
-      "passive": "With 2 or more ReGLOSS Members, grants Performance UP 45% to 2 ReGLOSS Members."
+      "outfit": "With 2 or more ReGLOSS Members, grants All Stats UP 50% to all.",
+      "passive": "With 2 or more ReGLOSS Members, grants Performance UP 45% to 2 ReGLOSS Members.",
+      "special": "For 12s, Grants Score Support Effect of 135%."
     }
   },
   {
@@ -1208,15 +1207,15 @@ export const CHARACTERS = [
     "avatar": "J",
     "stats": {
       "sense": 11380,
+      "total": 25865,
       "technique": 6803,
-      "performance": 7682,
-      "total": 25865
+      "performance": 7682
     },
     "skills": {
-      "outfit": "Grants Sense UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 8s, Score UP 55%. Every 22s with a High Probability chance. When LIFE is 600 or higher, Score UP 115%.",
-      "passive": "Grants Sense UP 43% to 2 ReGLOSS Members."
+      "outfit": "Grants Sense UP 120% to all.",
+      "passive": "Grants Sense UP 43% to 2 ReGLOSS Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   },
   {
@@ -1231,15 +1230,15 @@ export const CHARACTERS = [
     "avatar": "T",
     "stats": {
       "sense": 7682,
+      "total": 25865,
       "technique": 6803,
-      "performance": 11380,
-      "total": 25865
+      "performance": 11380
     },
     "skills": {
-      "outfit": "Grants Performance UP 120% to all.",
-      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%.",
       "active": "For 9s, Score UP 60%. Every 26s with a High Probability chance. With a Combo of 40 or more, Score UP 120%.",
-      "passive": "Grants Performance UP 41% to 2 Cute Type Members."
+      "outfit": "Grants Performance UP 120% to all.",
+      "passive": "Grants Performance UP 41% to 2 Cute Type Members.",
+      "special": "For 10s, Grants Score Support Effect of 145%. Skill Activation Rate UP 50%."
     }
   }
 ];
