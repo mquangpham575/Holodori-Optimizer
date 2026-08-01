@@ -36,7 +36,7 @@ if (isProd) {
 }
 
 // Admin Authentication Configuration
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = isProd ? (process.env.ADMIN_PASSWORD || 'admin123') : 'admin123';
 
 const requireAdmin = (req, res, next) => {
   const pwd = req.headers['x-admin-password'];
