@@ -149,6 +149,11 @@ const initPostgresSchema = async () => {
         content TEXT NOT NULL
       )
     `);
+    
+    // Ensure contentUrl column exists
+    await client.query(`
+      ALTER TABLE guides ADD COLUMN IF NOT EXISTS contentUrl JSONB
+    `);
 
     await client.query("COMMIT");
     console.log("PostgreSQL schema validated successfully!");
@@ -213,8 +218,8 @@ const seedPostgres = async () => {
 
     for (const guide of module.GUIDES) {
       await client.query(
-        `INSERT INTO guides (id, title, summary, category, readTime, author, date, content)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO guides (id, title, summary, category, readTime, author, date, content, contentUrl)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
          ON CONFLICT (id) DO UPDATE SET
            title = EXCLUDED.title,
            summary = EXCLUDED.summary,
@@ -222,16 +227,18 @@ const seedPostgres = async () => {
            readTime = EXCLUDED.readTime,
            author = EXCLUDED.author,
            date = EXCLUDED.date,
-           content = EXCLUDED.content`,
+           content = EXCLUDED.content,
+           contentUrl = EXCLUDED.contentUrl`,
         [
           guide.id,
-          guide.title,
-          guide.summary,
+          typeof guide.title === 'string' ? guide.title : JSON.stringify(guide.title),
+          typeof guide.summary === 'string' ? guide.summary : JSON.stringify(guide.summary),
           guide.category,
           guide.readTime,
           guide.author,
           guide.date,
-          guide.content
+          guide.content || '',
+          guide.contentUrl ? JSON.stringify(guide.contentUrl) : null
         ]
       );
     }
@@ -515,7 +522,35 @@ app.get('/api/guides', async (req, res) => {
   if (isProd) {
     try {
       const result = await pgPool.query("SELECT * FROM guides ORDER BY id ASC");
-      res.json(result.rows);
+      const parsedGuides = result.rows.map(row => {
+        let title = row.title;
+        let summary = row.summary;
+        let contentUrl = row.contenturl || row.contentUrl; // Handle pg lowercase column names
+
+        try {
+          if (typeof title === 'string' && (title.startsWith('{') || title.startsWith('['))) {
+            title = JSON.parse(title);
+          }
+        } catch {}
+        try {
+          if (typeof summary === 'string' && (summary.startsWith('{') || summary.startsWith('['))) {
+            summary = JSON.parse(summary);
+          }
+        } catch {}
+        try {
+          if (typeof contentUrl === 'string' && (contentUrl.startsWith('{') || contentUrl.startsWith('['))) {
+            contentUrl = JSON.parse(contentUrl);
+          }
+        } catch {}
+
+        return {
+          ...row,
+          title,
+          summary,
+          contentUrl
+        };
+      });
+      res.json(parsedGuides);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
