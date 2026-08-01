@@ -161,62 +161,83 @@ const initPostgresSchema = async () => {
   }
 };
 
-// PostgreSQL Seeding
+// PostgreSQL Seeding & Synchronization
 const seedPostgres = async () => {
   const client = await pgPool.connect();
   try {
-    // 1. Seed characters table
-    const charCountResult = await client.query("SELECT COUNT(*) FROM characters");
-    if (parseInt(charCountResult.rows[0].count) === 0) {
-      console.log("Seeding characters into PostgreSQL...");
-      const module = await import('../frontend/src/data.js');
-      for (const char of module.CHARACTERS) {
-        await client.query(
-          `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
-          [
-            char.id,
-            char.name,
-            char.title,
-            char.rarity,
-            char.group,
-            char.type,
-            char.accentColor,
-            char.image,
-            char.avatar,
-            JSON.stringify(char.stats),
-            JSON.stringify(char.skills)
-          ]
-        );
-      }
-      console.log("Characters seeded successfully in PostgreSQL!");
+    console.log("Synchronizing database tables with src/data.js...");
+    const module = await import('../frontend/src/data.js');
+
+    // 1. Sync characters table
+    console.log("Syncing characters in PostgreSQL...");
+    for (const char of module.CHARACTERS) {
+      await client.query(
+        `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)
+         ON CONFLICT (id) DO UPDATE SET
+           name = EXCLUDED.name,
+           title = EXCLUDED.title,
+           rarity = EXCLUDED.rarity,
+           "group" = EXCLUDED."group",
+           type = EXCLUDED.type,
+           accentColor = EXCLUDED.accentColor,
+           image = EXCLUDED.image,
+           avatar = EXCLUDED.avatar,
+           stats = EXCLUDED.stats,
+           skills = EXCLUDED.skills`,
+        [
+          char.id,
+          char.name,
+          char.title,
+          char.rarity,
+          char.group,
+          char.type,
+          char.accentColor,
+          char.image,
+          char.avatar,
+          JSON.stringify(char.stats),
+          JSON.stringify(char.skills)
+        ]
+      );
+    }
+    console.log("Characters synchronized successfully in PostgreSQL!");
+
+    // 2. Sync guides table (delete inactive guides and upsert active ones)
+    console.log("Syncing guides in PostgreSQL...");
+    const activeGuideIds = module.GUIDES.map(g => g.id);
+    if (activeGuideIds.length > 0) {
+      await client.query("DELETE FROM guides WHERE NOT (id = ANY($1))", [activeGuideIds]);
+    } else {
+      await client.query("DELETE FROM guides");
     }
 
-    // 2. Seed guides table
-    const guideCountResult = await client.query("SELECT COUNT(*) FROM guides");
-    if (parseInt(guideCountResult.rows[0].count) === 0) {
-      console.log("Seeding guides into PostgreSQL...");
-      const module = await import('../frontend/src/data.js');
-      for (const guide of module.GUIDES) {
-        await client.query(
-          `INSERT INTO guides (id, title, summary, category, readTime, author, date, content)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [
-            guide.id,
-            guide.title,
-            guide.summary,
-            guide.category,
-            guide.readTime,
-            guide.author,
-            guide.date,
-            guide.content
-          ]
-        );
-      }
-      console.log("Guides seeded successfully in PostgreSQL!");
+    for (const guide of module.GUIDES) {
+      await client.query(
+        `INSERT INTO guides (id, title, summary, category, readTime, author, date, content)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (id) DO UPDATE SET
+           title = EXCLUDED.title,
+           summary = EXCLUDED.summary,
+           category = EXCLUDED.category,
+           readTime = EXCLUDED.readTime,
+           author = EXCLUDED.author,
+           date = EXCLUDED.date,
+           content = EXCLUDED.content`,
+        [
+          guide.id,
+          guide.title,
+          guide.summary,
+          guide.category,
+          guide.readTime,
+          guide.author,
+          guide.date,
+          guide.content
+        ]
+      );
     }
+    console.log("Guides synchronized successfully in PostgreSQL!");
   } catch (err) {
-    console.error("Error seeding PostgreSQL:", err);
+    console.error("Error synchronizing PostgreSQL:", err);
   } finally {
     client.release();
   }
