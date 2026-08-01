@@ -249,3 +249,16 @@
     gap: 0.75rem;
   }
 }
+
+/* Inline Links inside Guides */
+.guide-link {
+  color: var(--accent-color);
+  text-decoration: underline;
+  font-weight: 500;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.guide-link:hover {
+  opacity: 0.85;
+  color: #fff;
+}

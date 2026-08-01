@@ -8,8 +8,19 @@ import './Home.css';
  * Home - Displays landing info, editable personal showcase, and links to guides/characters.
  */
 export default function Home({ activeTeam, activeLeader, characters = [], guides = [] }) {
-  const { t } = useLanguage();
+  const getLangPath = (path) => {
+    if (!currentLang) return path;
+    if (path === '/') return '/' + currentLang;
+    return path + '/' + currentLang;
+  };
+  const { t, currentLang } = useLanguage();
   const navigate = useNavigate();
+
+  const getLocalizedValue = (val, lang) => {
+    if (!val) return '';
+    if (typeof val === 'string') return val;
+    return val[lang] || val['en'] || val[Object.keys(val)[0]] || '';
+  };
 
   const leaderChar = characters.find(c => c.id === activeLeader);
   
@@ -37,10 +48,10 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
             {t('hero_subtitle')}
           </p>
           <div className="hero-actions">
-            <button className="btn-primary" onClick={() => navigate('/characters')}>
+            <button className="btn-primary" onClick={() => navigate(getLangPath('/characters'))}>
               {t('view_characters')}
             </button>
-            <button className="btn-secondary" onClick={() => navigate('/guides')}>
+            <button className="btn-secondary" onClick={() => navigate(getLangPath('/guides'))}>
               {t('view_guides')} <ArrowRight size={16} />
             </button>
           </div>
@@ -67,7 +78,7 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
                       key={char.id} 
                       className={`team-slot-card glass ${activeLeader === char.id ? 'leader-card border-gold' : ''}`}
                       style={{ '--char-color': char.accentColor }}
-                      onClick={() => navigate('/builder')}
+                      onClick={() => navigate(getLangPath('/builder'))}
                     >
                       {activeLeader === char.id && <span className="home-leader-badge">{t('leader_tag')}</span>}
                       {char.image ? (
@@ -81,7 +92,7 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
                   ))}
                 </>
               ) : (
-                <div className="empty-team-placeholder" onClick={() => navigate('/builder')}>
+                <div className="empty-team-placeholder" onClick={() => navigate(getLangPath('/builder'))}>
                   <p>{t('no_active_team')}</p>
                 </div>
               )}
@@ -94,16 +105,16 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
       <section className="latest-articles glass">
         <div className="articles-header">
           <h2 className="section-title"><Calendar className="title-icon" /> {t('guides_title')}</h2>
-          <button className="link-btn" onClick={() => navigate('/guides')}>
+          <button className="link-btn" onClick={() => navigate(getLangPath('/guides'))}>
             {t('view_all_articles')} <ArrowRight size={16} />
           </button>
         </div>
         <div className="articles-grid">
           {guides.slice(0, 2).map((guide) => (
-            <div key={guide.id} className="article-preview-card glass" onClick={() => navigate('/guides')}>
+            <div key={guide.id} className="article-preview-card glass" onClick={() => navigate(getLangPath('/guides'))}>
               <span className="article-category">{guide.category}</span>
-              <h3 className="article-title">{guide.title}</h3>
-              <p className="article-summary">{guide.summary}</p>
+              <h3 className="article-title">{getLocalizedValue(guide.title, currentLang)}</h3>
+              <p className="article-summary">{getLocalizedValue(guide.summary, currentLang)}</p>
               <div className="article-meta">
                 <span>{t('by_author', { author: guide.author })}</span>
                 <span>•</span>

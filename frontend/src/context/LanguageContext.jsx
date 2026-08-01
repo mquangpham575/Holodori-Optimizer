@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const LanguageContext = createContext();
 
@@ -41,6 +42,8 @@ const TRANSLATIONS = {
     leader_tag: "Leader",
     member_tag: "Member",
     guides_title: "Guides & Strategies",
+    guides_page_title: "Game Guides & Blog",
+    guides_page_subtitle: "Learn strategies, character insights, and guide builds to optimize your Hololive Dreams progression.",
     read_more: "Read More",
     database_title: "HoloDreams Database",
     database_desc: "View detailed profile information, character stats, and skill breakdowns for every Holo-talent.",
@@ -115,6 +118,8 @@ const TRANSLATIONS = {
     leader_tag: "Trưởng nhóm",
     member_tag: "Thành viên",
     guides_title: "Hướng dẫn & Chiến thuật",
+    guides_page_title: "Hướng dẫn & Blog",
+    guides_page_subtitle: "Tìm hiểu chiến thuật, hồ sơ nhân vật và hướng dẫn xây dựng đội hình để tối ưu hóa tiến trình Hololive Dreams.",
     read_more: "Đọc thêm",
     database_title: "Thư viện HoloDreams",
     database_desc: "Xem thông tin chi tiết, chỉ số nhân vật và chi tiết kỹ năng của từng tài năng Hololive.",
@@ -189,6 +194,8 @@ const TRANSLATIONS = {
     leader_tag: "リーダー",
     member_tag: "メンバー",
     guides_title: "攻略ガイド＆戦略",
+    guides_page_title: "ゲームガイド＆ブログ",
+    guides_page_subtitle: "ホロライブドリームスの進行を最適化するための戦略、キャラクター情報、チーム編成ガイドを学びましょう。",
     read_more: "詳細を見る",
     database_title: "HoloDreams データベース",
     database_desc: "ホロライブメンバーのプロフィール、ステータス、スキル詳細を閲覧できます。",
@@ -263,6 +270,8 @@ const TRANSLATIONS = {
     leader_tag: "隊長",
     member_tag: "隊員",
     guides_title: "指南與戰術",
+    guides_page_title: "遊戲指南與部落格",
+    guides_page_subtitle: "學習戰術、角色分析與組隊指南，優化您的 Hololive Dreams 進度。",
     read_more: "閱讀更多",
     database_title: "HoloDreams 數據庫",
     database_desc: "查看每位 Hololive 成員的詳細資料、屬性數值及技能介紹。",
@@ -337,6 +346,8 @@ const TRANSLATIONS = {
     leader_tag: "리더",
     member_tag: "멤버",
     guides_title: "가이드 및 전략",
+    guides_page_title: "게임 가이드 및 블로그",
+    guides_page_subtitle: "홀로라이브 드림스 진행을 최적화하기 위한 전략, 캐릭터 정보, 팀 빌딩 가이드를 알아보세요.",
     read_more: "자세히 보기",
     database_title: "HoloDreams 데이터베이스",
     database_desc: "모든 홀로라이브 멤버들의 상세 스탯 및 스킬을 확인하세요.",
@@ -411,6 +422,8 @@ const TRANSLATIONS = {
     leader_tag: "Anführer",
     member_tag: "Mitglied",
     guides_title: "Guides & Strategien",
+    guides_page_title: "Spiele-Guides & Blog",
+    guides_page_subtitle: "Lerne Strategien, Charakter-Einblicke und Team-Builds, um deinen Fortschritt in Hololive Dreams zu optimieren.",
     read_more: "Mehr lesen",
     database_title: "HoloDreams-Datenbank",
     database_desc: "Detaillierte Profilinformationen, Charakterwerte und Skill-Details für jedes Holo-Talent ansehen.",
@@ -485,6 +498,8 @@ const TRANSLATIONS = {
     leader_tag: "Líder",
     member_tag: "Miembro",
     guides_title: "Guías & Estrategias",
+    guides_page_title: "Guías de juego y blog",
+    guides_page_subtitle: "Aprende estrategias, información sobre personajes y guías de equipo para optimizar tu progreso en Hololive Dreams.",
     read_more: "Leer más",
     database_title: "Base de Datos",
     database_desc: "Ver perfiles detallados, estadísticas y habilidades de cada talento de Hololive.",
@@ -559,6 +574,8 @@ const TRANSLATIONS = {
     leader_tag: "Leader",
     member_tag: "Membre",
     guides_title: "Guides & Stratégies",
+    guides_page_title: "Guides de jeu & Blog",
+    guides_page_subtitle: "Apprenez des stratégies, des informations sur les personnages et des guides d'équipe pour optimiser votre progression dans Hololive Dreams.",
     read_more: "Lire la suite",
     database_title: "Base de données",
     database_desc: "Fiches détaillées, statistiques et compétences pour chaque talent Hololive.",
@@ -633,6 +650,8 @@ const TRANSLATIONS = {
     leader_tag: "หัวหน้า",
     member_tag: "สมาชิก",
     guides_title: "คู่มือและกลยุทธ์",
+    guides_page_title: "คู่มือเกมและบล็อก",
+    guides_page_subtitle: "เรียนรู้กลยุทธ์ ข้อมูลเชิงลึกของตัวละคร และแนวทางการสร้างทีมเพื่อเพิ่มประสิทธิภาพความก้าวหน้าใน Hololive Dreams",
     read_more: "อ่านเพิ่มเติม",
     database_title: "ฐานข้อมูล",
     database_desc: "ประวัติอย่างละเอียด ค่าสถานะตัวละคร และรายละเอียดสกิลของสมาชิก Hololive ทุกคน",
@@ -707,6 +726,8 @@ const TRANSLATIONS = {
     leader_tag: "Líder",
     member_tag: "Membro",
     guides_title: "Guias & Estratégias",
+    guides_page_title: "Guias de Jogo & Blog",
+    guides_page_subtitle: "Aprenda estratégias, informações sobre personagens e guias de equipe para otimizar seu progresso no Hololive Dreams.",
     read_more: "Ler mais",
     database_title: "Base de Dados",
     database_desc: "Ver perfis detalhados, estatísticas e habilidades para cada talento Hololive.",
@@ -781,6 +802,8 @@ const TRANSLATIONS = {
     leader_tag: "Лидер",
     member_tag: "Участник",
     guides_title: "Руководства и тактики",
+    guides_page_title: "Игровые руководства и блог",
+    guides_page_subtitle: "Изучите стратегии, информацию о персонажах и руководства по сборке отрядов для оптимизации вашего прогресса в Hololive Dreams.",
     read_more: "Читать далее",
     database_title: "База данных",
     database_desc: "Подробные профили, характеристики и навыки каждого таланта Hololive.",
@@ -835,14 +858,48 @@ const TRANSLATIONS = {
 };
 
 export function LanguageProvider({ children }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [currentLang, setLangState] = useState(() => {
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const potentialLang = pathParts[pathParts.length - 1];
+    const supportedLangs = LANGUAGES.map(l => l.code);
+    if (supportedLangs.includes(potentialLang)) {
+      return potentialLang;
+    }
     return localStorage.getItem('theme_language') || 'en';
   });
 
+  useEffect(() => {
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    const potentialLang = pathParts[pathParts.length - 1];
+    const supportedLangs = LANGUAGES.map(l => l.code);
+    if (supportedLangs.includes(potentialLang)) {
+      if (potentialLang !== currentLang) {
+        setLangState(potentialLang);
+        localStorage.setItem('theme_language', potentialLang);
+      }
+    }
+  }, [location.pathname, currentLang]);
+
   const setLang = (code) => {
-    if (TRANSLATIONS[code]) {
+    const supportedLangs = LANGUAGES.map(l => l.code);
+    if (supportedLangs.includes(code)) {
       setLangState(code);
       localStorage.setItem('theme_language', code);
+
+      const pathParts = location.pathname.split('/').filter(Boolean);
+      const lastPart = pathParts[pathParts.length - 1];
+      let newPath = '';
+
+      if (supportedLangs.includes(lastPart)) {
+        newPath = '/' + [...pathParts.slice(0, -1), code].join('/');
+      } else {
+        newPath = '/' + [...pathParts, code].join('/');
+      }
+      
+      navigate(newPath + location.search + location.hash);
     }
   };
 
@@ -850,7 +907,6 @@ export function LanguageProvider({ children }) {
     const langDict = TRANSLATIONS[currentLang] || TRANSLATIONS['en'];
     let text = langDict[key] || TRANSLATIONS['en'][key] || key;
     
-    // Replace parameters if any, e.g. {num} or {owned} or {total}
     Object.keys(params).forEach(p => {
       text = text.replace(`{${p}}`, params[p]);
     });

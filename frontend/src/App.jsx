@@ -273,7 +273,28 @@ function App() {
             } 
           />
           <Route 
+            path="/:lang" 
+            element={
+              <Home 
+                activeTeam={activePreset.team} 
+                activeLeader={activePreset.leader}
+                characters={characters}
+                guides={guides}
+              />
+            } 
+          />
+          <Route 
             path="/characters" 
+            element={
+              <CharacterDB 
+                onAccentChange={handleAccentChange} 
+                currentAccent={themeAccent} 
+                characters={characters}
+              />
+            } 
+          />
+          <Route 
+            path="/characters/:lang" 
             element={
               <CharacterDB 
                 onAccentChange={handleAccentChange} 
@@ -297,7 +318,23 @@ function App() {
               />
             } 
           />
+          <Route 
+            path="/builder/:lang" 
+            element={
+              <TeamBuilder 
+                presets={presets}
+                selectedPresetId={selectedPresetId}
+                setSelectedPresetId={setSelectedPresetId}
+                onUpdatePreset={handleUpdatePreset}
+                onSavePresets={() => handleSavePresets(presets)}
+                ownedRoster={ownedRoster}
+                onUpdateOwnedRoster={handleUpdateOwnedRoster}
+                characters={characters}
+              />
+            } 
+          />
           <Route path="/guides" element={<Guides guides={guides} />} />
+          <Route path="/guides/:lang" element={<Guides guides={guides} />} />
           <Route 
             path="/admin" 
             element={
@@ -310,7 +347,20 @@ function App() {
               />
             } 
           />
+          <Route 
+            path="/admin/:lang" 
+            element={
+              <AdminDashboard 
+                characters={characters} 
+                setCharacters={setCharacters} 
+                guides={guides} 
+                setGuides={setGuides} 
+                API_BASE={API_BASE}
+              />
+            } 
+          />
           <Route path="/home" element={<Navigate to="/" replace />} />
+          <Route path="/home/:lang" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

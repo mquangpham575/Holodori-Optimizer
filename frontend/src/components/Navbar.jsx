@@ -8,6 +8,11 @@ import './Navbar.css';
  * Navbar - Premium navigation header for the application.
  */
 export default function Navbar({ API_BASE = '' }) {
+  const getLangPath = (path) => {
+    if (!currentLang) return path;
+    if (path === '/') return '/' + currentLang;
+    return path + '/' + currentLang;
+  };
   const navigate = useNavigate();
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -107,7 +112,7 @@ export default function Navbar({ API_BASE = '' }) {
   return (
     <header className="navbar glass">
       <div className="nav-container">
-        <div className="brand" onClick={() => navigate('/')}>
+        <div className="brand" onClick={() => navigate(getLangPath('/'))}>
           <Sparkles className="brand-icon" />
           <span className="brand-title">HoloDreams <span className="title-glow">Showcase</span></span>
         </div>
@@ -119,7 +124,7 @@ export default function Navbar({ API_BASE = '' }) {
               return (
                 <NavLink
                   key={item.path}
-                  to={item.path}
+                  to={getLangPath(item.path)}
                   className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                 >
                   {({ isActive }) => (
