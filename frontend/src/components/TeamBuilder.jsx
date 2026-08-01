@@ -32,7 +32,7 @@ const getPassiveCount = (team, leader, characters) => {
         uniqueActiveIds.forEach(activeId => {
           const activeChar = characters.find(c => c.id === activeId);
           if (activeChar) {
-            if (activeChar.group.toUpperCase().includes(condTarget) || 
+            if (activeChar.group.toUpperCase() === condTarget || 
                 activeChar.type.toUpperCase() === condTarget) {
               count++;
             }
@@ -65,7 +65,7 @@ const getPassiveCount = (team, leader, characters) => {
         uniqueActiveIds.forEach(activeId => {
           const activeChar = characters.find(c => c.id === activeId);
           if (activeChar) {
-            if (activeChar.group.toUpperCase().includes(condTarget) || 
+            if (activeChar.group.toUpperCase() === condTarget || 
                 activeChar.type.toUpperCase() === condTarget) {
               count++;
             }

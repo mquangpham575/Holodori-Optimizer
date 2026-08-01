@@ -10,7 +10,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCharacter, setActiveCharacter] = useState(null);
 
-  const groups = ['All', 'Gen 0', 'Gen 1', 'Gen 3', 'Myth', 'ID Gen 3', 'ReGLOSS'];
+  const groups = ['All', ...Array.from(new Set(characters.map((c) => c.group).filter(Boolean)))];
   const types = ['All', 'PURE', 'CUTE', 'HAPPY'];
 
   const typeDisplayMap = {
