@@ -11,74 +11,229 @@ const getPassiveCount = (team, leader, characters) => {
   const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
   let activeCount = 0;
   
-  // 1. Evaluate normal passive skills
   uniqueActiveIds.forEach(id => {
     const char = characters.find(c => c.id === id);
     if (char && char.skills && char.skills.passive) {
-      const passiveText = char.skills.passive;
-        const match = passiveText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
-      if (!match) {
+      if (isSkillActive(char.skills.passive, uniqueActiveIds, characters)) {
         activeCount++;
-      } else {
-        const requiredCount = parseInt(match[1] || match[2]) || 2;
-        const rawTarget = match[3].trim().toUpperCase();
-        const condTarget = rawTarget
-          .replace(/[[\]]/g, '')
-          .replace(/\bTYPE\b/g, '')
-          
-          .trim();
-        
-        let count = 0;
-        uniqueActiveIds.forEach(activeId => {
-          const activeChar = characters.find(c => c.id === activeId);
-          if (activeChar) {
-            if (activeChar.group.toUpperCase() === condTarget || 
-                activeChar.type.toUpperCase() === condTarget) {
-              count++;
-            }
-          }
-        });
-        if (count >= requiredCount) {
-          activeCount++;
-        }
       }
     }
   });
-  // 2. Evaluate Leader Passive (Outfit Skill)
+
   if (leader) {
     const leaderChar = characters.find(c => c.id === leader);
     if (leaderChar && leaderChar.skills && leaderChar.skills.outfit) {
-      const outfitText = leaderChar.skills.outfit;
-        const match = outfitText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
-      if (!match) {
+      if (isSkillActive(leaderChar.skills.outfit, uniqueActiveIds, characters)) {
         activeCount++;
-      } else {
-        const requiredCount = parseInt(match[1] || match[2]) || 2;
-        const rawTarget = match[3].trim().toUpperCase();
-        const condTarget = rawTarget
-          .replace(/[[\]]/g, '')
-          .replace(/\bTYPE\b/g, '')
-          
-          .trim();
-        
-        let count = 0;
-        uniqueActiveIds.forEach(activeId => {
-          const activeChar = characters.find(c => c.id === activeId);
-          if (activeChar) {
-            if (activeChar.group.toUpperCase() === condTarget || 
-                activeChar.type.toUpperCase() === condTarget) {
-              count++;
-            }
-          }
-        });
-        if (count >= requiredCount) {
-          activeCount++;
-        }
       }
     }
   }
   return activeCount;
 };
+
+const parseSkillModifier = (text) => {
+  if (!text) return [];
+  const modifiers = [];
+
+  // Helper to extract target
+  const getTarget = (txt) => {
+    if (/to\s+self/i.test(txt)) return 'self';
+    if (/to\s+all/i.test(txt)) return 'all';
+    const targetMatch = txt.match(/to\s+(?:\d+\s+)?([A-Za-z0-9\s\-++]+?)\s+Members/i);
+    if (targetMatch) {
+      return targetMatch[1].trim().toUpperCase();
+    }
+    return 'self'; // Default to self for active/special combat triggers
+  };
+
+  // 1. Match standard Stat UPs: e.g., "Sense UP 45%", "All Stats UP 50%", "+50% Stats"
+  const statRegexes = [
+    { pattern: /(Sense|Technique|Performance|All Stats)\s+UP\s+(\d+)%/i, type: 'standard' },
+    { pattern: /\+(\d+)%\s+(Stats|All Stats)/i, type: 'prefix' }
+  ];
+
+  statRegexes.forEach(reg => {
+    const re = new RegExp(reg.pattern, 'gi');
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      let stat = '';
+      let percentage = 0;
+      if (reg.type === 'standard') {
+        stat = m[1].toLowerCase();
+        percentage = parseInt(m[2]);
+      } else {
+        stat = 'all stats';
+        percentage = parseInt(m[1]);
+      }
+      modifiers.push({ stat, percentage, target: getTarget(text) });
+    }
+  });
+
+  // 2. Match Score UP: e.g., "Score UP 100%"
+  const scoreUpRe = /Score\s+UP\s+(\d+)%/gi;
+  let m1;
+  while ((m1 = scoreUpRe.exec(text)) !== null) {
+    modifiers.push({ stat: 'score_up', percentage: parseInt(m1[1]), target: getTarget(text) });
+  }
+
+  // 3. Match Skill Activation Rate UP: e.g., "Skill Activation Rate UP 55%"
+  const actRateRe = /Skill\s+Activation\s+Rate\s+UP\s+(\d+)%/gi;
+  let m2;
+  while ((m2 = actRateRe.exec(text)) !== null) {
+    modifiers.push({ stat: 'activation_rate', percentage: parseInt(m2[1]), target: getTarget(text) });
+  }
+
+  // 4. Match Score Support Effect: e.g., "Grants Score Support Effect of 160%"
+  const supportRe = /Score\s+Support\s+Effect\s+(?:of|UP)?\s*(\d+)%/gi;
+  let m3;
+  while ((m3 = supportRe.exec(text)) !== null) {
+    modifiers.push({ stat: 'support_effect', percentage: parseInt(m3[1]), target: getTarget(text) });
+  }
+
+  return modifiers;
+};
+
+const isSkillActive = (text, team, characters) => {
+  if (!text) return false;
+  const match = text.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
+  if (!match) return true;
+  const requiredCount = parseInt(match[1] || match[2]) || 2;
+  const rawTarget = match[3].trim().toUpperCase();
+  const condTarget = rawTarget.replace(/[[]]/g, '').replace(/\bTYPE\b/g, '').trim();
+  
+  let count = 0;
+  team.forEach(activeId => {
+    const activeChar = characters.find(c => c.id === activeId);
+    if (activeChar) {
+      if (activeChar.group.toUpperCase() === condTarget || 
+          activeChar.type.toUpperCase() === condTarget) {
+        count++;
+      }
+    }
+  });
+  return count >= requiredCount;
+};
+
+const getTeamSimulatedScore = (team, leader, characters) => {
+  const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
+  
+  const senseBuffs = {};
+  const techniqueBuffs = {};
+  const performanceBuffs = {};
+  const scoreBuffs = {};
+  const activationRateBuffs = {};
+  
+  uniqueActiveIds.forEach(id => {
+    senseBuffs[id] = 0.0;
+    techniqueBuffs[id] = 0.0;
+    performanceBuffs[id] = 0.0;
+    scoreBuffs[id] = 0.0;
+    activationRateBuffs[id] = 0.0;
+  });
+
+  const applyModifier = (mod, ownerId) => {
+    if (!mod) return;
+    const { stat, percentage, target } = mod;
+    const val = percentage / 100;
+
+    uniqueActiveIds.forEach(id => {
+      const char = characters.find(c => c.id === id);
+      if (!char) return;
+
+      let match = false;
+      if (target === 'all') {
+        match = true;
+      } else if (target === 'self') {
+        match = id === ownerId;
+      } else {
+        if (char.group.toUpperCase() === target || char.type.toUpperCase() === target) {
+          match = true;
+        }
+      }
+
+      if (match) {
+        if (stat === 'all stats') {
+          senseBuffs[id] += val;
+          techniqueBuffs[id] += val;
+          performanceBuffs[id] += val;
+        } else if (stat === 'sense') {
+          senseBuffs[id] += val;
+        } else if (stat === 'technique') {
+          techniqueBuffs[id] += val;
+        } else if (stat === 'performance') {
+          performanceBuffs[id] += val;
+        } else if (stat === 'score_up' || stat === 'support_effect') {
+          scoreBuffs[id] += val;
+        } else if (stat === 'activation_rate') {
+          activationRateBuffs[id] += val;
+        }
+      }
+    });
+  };
+
+  // Evaluate all active skills on the team
+  uniqueActiveIds.forEach(id => {
+    const char = characters.find(c => c.id === id);
+    if (!char || !char.skills) return;
+
+    if (id === leader && char.skills.outfit) {
+      if (isSkillActive(char.skills.outfit, uniqueActiveIds, characters)) {
+        const mods = parseSkillModifier(char.skills.outfit);
+        mods.forEach(mod => applyModifier(mod, id));
+      }
+    }
+
+    if (char.skills.passive) {
+      if (isSkillActive(char.skills.passive, uniqueActiveIds, characters)) {
+        const mods = parseSkillModifier(char.skills.passive);
+        mods.forEach(mod => applyModifier(mod, id));
+      }
+    }
+
+    if (char.skills.active) {
+      if (isSkillActive(char.skills.active, uniqueActiveIds, characters)) {
+        const mods = parseSkillModifier(char.skills.active);
+        mods.forEach(mod => applyModifier(mod, id));
+      }
+    }
+
+    if (char.skills.special) {
+      if (isSkillActive(char.skills.special, uniqueActiveIds, characters)) {
+        const mods = parseSkillModifier(char.skills.special);
+        mods.forEach(mod => applyModifier(mod, id));
+      }
+    }
+  });
+
+  let totalUnitScore = 0;
+  uniqueActiveIds.forEach(id => {
+    const char = characters.find(c => c.id === id);
+    if (char) {
+      // Scale up base parameters to standard 25,000 max-level total range if it's currently low level to ensure fair team suggestions
+      const scale = char.stats.total < 1000 ? 100 : 1;
+      const baseSense = char.stats.sense * scale;
+      const baseTech = char.stats.technique * scale;
+      const basePerf = char.stats.performance * scale;
+      
+      // Calculate overall power by applying buffs to their respective parameters
+      const finalSense = baseSense * (1 + senseBuffs[id]);
+      const finalTech = baseTech * (1 + techniqueBuffs[id]);
+      const finalPerf = basePerf * (1 + performanceBuffs[id]);
+      const overallPower = finalSense + finalTech + finalPerf;
+
+      // Calculate expected Score Bonus (Score Buffs * (Base activation rate + activation rate buffs))
+      const baseActivationRate = 0.5;
+      const expectedScoreBonus = scoreBuffs[id] * (baseActivationRate + activationRateBuffs[id]);
+
+      // Calculate Unit Score: Overall Power * (1 + expected Score Bonus)
+      const unitScore = overallPower * (1 + expectedScoreBonus);
+      totalUnitScore += unitScore;
+    }
+  });
+
+  return Math.round(totalUnitScore);
+};
+
 const recommendBestTeam = (ownedIds, characters) => {
   if (ownedIds.length < 5) return null;
   
@@ -128,7 +283,7 @@ const recommendBestTeam = (ownedIds, characters) => {
   
   combos.forEach(team => {
     team.forEach(leader => {
-      const score = getPassiveCount(team, leader, characters);
+      const score = getTeamSimulatedScore(team, leader, characters);
       if (score > maxScore) {
         maxScore = score;
         bestTeam = team;
@@ -137,8 +292,10 @@ const recommendBestTeam = (ownedIds, characters) => {
     });
   });
   
-  return { team: bestTeam, leader: bestLeader, passiveCount: maxScore };
-};
+  const passiveCount = getPassiveCount(bestTeam, bestLeader, characters);
+  return { team: bestTeam, leader: bestLeader, passiveCount, simulatedScore: maxScore };
+};;
+
 export default function TeamBuilder({ presets, selectedPresetId, setSelectedPresetId, onUpdatePreset, onSavePresets, ownedRoster = [], onUpdateOwnedRoster, characters = [] }) {
   const { t } = useLanguage();
   const [isActiveExpanded, setIsActiveExpanded] = useState(false);
@@ -736,7 +893,7 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
             </div>
             <div className="modal-body">
               <p className="recommendation-desc">
-                We analyzed your owned roster and generated the team with the highest possible active synergies (<strong>{recommendedTeamResult.passiveCount} passives</strong> triggered).
+                We simulated all team combinations from your roster to find the team with the highest raw performance potential (Score: <strong>{recommendedTeamResult.simulatedScore.toLocaleString()}</strong>, <strong>{recommendedTeamResult.passiveCount} passives</strong> triggered).
               </p>
               <h3 className="modal-section-title">Recommended Party</h3>
               <div className="recommended-team-slots">

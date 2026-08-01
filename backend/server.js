@@ -731,6 +731,54 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
   }
 });
 
+app.post('/api/admin/characters/bulk', requireAdmin, async (req, res) => {
+  const charactersList = req.body;
+  if (!Array.isArray(charactersList)) {
+    return res.status(400).json({ error: 'Body must be an array of characters' });
+  }
+
+  if (isProd) {
+    const client = await pgPool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("DELETE FROM characters");
+      
+      for (const char of charactersList) {
+        await client.query(
+          `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
+          [
+            char.id,
+            char.name,
+            char.title,
+            char.rarity,
+            char.group,
+            char.type,
+            char.accentColor || char.accent_color,
+            char.image,
+            char.avatar,
+            JSON.stringify(char.stats),
+            JSON.stringify(char.skills)
+          ]
+        );
+      }
+      
+      await client.query("COMMIT");
+      res.json({ success: true, count: charactersList.length });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
+    }
+  } else {
+    const db = loadDB();
+    db.characters = charactersList;
+    saveDB(db);
+    res.json({ success: true, count: charactersList.length });
+  }
+});
+
 app.post('/api/admin/characters', requireAdmin, async (req, res) => {
   const char = req.body;
   if (!char.id || !char.name) {

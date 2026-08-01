@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Plus, Edit2, Trash2, X, FileText, Sparkles, Key, Check } from 'lucide-react';
+import { Lock, Plus, Edit2, Trash2, X, FileText, Sparkles, Key, Check, Download, Upload } from 'lucide-react';
 import './AdminDashboard.css';
 import { CHARACTERS } from '../data';
 
@@ -171,6 +171,70 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       });
     }
     setCharModalOpen(true);
+  };
+
+  // Export characters to JSON file
+  const handleExportData = () => {
+    const dataStr = JSON.stringify(characters, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `characters_export_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showNotification('Characters data exported successfully!');
+  };
+
+  // Import characters from JSON file
+  const handleImportData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!window.confirm('WARNING: Importing characters will overwrite the entire database. Are you sure you want to proceed?')) {
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        if (!Array.isArray(importedData)) {
+          throw new Error('Imported JSON must be a list of characters (array).');
+        }
+
+        for (const char of importedData) {
+          if (!char.id || !char.name) {
+            throw new Error(`Invalid character card object found. Missing "id" or "name".`);
+          }
+        }
+
+        const res = await fetch(`${API_BASE}/api/admin/characters/bulk`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-password': password
+          },
+          body: JSON.stringify(importedData)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Server bulk import failed');
+        }
+
+        setCharacters(importedData);
+        showNotification(`Successfully imported and synced ${importedData.length} character cards!`);
+      } catch (err) {
+        showNotification(err.message, 'error');
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   // Save Character (Add or Edit)
@@ -434,9 +498,24 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
         <div className="admin-tab-content glass">
           <div className="admin-actions-row">
             <h3>Talent Cards Inventory</h3>
-            <button className="btn-add-item" onClick={() => openCharModal(null)}>
-              <Plus size={16} /> Add VTuber Card
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn-add-item" style={{ background: '#10b981' }} onClick={handleExportData}>
+                <Download size={16} /> Export JSON
+              </button>
+              <button className="btn-add-item" style={{ background: '#ff9f1c' }} onClick={() => document.getElementById('json-file-input').click()}>
+                <Upload size={16} /> Import JSON
+              </button>
+              <input 
+                id="json-file-input" 
+                type="file" 
+                accept=".json" 
+                style={{ display: 'none' }} 
+                onChange={handleImportData}
+              />
+              <button className="btn-add-item" onClick={() => openCharModal(null)}>
+                <Plus size={16} /> Add VTuber Card
+              </button>
+            </div>
           </div>
 
           <div className="admin-table-wrapper">
