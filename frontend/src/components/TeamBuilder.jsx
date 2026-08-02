@@ -31,6 +31,7 @@ const getPassiveCount = (team, leader, characters) => {
   return activeCount;
 };
 
+// Intent: Parse skill descriptions into structured modifier objects for simulation.
 const parseSkillModifier = (text) => {
   if (!text) return [];
   const modifiers = [];
@@ -41,7 +42,8 @@ const parseSkillModifier = (text) => {
     if (/to\s+all/i.test(txt)) return 'all';
     const targetMatch = txt.match(/to\s+(?:\d+\s+)?([A-Za-z0-9\s\-++]+?)\s+Members/i);
     if (targetMatch) {
-      return targetMatch[1].trim().toUpperCase();
+      const rawTarget = targetMatch[1].trim().toUpperCase();
+      return rawTarget.replace(/[[]]/g, '').replace(/\bTYPE\b/g, '').trim();
     }
     return 'self'; // Default to self for active/special combat triggers
   };
@@ -90,7 +92,16 @@ const parseSkillModifier = (text) => {
     modifiers.push({ stat: 'support_effect', percentage: parseInt(m3[1]), target: getTarget(text) });
   }
 
-  return modifiers;
+  // Filter modifiers: group by (stat, target) and take only the maximum percentage to prevent double-counting conditional steps
+  const grouped = {};
+  modifiers.forEach(mod => {
+    const key = `${mod.stat}_${mod.target}`;
+    if (!grouped[key] || grouped[key].percentage < mod.percentage) {
+      grouped[key] = mod;
+    }
+  });
+
+  return Object.values(grouped);
 };
 
 const isSkillActive = (text, team, characters) => {
@@ -114,7 +125,34 @@ const isSkillActive = (text, team, characters) => {
   return count >= requiredCount;
 };
 
-const getTeamSimulatedScore = (team, leader, characters) => {
+// Intent: Pre-parse activation conditions from skill text to avoid regex matching inside the simulation loop.
+const parseSkillCondition = (text) => {
+  if (!text) return null;
+  const match = text.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
+  if (!match) return null;
+  const requiredCount = parseInt(match[1] || match[2]) || 2;
+  const rawTarget = match[3].trim().toUpperCase();
+  const condTarget = rawTarget.replace(/[[]]/g, '').replace(/\bTYPE\b/g, '').trim();
+  return { requiredCount, condTarget };
+};
+
+// Intent: Check if a pre-parsed skill condition is met by the current active team.
+const isSkillActiveOptimized = (cond, team, characters) => {
+  if (!cond) return true;
+  let count = 0;
+  team.forEach(activeId => {
+    const activeChar = characters.find(c => c.id === activeId);
+    if (activeChar) {
+      if (activeChar.group.toUpperCase() === cond.condTarget || 
+          activeChar.type.toUpperCase() === cond.condTarget) {
+        count++;
+      }
+    }
+  });
+  return count >= cond.requiredCount;
+};
+
+const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null) => {
   const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
   
   const senseBuffs = {};
@@ -176,30 +214,36 @@ const getTeamSimulatedScore = (team, leader, characters) => {
     const char = characters.find(c => c.id === id);
     if (!char || !char.skills) return;
 
+    const ps = preparsedSkills ? preparsedSkills[id] : null;
+
     if (id === leader && char.skills.outfit) {
-      if (isSkillActive(char.skills.outfit, uniqueActiveIds, characters)) {
-        const mods = parseSkillModifier(char.skills.outfit);
+      const active = ps ? isSkillActiveOptimized(ps.outfit.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.outfit, uniqueActiveIds, characters);
+      if (active) {
+        const mods = ps ? ps.outfit.mods : parseSkillModifier(char.skills.outfit);
         mods.forEach(mod => applyModifier(mod, id));
       }
     }
 
     if (char.skills.passive) {
-      if (isSkillActive(char.skills.passive, uniqueActiveIds, characters)) {
-        const mods = parseSkillModifier(char.skills.passive);
+      const active = ps ? isSkillActiveOptimized(ps.passive.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.passive, uniqueActiveIds, characters);
+      if (active) {
+        const mods = ps ? ps.passive.mods : parseSkillModifier(char.skills.passive);
         mods.forEach(mod => applyModifier(mod, id));
       }
     }
 
     if (char.skills.active) {
-      if (isSkillActive(char.skills.active, uniqueActiveIds, characters)) {
-        const mods = parseSkillModifier(char.skills.active);
+      const active = ps ? isSkillActiveOptimized(ps.active.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.active, uniqueActiveIds, characters);
+      if (active) {
+        const mods = ps ? ps.active.mods : parseSkillModifier(char.skills.active);
         mods.forEach(mod => applyModifier(mod, id));
       }
     }
 
     if (char.skills.special) {
-      if (isSkillActive(char.skills.special, uniqueActiveIds, characters)) {
-        const mods = parseSkillModifier(char.skills.special);
+      const active = ps ? isSkillActiveOptimized(ps.special.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.special, uniqueActiveIds, characters);
+      if (active) {
+        const mods = ps ? ps.special.mods : parseSkillModifier(char.skills.special);
         mods.forEach(mod => applyModifier(mod, id));
       }
     }
@@ -237,6 +281,29 @@ const getTeamSimulatedScore = (team, leader, characters) => {
 const recommendBestTeam = (ownedIds, characters) => {
   if (ownedIds.length < 5) return null;
   
+  // Pre-parse skills and conditions for all characters to optimize simulation performance
+  const preparsedSkills = {};
+  characters.forEach(char => {
+    preparsedSkills[char.id] = {
+      outfit: {
+        mods: parseSkillModifier(char.skills?.outfit),
+        cond: parseSkillCondition(char.skills?.outfit)
+      },
+      passive: {
+        mods: parseSkillModifier(char.skills?.passive),
+        cond: parseSkillCondition(char.skills?.passive)
+      },
+      active: {
+        mods: parseSkillModifier(char.skills?.active),
+        cond: parseSkillCondition(char.skills?.active)
+      },
+      special: {
+        mods: parseSkillModifier(char.skills?.special),
+        cond: parseSkillCondition(char.skills?.special)
+      }
+    };
+  });
+
   const charScores = ownedIds.map(id => {
     const char = characters.find(c => c.id === id);
     if (!char) return { id, score: 0 };
@@ -256,7 +323,7 @@ const recommendBestTeam = (ownedIds, characters) => {
   });
   
   charScores.sort((a, b) => b.score - a.score);
-  const candidates = charScores.slice(0, 13).map(c => c.id);
+  const candidates = charScores.slice(0, 20).map(c => c.id);
   
   const getCombinations = (arr, k) => {
     const result = [];
@@ -283,7 +350,7 @@ const recommendBestTeam = (ownedIds, characters) => {
   
   combos.forEach(team => {
     team.forEach(leader => {
-      const score = getTeamSimulatedScore(team, leader, characters);
+      const score = getTeamSimulatedScore(team, leader, characters, preparsedSkills);
       if (score > maxScore) {
         maxScore = score;
         bestTeam = team;
