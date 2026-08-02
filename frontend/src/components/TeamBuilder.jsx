@@ -48,6 +48,16 @@ const parseSkillModifier = (text) => {
     return 'self'; // Default to self for active/special combat triggers
   };
 
+  // Helper to extract target limit
+  const getLimit = (txt) => {
+    if (!txt) return null;
+    const limitMatch = txt.match(/to\s+(\d+)\s+[A-Za-z0-9\s\-++]+?\s+Members/i);
+    if (limitMatch) {
+      return parseInt(limitMatch[1]) || null;
+    }
+    return null;
+  };
+
   // 1. Match standard Stat UPs: e.g., "Sense UP 45%", "All Stats UP 50%", "+50% Stats"
   const statRegexes = [
     { pattern: /(Sense|Technique|Performance|All Stats)\s+UP\s+(\d+)%/i, type: 'standard' },
@@ -67,7 +77,7 @@ const parseSkillModifier = (text) => {
         stat = 'all stats';
         percentage = parseInt(m[1]);
       }
-      modifiers.push({ stat, percentage, target: getTarget(text) });
+      modifiers.push({ stat, percentage, target: getTarget(text), limit: getLimit(text) });
     }
   });
 
@@ -75,21 +85,21 @@ const parseSkillModifier = (text) => {
   const scoreUpRe = /Score\s+UP\s+(\d+)%/gi;
   let m1;
   while ((m1 = scoreUpRe.exec(text)) !== null) {
-    modifiers.push({ stat: 'score_up', percentage: parseInt(m1[1]), target: getTarget(text) });
+    modifiers.push({ stat: 'score_up', percentage: parseInt(m1[1]), target: getTarget(text), limit: getLimit(text) });
   }
 
   // 3. Match Skill Activation Rate UP: e.g., "Skill Activation Rate UP 55%"
   const actRateRe = /Skill\s+Activation\s+Rate\s+UP\s+(\d+)%/gi;
   let m2;
   while ((m2 = actRateRe.exec(text)) !== null) {
-    modifiers.push({ stat: 'activation_rate', percentage: parseInt(m2[1]), target: getTarget(text) });
+    modifiers.push({ stat: 'activation_rate', percentage: parseInt(m2[1]), target: getTarget(text), limit: getLimit(text) });
   }
 
   // 4. Match Score Support Effect: e.g., "Grants Score Support Effect of 160%"
   const supportRe = /Score\s+Support\s+Effect\s+(?:of|UP)?\s*(\d+)%/gi;
   let m3;
   while ((m3 = supportRe.exec(text)) !== null) {
-    modifiers.push({ stat: 'support_effect', percentage: parseInt(m3[1]), target: getTarget(text) });
+    modifiers.push({ stat: 'support_effect', percentage: parseInt(m3[1]), target: getTarget(text), limit: getLimit(text) });
   }
 
   // Filter modifiers: group by (stat, target) and take only the maximum percentage to prevent double-counting conditional steps
@@ -158,22 +168,25 @@ const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null)
   const senseBuffs = {};
   const techniqueBuffs = {};
   const performanceBuffs = {};
-  const scoreBuffs = {};
+  const activeScoreBuffs = {};
+  const specialScoreBuffs = {};
   const activationRateBuffs = {};
   
   uniqueActiveIds.forEach(id => {
     senseBuffs[id] = 0.0;
     techniqueBuffs[id] = 0.0;
     performanceBuffs[id] = 0.0;
-    scoreBuffs[id] = 0.0;
+    activeScoreBuffs[id] = 0.0;
+    specialScoreBuffs[id] = 0.0;
     activationRateBuffs[id] = 0.0;
   });
 
-  const applyModifier = (mod, ownerId) => {
+  const applyModifier = (mod, ownerId, isSpecial = false) => {
     if (!mod) return;
-    const { stat, percentage, target } = mod;
+    const { stat, percentage, target, limit } = mod;
     const val = percentage / 100;
 
+    let appliedCount = 0;
     uniqueActiveIds.forEach(id => {
       const char = characters.find(c => c.id === id);
       if (!char) return;
@@ -190,6 +203,13 @@ const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null)
       }
 
       if (match) {
+        if (limit !== undefined && limit !== null) {
+          if (appliedCount >= limit) {
+            return;
+          }
+          appliedCount++;
+        }
+
         if (stat === 'all stats') {
           senseBuffs[id] += val;
           techniqueBuffs[id] += val;
@@ -201,7 +221,11 @@ const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null)
         } else if (stat === 'performance') {
           performanceBuffs[id] += val;
         } else if (stat === 'score_up' || stat === 'support_effect') {
-          scoreBuffs[id] += val;
+          if (isSpecial) {
+            specialScoreBuffs[id] += val;
+          } else {
+            activeScoreBuffs[id] += val;
+          }
         } else if (stat === 'activation_rate') {
           activationRateBuffs[id] += val;
         }
@@ -220,7 +244,7 @@ const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null)
       const active = ps ? isSkillActiveOptimized(ps.outfit.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.outfit, uniqueActiveIds, characters);
       if (active) {
         const mods = ps ? ps.outfit.mods : parseSkillModifier(char.skills.outfit);
-        mods.forEach(mod => applyModifier(mod, id));
+        mods.forEach(mod => applyModifier(mod, id, false));
       }
     }
 
@@ -228,7 +252,7 @@ const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null)
       const active = ps ? isSkillActiveOptimized(ps.passive.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.passive, uniqueActiveIds, characters);
       if (active) {
         const mods = ps ? ps.passive.mods : parseSkillModifier(char.skills.passive);
-        mods.forEach(mod => applyModifier(mod, id));
+        mods.forEach(mod => applyModifier(mod, id, false));
       }
     }
 
@@ -236,7 +260,7 @@ const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null)
       const active = ps ? isSkillActiveOptimized(ps.active.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.active, uniqueActiveIds, characters);
       if (active) {
         const mods = ps ? ps.active.mods : parseSkillModifier(char.skills.active);
-        mods.forEach(mod => applyModifier(mod, id));
+        mods.forEach(mod => applyModifier(mod, id, false));
       }
     }
 
@@ -244,7 +268,7 @@ const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null)
       const active = ps ? isSkillActiveOptimized(ps.special.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.special, uniqueActiveIds, characters);
       if (active) {
         const mods = ps ? ps.special.mods : parseSkillModifier(char.skills.special);
-        mods.forEach(mod => applyModifier(mod, id));
+        mods.forEach(mod => applyModifier(mod, id, true));
       }
     }
   });
@@ -265,9 +289,34 @@ const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null)
       const finalPerf = basePerf * (1 + performanceBuffs[id]);
       const overallPower = finalSense + finalTech + finalPerf;
 
-      // Calculate expected Score Bonus (Score Buffs * (Base activation rate + activation rate buffs))
-      const baseActivationRate = 0.5;
-      const expectedScoreBonus = scoreBuffs[id] * (baseActivationRate + activationRateBuffs[id]);
+      // Determine character-specific base activation rate based on active skill description probability text
+      let baseActivationRate = 0.50;
+      const activeText = char.skills?.active || '';
+      if (/low\s+probability/i.test(activeText)) {
+        baseActivationRate = 0.37;
+      } else if (/medium\s+probability/i.test(activeText)) {
+        baseActivationRate = 0.46;
+      } else if (/high\s+probability/i.test(activeText)) {
+        baseActivationRate = 0.55;
+      }
+
+      // Parse active skill duration and interval
+      const durationMatch = activeText.match(/For\s+(\d+)s/i);
+      const intervalMatch = activeText.match(/Every\s+(\d+)s/i);
+      const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
+      const interval = intervalMatch ? parseInt(intervalMatch[1]) : 30;
+
+      // Calculate expected active trigger rate and uptime ratio over a 2m 45s (165s) song
+      const triggerRate = baseActivationRate + activationRateBuffs[id];
+      const songDuration = 165;
+      const triggers = Math.floor(songDuration / interval);
+      const expectedUptime = triggers * duration * triggerRate;
+      const uptimeRatio = Math.min(1.0, expectedUptime / songDuration);
+
+      // Calculate expected Score Bonus (Active Buff scaled by Uptime + Special Buff at 100%)
+      const activeBonus = activeScoreBuffs[id] * uptimeRatio;
+      const specialBonus = specialScoreBuffs[id] * 1.0; // SP skills trigger with 100% certainty
+      const expectedScoreBonus = activeBonus + specialBonus;
 
       // Calculate Unit Score: Overall Power * (1 + expected Score Bonus)
       const unitScore = overallPower * (1 + expectedScoreBonus);
@@ -317,8 +366,33 @@ const recommendBestTeam = (ownedIds, characters) => {
       const ochar = characters.find(c => c.id === oid);
       return ochar && ochar.id !== id && ochar.type === char.type;
     }).length;
-    
-    const score = (sameGenCount * 3) + sameTypeCount;
+
+    // Parse active skill details
+    const activeText = char.skills?.active || '';
+    const durationMatch = activeText.match(/For\s+(\d+)s/i);
+    const intervalMatch = activeText.match(/Every\s+(\d+)s/i);
+    const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
+    const interval = intervalMatch ? parseInt(intervalMatch[1]) : 30;
+
+    let baseActivationRate = 0.50;
+    if (/low\s+probability/i.test(activeText)) baseActivationRate = 0.37;
+    else if (/medium\s+probability/i.test(activeText)) baseActivationRate = 0.46;
+    else if (/high\s+probability/i.test(activeText)) baseActivationRate = 0.55;
+
+    const triggers = Math.floor(165 / interval);
+    const expectedUptime = triggers * duration * baseActivationRate;
+    const uptimeRatio = Math.min(1.0, expectedUptime / 165);
+
+    // Grab active buff percentage
+    const activeMods = preparsedSkills[id]?.active?.mods || [];
+    const activePercent = activeMods.length > 0 ? activeMods[0].percentage : 60;
+    const activeUptimeScore = activePercent * uptimeRatio;
+
+    // Unified heuristic score: stat weight + synergy weight + active uptime weight
+    const statIndex = char.stats.total / 800;
+    const synergyIndex = (sameGenCount * 6) + (sameTypeCount * 1.5);
+    const score = statIndex + synergyIndex + activeUptimeScore;
+
     return { id, score };
   });
   
@@ -361,11 +435,227 @@ const recommendBestTeam = (ownedIds, characters) => {
   
   const passiveCount = getPassiveCount(bestTeam, bestLeader, characters);
   return { team: bestTeam, leader: bestLeader, passiveCount, simulatedScore: maxScore };
-};;
+};
+const getTeamCalculationDetails = (team, leader, characters) => {
+  const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
+  
+  const senseBuffs = {};
+  const techniqueBuffs = {};
+  const performanceBuffs = {};
+  const activeScoreBuffs = {};
+  const specialScoreBuffs = {};
+  const activationRateBuffs = {};
+  
+  uniqueActiveIds.forEach(id => {
+    senseBuffs[id] = 0.0;
+    techniqueBuffs[id] = 0.0;
+    performanceBuffs[id] = 0.0;
+    activeScoreBuffs[id] = 0.0;
+    specialScoreBuffs[id] = 0.0;
+    activationRateBuffs[id] = 0.0;
+  });
+
+  const applyModifier = (mod, ownerId, isSpecial = false) => {
+    if (!mod) return;
+    const { stat, percentage, target, limit } = mod;
+    const val = percentage / 100;
+
+    let appliedCount = 0;
+    uniqueActiveIds.forEach(id => {
+      const char = characters.find(c => c.id === id);
+      if (!char) return;
+
+      let match = false;
+      if (target === 'all') {
+        match = true;
+      } else if (target === 'self') {
+        match = id === ownerId;
+      } else {
+        if (char.group.toUpperCase() === target || char.type.toUpperCase() === target) {
+          match = true;
+        }
+      }
+
+      if (match) {
+        if (limit !== undefined && limit !== null) {
+          if (appliedCount >= limit) {
+            return;
+          }
+          appliedCount++;
+        }
+
+        if (stat === 'all stats') {
+          senseBuffs[id] += val;
+          techniqueBuffs[id] += val;
+          performanceBuffs[id] += val;
+        } else if (stat === 'sense') {
+          senseBuffs[id] += val;
+        } else if (stat === 'technique') {
+          techniqueBuffs[id] += val;
+        } else if (stat === 'performance') {
+          performanceBuffs[id] += val;
+        } else if (stat === 'score_up' || stat === 'support_effect') {
+          if (isSpecial) {
+            specialScoreBuffs[id] += val;
+          } else {
+            activeScoreBuffs[id] += val;
+          }
+        } else if (stat === 'activation_rate') {
+          activationRateBuffs[id] += val;
+        }
+      }
+    });
+  };
+
+  // Evaluate all active skills on the team
+  uniqueActiveIds.forEach(id => {
+    const char = characters.find(c => c.id === id);
+    if (!char || !char.skills) return;
+
+    if (id === leader && char.skills.outfit) {
+      if (isSkillActive(char.skills.outfit, uniqueActiveIds, characters)) {
+        parseSkillModifier(char.skills.outfit).forEach(mod => applyModifier(mod, id, false));
+      }
+    }
+    if (char.skills.passive) {
+      if (isSkillActive(char.skills.passive, uniqueActiveIds, characters)) {
+        parseSkillModifier(char.skills.passive).forEach(mod => applyModifier(mod, id, false));
+      }
+    }
+    if (char.skills.active) {
+      if (isSkillActive(char.skills.active, uniqueActiveIds, characters)) {
+        parseSkillModifier(char.skills.active).forEach(mod => applyModifier(mod, id, false));
+      }
+    }
+    if (char.skills.special) {
+      if (isSkillActive(char.skills.special, uniqueActiveIds, characters)) {
+        parseSkillModifier(char.skills.special).forEach(mod => applyModifier(mod, id, true));
+      }
+    }
+  });
+
+  return uniqueActiveIds.map(id => {
+    const char = characters.find(c => c.id === id);
+    if (!char) return null;
+
+    const scale = char.stats.total < 1000 ? 100 : 1;
+    const baseSense = char.stats.sense * scale;
+    const baseTech = char.stats.technique * scale;
+    const basePerf = char.stats.performance * scale;
+    
+    const finalSense = baseSense * (1 + senseBuffs[id]);
+    const finalTech = baseTech * (1 + techniqueBuffs[id]);
+    const finalPerf = basePerf * (1 + performanceBuffs[id]);
+    const overallPower = finalSense + finalTech + finalPerf;
+
+    let baseActivationRate = 0.50;
+    const activeText = char.skills?.active || '';
+    if (/low\s+probability/i.test(activeText)) {
+      baseActivationRate = 0.37;
+    } else if (/medium\s+probability/i.test(activeText)) {
+      baseActivationRate = 0.46;
+    } else if (/high\s+probability/i.test(activeText)) {
+      baseActivationRate = 0.55;
+    }
+
+    const durationMatch = activeText.match(/For\s+(\d+)s/i);
+    const intervalMatch = activeText.match(/Every\s+(\d+)s/i);
+    const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
+    const interval = intervalMatch ? parseInt(intervalMatch[1]) : 30;
+
+    const triggerRate = baseActivationRate + activationRateBuffs[id];
+    const songDuration = 165;
+    const triggers = Math.floor(songDuration / interval);
+    const expectedUptime = triggers * duration * triggerRate;
+    const uptimeRatio = Math.min(1.0, expectedUptime / songDuration);
+
+    const activeBonus = activeScoreBuffs[id] * uptimeRatio;
+    const specialBonus = specialScoreBuffs[id] * 1.0;
+    const expectedScoreBonus = activeBonus + specialBonus;
+
+    const unitScore = Math.round(overallPower * (1 + expectedScoreBonus));
+
+    // Compile list of applied buffs for display
+    const appliedBuffLabels = [];
+    if (id === leader && char.skills.outfit && isSkillActive(char.skills.outfit, uniqueActiveIds, characters)) {
+      appliedBuffLabels.push(`${char.name} Leader (+50% All)`);
+    }
+    // Check if other characters' outfit/passives apply to this character
+    uniqueActiveIds.forEach(otherId => {
+      const otherChar = characters.find(c => c.id === otherId);
+      if (!otherChar) return;
+
+      // Leader outfit buff to all
+      if (otherId === leader && otherId !== id && otherChar.skills.outfit && isSkillActive(otherChar.skills.outfit, uniqueActiveIds, characters)) {
+        const mods = parseSkillModifier(otherChar.skills.outfit);
+        mods.forEach(mod => {
+          if (mod.target === 'all') {
+            appliedBuffLabels.push(`${otherChar.name} Leader (+${mod.percentage}% All)`);
+          }
+        });
+      }
+
+      // Passives
+      if (otherChar.skills.passive && isSkillActive(otherChar.skills.passive, uniqueActiveIds, characters)) {
+        const mods = parseSkillModifier(otherChar.skills.passive);
+        // Find if this passive targets the character 'id'
+        mods.forEach(mod => {
+          let applies = false;
+          if (mod.target === 'all') applies = true;
+          else if (mod.target === 'self' && otherId === id) applies = true;
+          else if (char.group.toUpperCase() === mod.target || char.type.toUpperCase() === mod.target) {
+            let matchedIds = uniqueActiveIds.filter(uid => {
+              const c = characters.find(x => x.id === uid);
+              return c && (c.group.toUpperCase() === mod.target || c.type.toUpperCase() === mod.target);
+            });
+            const limit = mod.limit;
+            if (limit !== null && limit !== undefined) {
+              matchedIds = matchedIds.slice(0, limit);
+            }
+            if (matchedIds.includes(id)) {
+              applies = true;
+            }
+          }
+          if (applies) {
+            const statLabel = mod.stat === 'all stats' ? 'All' : mod.stat === 'score_up' || mod.stat === 'support_effect' ? 'Score' : mod.stat;
+            appliedBuffLabels.push(`${otherChar.name} Passive (+${mod.percentage}% ${statLabel})`);
+          }
+        });
+      }
+    });
+
+    return {
+      id,
+      name: char.name,
+      accentColor: char.accentColor,
+      stats: {
+        sense: { raw: baseSense, final: finalSense, buff: senseBuffs[id] },
+        technique: { raw: baseTech, final: finalTech, buff: techniqueBuffs[id] },
+        performance: { raw: basePerf, final: finalPerf, buff: performanceBuffs[id] }
+      },
+      overallPower,
+      activeBuff: activeScoreBuffs[id],
+      uptime: {
+        triggers,
+        duration,
+        interval,
+        baseActivationRate,
+        triggerRate,
+        uptimeRatio
+      },
+      specialBuff: specialScoreBuffs[id],
+      totalBonus: expectedScoreBonus,
+      unitScore,
+      appliedBuffLabels
+    };
+  }).filter(Boolean);
+};
+
 
 export default function TeamBuilder({ presets, selectedPresetId, setSelectedPresetId, onUpdatePreset, onSavePresets, ownedRoster = [], onUpdateOwnedRoster, characters = [] }) {
   const { t } = useLanguage();
   const [isActiveExpanded, setIsActiveExpanded] = useState(false);
+  const [isDetailedMathExpanded, setIsDetailedMathExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSlotIndex, setActiveSlotIndex] = useState(null); // 'leader' or 0, 1, 2, 3, 4 or null
   const [isEditingName, setIsEditingName] = useState(false);
@@ -427,9 +717,7 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
         newTeam[targetIndex] = activeLeader;
         setActiveTeam(newTeam);
         
-        if (temp) {
-          setActiveLeader(temp);
-        }
+        setActiveLeader(temp || null); // Clear leader slot if target slot was empty
       }
     }
   };
@@ -444,15 +732,13 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
         // Prevent duplicate if character is already leader
         if (activeLeader === charId) return;
         
-        // Swap leader with team slot unit if leader was already set
+        // Swap leader with team slot unit
         const oldLeader = activeLeader;
         setActiveLeader(charId);
         
-        if (oldLeader) {
-          const newTeam = [...activeTeam];
-          newTeam[sourceIndex] = oldLeader;
-          setActiveTeam(newTeam);
-        }
+        const newTeam = [...activeTeam];
+        newTeam[sourceIndex] = oldLeader || null; // Clear team slot if no old leader exists to prevent duplication
+        setActiveTeam(newTeam);
       }
     }
   };
@@ -1345,6 +1631,155 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                       </div>
                     );
                   })}
+                </div>
+              ) : (
+                <div className="empty-analytics" style={{ padding: '2rem 1rem' }}>
+                  <AlertCircle size={24} className="text-muted" />
+                  <p>{t('add_members_msg')}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Row 3: Detailed Score Calculation Breakdowns panel */}
+        <div className="roster-manager glass" style={{ marginTop: '1.25rem', width: '100%' }}>
+          <div 
+            className="roster-header" 
+            onClick={() => setIsDetailedMathExpanded(!isDetailedMathExpanded)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="roster-header-title-block">
+              <h3 className="section-title-small" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={16} className="text-gold" />
+                {t('detailed_score_breakdowns')}
+              </h3>
+              <span className="presets-info-text">
+                {activeTeam.filter(Boolean).length > 0 || activeLeader
+                  ? t('detailed_score_desc')
+                  : t('add_members_calc_msg')
+                }
+              </span>
+            </div>
+            <button className="btn-toggle-roster" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              {isDetailedMathExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          </div>
+          
+          {isDetailedMathExpanded && (
+            <div className="roster-body animate-slide-down" style={{ marginTop: '1rem' }}>
+              {(activeTeam.filter(Boolean).length > 0 || activeLeader) ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {/* Summary Table */}
+                  <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.01)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)' }}>
+                          <th style={{ padding: '10px' }}>{t('character')}</th>
+                          <th style={{ padding: '10px' }}>{t('final_stats_header')}</th>
+                          <th style={{ padding: '10px' }}>{t('power')}</th>
+                          <th style={{ padding: '10px' }}>{t('active_buff')}</th>
+                          <th style={{ padding: '10px' }}>{t('uptime')}</th>
+                          <th style={{ padding: '10px' }}>{t('special_buff')}</th>
+                          <th style={{ padding: '10px' }}>{t('score_bonus')}</th>
+                          <th style={{ padding: '10px' }}>{t('unit_score')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          const detailsList = getTeamCalculationDetails(activeTeam, activeLeader, characters);
+                          const totalPower = detailsList.reduce((sum, item) => sum + item.overallPower, 0);
+                          const totalScore = detailsList.reduce((sum, item) => sum + item.unitScore, 0);
+                          return (
+                            <>
+                              {detailsList.map(details => (
+                                <tr key={details.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', color: 'var(--text-primary)' }}>
+                                  <td style={{ padding: '10px', fontWeight: 'bold' }}>{details.name}</td>
+                                  <td style={{ padding: '10px' }}>{Math.round(details.stats.sense.final).toLocaleString()} / {Math.round(details.stats.technique.final).toLocaleString()} / {Math.round(details.stats.performance.final).toLocaleString()}</td>
+                                  <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>{Math.round(details.overallPower).toLocaleString()}</td>
+                                  <td style={{ padding: '10px' }}>{Math.round(details.activeBuff * 100)}%</td>
+                                  <td style={{ padding: '10px' }}>{(details.uptime.uptimeRatio * 100).toFixed(1)}%</td>
+                                  <td style={{ padding: '10px' }}>{Math.round(details.specialBuff * 100)}%</td>
+                                  <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>+{(details.totalBonus * 100).toFixed(1)}%</td>
+                                  <td style={{ padding: '10px', fontWeight: 'bold' }}>{details.unitScore.toLocaleString()}</td>
+                                </tr>
+                              ))}
+                              <tr style={{ background: 'rgba(255,255,255,0.03)', borderTop: '2px solid var(--border-color)', color: 'var(--text-primary)' }}>
+                                <td style={{ padding: '10px', fontWeight: 'bold' }}>{t('total')}</td>
+                                <td style={{ padding: '10px' }}>-</td>
+                                <td style={{ padding: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{Math.round(totalPower).toLocaleString()}</td>
+                                <td style={{ padding: '10px' }}>-</td>
+                                <td style={{ padding: '10px' }}>-</td>
+                                <td style={{ padding: '10px' }}>-</td>
+                                <td style={{ padding: '10px' }}>-</td>
+                                <td style={{ padding: '10px', color: '#ffb703', fontWeight: 'bold', fontSize: '0.85rem' }}>{totalScore.toLocaleString()}</td>
+                              </tr>
+                            </>
+                          );
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Cards for each character */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                    {getTeamCalculationDetails(activeTeam, activeLeader, characters).map(details => (
+                      <div key={details.id} className="synergy-bonus-item glass" style={{ padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: details.accentColor }} />
+                          <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{details.name} - {t('calculation_math')}</strong>
+                        </div>
+                        
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px', lineHeight: '1.5' }}>
+                          <div>
+                            <strong style={{ color: 'var(--text-primary)' }}>{t('final_stats_math')}:</strong>
+                            <div style={{ paddingLeft: '10px', marginTop: '2px', color: 'var(--text-muted)' }}>
+                              Sense: {details.stats.sense.raw.toLocaleString()} * (1 + {details.stats.sense.buff.toFixed(2)}) = {Math.round(details.stats.sense.final).toLocaleString()}<br />
+                              Technique: {details.stats.technique.raw.toLocaleString()} * (1 + {details.stats.technique.buff.toFixed(2)}) = {Math.round(details.stats.technique.final).toLocaleString()}<br />
+                              Performance: {details.stats.performance.raw.toLocaleString()} * (1 + {details.stats.performance.buff.toFixed(2)}) = {Math.round(details.stats.performance.final).toLocaleString()}
+                            </div>
+                            {details.appliedBuffLabels.length > 0 && (
+                              <div style={{ paddingLeft: '10px', marginTop: '4px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                {t('applied_buffs')}: {details.appliedBuffLabels.join(', ')}
+                              </div>
+                            )}
+                          </div>
+
+                          <div>
+                            <strong style={{ color: 'var(--text-primary)' }}>{t('overall_power_math')}:</strong>
+                            <div style={{ paddingLeft: '10px', marginTop: '2px', color: 'var(--text-muted)' }}>
+                              {Math.round(details.stats.sense.final).toLocaleString()} (Sense) + {Math.round(details.stats.technique.final).toLocaleString()} (Tech) + {Math.round(details.stats.performance.final).toLocaleString()} (Perf) = {Math.round(details.overallPower).toLocaleString()} {t('power')}
+                            </div>
+                          </div>
+
+                          <div>
+                            <strong style={{ color: 'var(--text-primary)' }}>{t('active_uptime_math')}:</strong>
+                            <div style={{ paddingLeft: '10px', marginTop: '2px', color: 'var(--text-muted)' }}>
+                              {t('triggers_in')}: Math.floor(165 / {details.uptime.interval}) = {details.uptime.triggers}<br />
+                              {t('trigger_rate')}: {Math.round(details.uptime.baseActivationRate * 100)}% base + {Math.round((details.uptime.triggerRate - details.uptime.baseActivationRate) * 100)}% buff = {Math.round(details.uptime.triggerRate * 100)}%<br />
+                              {t('uptime_ratio')}: ({details.uptime.triggers} triggers * {details.uptime.duration}s duration * {Math.round(details.uptime.triggerRate * 100)}% trigger rate) / 165s = {(details.uptime.uptimeRatio * 100).toFixed(1)}%
+                            </div>
+                          </div>
+
+                          <div>
+                            <strong style={{ color: 'var(--text-primary)' }}>{t('score_bonus_math')}:</strong>
+                            <div style={{ paddingLeft: '10px', marginTop: '2px', color: 'var(--text-muted)' }}>
+                              {t('active')}: {Math.round(details.activeBuff * 100)}% active buff * {(details.uptime.uptimeRatio * 100).toFixed(1)}% uptime = {(details.activeBuff * details.uptime.uptimeRatio * 100).toFixed(1)}% score bonus<br />
+                              {t('special')}: {Math.round(details.specialBuff * 100)}% special buff * 100% trigger rate = {Math.round(details.specialBuff * 100)}% score bonus<br />
+                              {t('total_expected_bonus')}: {(details.activeBuff * details.uptime.uptimeRatio * 100).toFixed(1)}% + {Math.round(details.specialBuff * 100)}% = +{(details.totalBonus * 100).toFixed(1)}%
+                            </div>
+                          </div>
+
+                          <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
+                            <strong style={{ color: 'var(--text-primary)' }}>{t('final_unit_score_math')}:</strong>
+                            <div style={{ paddingLeft: '10px', marginTop: '2px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+                              {Math.round(details.overallPower).toLocaleString()} Power * (1 + {details.totalBonus.toFixed(4)}) = {details.unitScore.toLocaleString()} Unit Score
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="empty-analytics" style={{ padding: '2rem 1rem' }}>
