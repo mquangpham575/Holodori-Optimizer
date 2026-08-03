@@ -358,40 +358,46 @@
 
 /* Slot and roster images in TeamBuilder */
 .slot-img-wrapper {
-  width: 55px;
-  height: 55px;
-  border-radius: 8px;
+  width: 58px;
+  height: 76px;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.25);
   display: flex;
   justify-content: center;
   align-items: center;
   border: 1px solid var(--border-color);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
 }
 
 .slot-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: top center;
 }
 
 .roster-item-media {
-  width: 65px;
-  height: 65px;
-  border-radius: 8px;
+  width: 58px;
+  height: 76px;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.25);
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 0.5rem;
   border: 1px solid var(--border-color);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
 }
 
 .roster-item-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: top center;
 }
 
 .text-purple { color: #a855f7; }
@@ -421,7 +427,7 @@
 }
 
 .leader-slot {
-  height: 170px;
+  height: 190px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -528,7 +534,8 @@
 }
 
 .builder-slot {
-  height: 80px;
+  min-height: 95px;
+  height: auto;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -536,9 +543,10 @@
   justify-content: center;
   position: relative;
   transition: all 0.3s ease;
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
   border: 1px solid var(--border-color);
+  padding: 0.85rem 1.15rem;
 }
 
 .builder-slot.active-focused-slot {
@@ -549,7 +557,7 @@
 }
 
 .leader-slot {
-  height: 175px;
+  height: 190px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -1116,20 +1124,21 @@
 }
 
 .roster-char-avatar-mini {
-  width: 26px;
-  height: 26px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 900;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.85rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .roster-char-item.owned .roster-char-avatar-mini {
-  background: var(--accent-glow);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--text-primary);
 }
 
@@ -1271,7 +1280,7 @@
 /* Custom styled close modal button */
 .btn-close-modal {
   background: transparent !important;
-  border: 1px solid #000000 !important;
+  border: none !important;
   color: var(--text-primary) !important;
   border-radius: 50% !important;
   width: 32px;
@@ -1281,6 +1290,341 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+/* Search & Add Roster Manager Styling */
+.roster-search-section {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+.roster-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.25s ease;
+}
+
+.roster-search-input-wrapper:focus-within {
+  border-color: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.roster-search-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  width: 100%;
+  outline: none;
+}
+
+.btn-clear-search {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-clear-search:hover {
+  color: #fff;
+}
+
+.roster-search-results-dropdown {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 1rem;
+  border-radius: 16px;
+  background: #0f172a;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.search-results-header {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.no-search-results {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.search-card-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease;
+}
+
+.search-card-result-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.search-card-thumb {
+  width: 44px;
+  height: 58px;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.search-card-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.search-card-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-card-title {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-card-badges {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+
+.badge-role-mini, .badge-type-mini {
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.btn-add-roster {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-add-roster:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.btn-add-roster.added {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Saved Roster Section */
+.owned-cards-section {
+  margin-top: 1.25rem;
+}
+
+.owned-grid-heading {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.85rem;
+  letter-spacing: 0.3px;
+}
+
+.empty-roster-placeholder {
+  padding: 2rem;
+  border-radius: 14px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.owned-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.owned-roster-card {
+  position: relative;
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.25s ease;
+}
+
+.owned-roster-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn-remove-roster-card {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0.2rem;
+  transition: color 0.2s ease;
+}
+
+.btn-remove-roster-card:hover {
+  color: #ef4444;
+}
+
+.owned-card-media {
+  width: 52px;
+  height: 68px;
+  aspect-ratio: 3 / 4;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.owned-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.owned-card-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  gap: 0.2rem;
+}
+
+.owned-card-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 1.2rem;
+}
+
+.owned-card-title {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.owned-card-badges {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.owned-card-progression {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.progression-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.progression-field label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.roster-level-input {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  outline: none;
+}
+
+.roster-bloom-select {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  outline: none;
 }
 
 .btn-close-modal:hover {

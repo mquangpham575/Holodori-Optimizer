@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import pkg from 'pg';
+import { fetchPacked, packedToLegacySnapshot, enrichCharacters, packedContentHash } from './etl/holodori-sync.js';
 
 const { Pool } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -53,7 +54,8 @@ const loadDB = () => {
       characters: [],
       presets: {},
       roster: {},
-      guides: []
+      guides: [],
+      songs: []
     };
   }
   try {
@@ -62,10 +64,11 @@ const loadDB = () => {
     if (Array.isArray(parsed.presets)) parsed.presets = {};
     if (Array.isArray(parsed.roster)) parsed.roster = {};
     if (!parsed.guides) parsed.guides = [];
+    if (!parsed.songs) parsed.songs = [];
     return parsed;
   } catch (err) {
     console.error("Error reading database.json:", err);
-    return { characters: [], presets: {}, roster: {}, guides: [] };
+    return { characters: [], presets: {}, roster: {}, guides: [], songs: [] };
   }
 };
 
@@ -111,7 +114,13 @@ const initPostgresSchema = async () => {
         image TEXT NOT NULL,
         avatar TEXT NOT NULL,
         stats JSONB NOT NULL,
-        skills JSONB NOT NULL
+        skills JSONB NOT NULL,
+        "cardData" JSONB NOT NULL DEFAULT '{}'::jsonb,
+        "cards" JSONB NOT NULL DEFAULT '[]'::jsonb,
+        "characterId" TEXT,
+        "attributeId" TEXT,
+        "groupIds" JSONB,
+        "assetId" TEXT
       )
     `);
 
@@ -155,6 +164,14 @@ const initPostgresSchema = async () => {
       ALTER TABLE guides ADD COLUMN IF NOT EXISTS contentUrl JSONB
     `);
 
+    // App-level metadata (holodori sync version tracking)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    `);
+
     await client.query("COMMIT");
     console.log("PostgreSQL schema validated successfully!");
   } catch (err) {
@@ -177,8 +194,8 @@ const seedPostgres = async () => {
     console.log("Syncing characters in PostgreSQL...");
     for (const char of module.CHARACTERS) {
       await client.query(
-        `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)
+        `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills, "cardData", "cards", "characterId", "attributeId", "groupIds", "assetId")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, $15, $16::jsonb, $17)
          ON CONFLICT (id) DO UPDATE SET
            name = EXCLUDED.name,
            title = EXCLUDED.title,
@@ -189,7 +206,13 @@ const seedPostgres = async () => {
            image = EXCLUDED.image,
            avatar = EXCLUDED.avatar,
            stats = EXCLUDED.stats,
-           skills = EXCLUDED.skills`,
+           skills = EXCLUDED.skills,
+           "cardData" = EXCLUDED."cardData",
+           "cards" = EXCLUDED."cards",
+           "characterId" = EXCLUDED."characterId",
+           "attributeId" = EXCLUDED."attributeId",
+           "groupIds" = EXCLUDED."groupIds",
+           "assetId" = EXCLUDED."assetId"`,
         [
           char.id,
           char.name,
@@ -201,7 +224,13 @@ const seedPostgres = async () => {
           char.image,
           char.avatar,
           JSON.stringify(char.stats),
-          JSON.stringify(char.skills)
+          JSON.stringify(char.skills),
+          JSON.stringify(char.cardData || {}),
+          JSON.stringify(char.cards || []),
+          char.characterId || null,
+          char.attributeId || null,
+          JSON.stringify(char.groupIds || []),
+          char.assetId || null
         ]
       );
     }
@@ -247,6 +276,92 @@ const seedPostgres = async () => {
     console.error("Error synchronizing PostgreSQL:", err);
   } finally {
     client.release();
+  }
+};
+
+// HolodoriDB live card sync (prod): applies upstream card updates to Postgres
+let holodoriSyncInFlight = false;
+
+const getHolodoriHash = async (client) => {
+  const res = await client.query("SELECT value FROM app_meta WHERE key = $1", ["holodori_packed_hash"]);
+  return res.rows[0]?.value || null;
+};
+
+const setHolodoriHash = async (client, hash, sourceVersion) => {
+  await client.query(
+    `INSERT INTO app_meta (key, value) VALUES ($1, $2)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    ["holodori_packed_hash", hash]
+  );
+  await client.query(
+    `INSERT INTO app_meta (key, value) VALUES ($1, $2)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    ["holodori_source_version", sourceVersion]
+  );
+};
+
+const syncHolodoriCards = async () => {
+  if (!isProd || holodoriSyncInFlight) return;
+  holodoriSyncInFlight = true;
+  try {
+    const packed = await fetchPacked();
+    const newHash = packedContentHash(packed);
+    const newVersion = packed.sourceVersion;
+    if (!newVersion) throw new Error("BUNDLED_PACKED has no sourceVersion");
+
+    const client = await pgPool.connect();
+    try {
+      const currentHash = await getHolodoriHash(client);
+      if (currentHash === newHash) {
+        console.log(`HolodoriDB sync: already up to date (${newVersion}).`);
+        return;
+      }
+
+      console.log(`HolodoriDB sync: applying update (${newVersion}, hash ${newHash.slice(0, 12)})`);
+      const snapshot = packedToLegacySnapshot(packed);
+
+      await client.query("BEGIN");
+      const skeletonRes = await client.query("SELECT * FROM characters");
+      const { characters, skipped } = enrichCharacters(skeletonRes.rows, snapshot);
+      if (skipped.length > 0) {
+        console.warn(`HolodoriDB sync: no card match for ${skipped.length} characters, left unchanged: ${skipped.join(", ")}`);
+      }
+
+      for (const char of characters) {
+        await client.query(
+          `UPDATE characters SET
+             title = $2, type = $3, stats = $4::jsonb, skills = $5::jsonb,
+             "cardData" = $6::jsonb, "cards" = $7::jsonb,
+             "characterId" = $8, "attributeId" = $9, "assetId" = $10
+           WHERE id = $1`,
+          [
+            char.id,
+            char.title,
+            char.type,
+            JSON.stringify(char.stats),
+            JSON.stringify(char.skills),
+            JSON.stringify(char.cardData || {}),
+            JSON.stringify(char.cards || []),
+            char.characterId || null,
+            char.attributeId || null,
+            char.assetId || null
+          ]
+        );
+      }
+
+      await setHolodoriHash(client, newHash, newVersion);
+      await client.query("COMMIT");
+      console.log(`HolodoriDB sync: applied upstream update for ${characters.length} characters (${newVersion}).`);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("HolodoriDB sync failed:", err.message);
+  } finally {
+    holodoriSyncInFlight = false;
   }
 };
 
@@ -304,6 +419,11 @@ const seedDatabase = async () => {
 
 await seedDatabase();
 
+if (isProd) {
+  syncHolodoriCards();
+  setInterval(syncHolodoriCards, 6 * 60 * 60 * 1000);
+}
+
 // GET /api/health
 app.get('/api/health', async (req, res) => {
   let postgresStatus = 'operational';
@@ -349,7 +469,13 @@ app.get('/api/characters', async (req, res) => {
         image: row.image,
         avatar: row.avatar,
         stats: row.stats,
-        skills: row.skills
+        skills: row.skills,
+        cardData: row.cardData,
+        cards: row.cards,
+        characterId: row.characterId,
+        attributeId: row.attributeId,
+        groupIds: row.groupIds,
+        assetId: row.assetId
       }));
       res.json(mapped);
     } catch (err) {
@@ -359,6 +485,12 @@ app.get('/api/characters', async (req, res) => {
     const db = loadDB();
     res.json(db.characters || []);
   }
+});
+
+// GET /api/songs
+app.get('/api/songs', (req, res) => {
+  const db = loadDB();
+  res.json(db.songs || []);
 });
 
 // GET /api/presets
@@ -614,8 +746,8 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
           const existing = await client.query("SELECT * FROM characters WHERE id = $1", [char.id]);
           if (existing.rows.length === 0) {
             await client.query(
-              `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
+              `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills, "cardData", "cards", "characterId", "attributeId", "groupIds", "assetId")
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, $15, $16::jsonb, $17)`,
               [
                 char.id,
                 char.name,
@@ -627,7 +759,13 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
                 char.image,
                 char.avatar,
                 JSON.stringify(char.stats),
-                JSON.stringify(char.skills)
+                JSON.stringify(char.skills),
+                JSON.stringify(char.cardData || {}),
+                JSON.stringify(char.cards || []),
+                char.characterId || null,
+                char.attributeId || null,
+                JSON.stringify(char.groupIds || []),
+                char.assetId || null
               ]
             );
           } else {
@@ -685,7 +823,9 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
           image: row.image,
           avatar: row.avatar,
           stats: row.stats,
-          skills: row.skills
+          skills: row.skills,
+          cardData: row.cardData,
+          cards: row.cards
         }));
         res.json({ success: true, characters: mapped });
       } catch (err) {
@@ -745,8 +885,8 @@ app.post('/api/admin/characters/bulk', requireAdmin, async (req, res) => {
       
       for (const char of charactersList) {
         await client.query(
-          `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
+          `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills, "cardData", "cards", "characterId", "attributeId", "groupIds", "assetId")
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, $15, $16::jsonb, $17)`,
           [
             char.id,
             char.name,
@@ -758,7 +898,13 @@ app.post('/api/admin/characters/bulk', requireAdmin, async (req, res) => {
             char.image,
             char.avatar,
             JSON.stringify(char.stats),
-            JSON.stringify(char.skills)
+            JSON.stringify(char.skills),
+            JSON.stringify(char.cardData || {}),
+            JSON.stringify(char.cards || []),
+            char.characterId || null,
+            char.attributeId || null,
+            JSON.stringify(char.groupIds || []),
+            char.assetId || null
           ]
         );
       }
@@ -787,8 +933,8 @@ app.post('/api/admin/characters', requireAdmin, async (req, res) => {
   if (isProd) {
     try {
       await pgPool.query(
-        `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb)`,
+        `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills, "cardData", "cards", "characterId", "attributeId", "groupIds", "assetId")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, $15, $16::jsonb, $17)`,
         [
           char.id,
           char.name,
@@ -800,7 +946,13 @@ app.post('/api/admin/characters', requireAdmin, async (req, res) => {
           char.image,
           char.avatar,
           JSON.stringify(char.stats || {}),
-          JSON.stringify(char.skills || {})
+          JSON.stringify(char.skills || {}),
+          JSON.stringify(char.cardData || {}),
+          JSON.stringify(char.cards || []),
+          char.characterId || null,
+          char.attributeId || null,
+          JSON.stringify(char.groupIds || []),
+          char.assetId || null
         ]
       );
       res.status(201).json({ success: true, character: char });

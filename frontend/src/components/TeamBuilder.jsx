@@ -1,18 +1,97 @@
-import { useLanguage } from '../context/LanguageContext';
-import React, { useState } from 'react';
-import { Trash2, Users, AlertCircle, CheckCircle2, Award, Leaf, Heart, Sun, Sparkles, X, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
-import './TeamBuilder.css';
-import './CharacterDB.css';
+import { useLanguage } from "../context/LanguageContext";
+import React, { useState } from "react";
+import {
+  Trash2,
+  Users,
+  AlertCircle,
+  CheckCircle2,
+  Award,
+  Leaf,
+  Heart,
+  Sun,
+  Sparkles,
+  X,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Search,
+} from "lucide-react";
+import "./TeamBuilder.css";
+import "./CharacterDB.css";
+import { ALL_CARDS } from "../data";
+import searchWorkerSource from "../search_worker.js?raw";
 const GROUPS = [
-  "Gen 0", "Gen 1", "Gen 2", "GAMERS", "Gen 3", "Gen 4", "Gen 5", "holoX",
-  "ID Gen 1", "ID Gen 2", "ID Gen 3", "Myth", "Promise", "Advent", "ReGLOSS"
+  "Gen 0",
+  "Gen 1",
+  "Gen 2",
+  "GAMERS",
+  "Gen 3",
+  "Gen 4",
+  "Gen 5",
+  "holoX",
+  "ID Gen 1",
+  "ID Gen 2",
+  "ID Gen 3",
+  "Myth",
+  "Promise",
+  "Advent",
+  "ReGLOSS",
 ];
+
+// Intent: Robust character/card resolver across ALL_CARDS and characters database
+export const findChar = (idOrObj, characters = []) => {
+  if (!idOrObj) return null;
+  if (typeof idOrObj === "object") return idOrObj;
+  const idStr = String(idOrObj);
+
+  // 1. Search in characters prop
+  if (Array.isArray(characters) && characters.length > 0) {
+    const match = characters.find(
+      (c) =>
+        c.id === idStr ||
+        c.assetId === idStr ||
+        c.cardData?.id === idStr ||
+        c.cardData?.cardId === idStr ||
+        c.characterId === idStr ||
+        c.name === idStr ||
+        c.member === idStr ||
+        (c.assetId && idStr.includes(c.assetId)) ||
+        (c.cardData?.id && idStr.includes(c.cardData.id)),
+    );
+    if (match) return match;
+  }
+
+  // 2. Search in ALL_CARDS
+  if (
+    typeof ALL_CARDS !== "undefined" &&
+    Array.isArray(ALL_CARDS) &&
+    ALL_CARDS.length > 0
+  ) {
+    const match = ALL_CARDS.find(
+      (c) =>
+        c.id === idStr ||
+        c.assetId === idStr ||
+        c.cardData?.id === idStr ||
+        c.cardData?.cardId === idStr ||
+        c.characterId === idStr ||
+        c.name === idStr ||
+        c.member === idStr ||
+        (c.assetId && idStr.includes(c.assetId)) ||
+        (c.cardData?.id && idStr.includes(c.cardData.id)),
+    );
+    if (match) return match;
+  }
+
+  return null;
+};
 const getPassiveCount = (team, leader, characters) => {
-  const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
+  const uniqueActiveIds = Array.from(
+    new Set([...team, leader].filter(Boolean)),
+  );
   let activeCount = 0;
-  
-  uniqueActiveIds.forEach(id => {
-    const char = characters.find(c => c.id === id);
+
+  uniqueActiveIds.forEach((id) => {
+    const char = characters.find((c) => c.id === id);
     if (char && char.skills && char.skills.passive) {
       if (isSkillActive(char.skills.passive, uniqueActiveIds, characters)) {
         activeCount++;
@@ -21,9 +100,11 @@ const getPassiveCount = (team, leader, characters) => {
   });
 
   if (leader) {
-    const leaderChar = characters.find(c => c.id === leader);
+    const leaderChar = characters.find((c) => c.id === leader);
     if (leaderChar && leaderChar.skills && leaderChar.skills.outfit) {
-      if (isSkillActive(leaderChar.skills.outfit, uniqueActiveIds, characters)) {
+      if (
+        isSkillActive(leaderChar.skills.outfit, uniqueActiveIds, characters)
+      ) {
         activeCount++;
       }
     }
@@ -38,14 +119,19 @@ const parseSkillModifier = (text) => {
 
   // Helper to extract target
   const getTarget = (txt) => {
-    if (/to\s+self/i.test(txt)) return 'self';
-    if (/to\s+all/i.test(txt)) return 'all';
-    const targetMatch = txt.match(/to\s+(?:\d+\s+)?([A-Za-z0-9\s\-++]+?)\s+Members/i);
+    if (/to\s+self/i.test(txt)) return "self";
+    if (/to\s+all/i.test(txt)) return "all";
+    const targetMatch = txt.match(
+      /to\s+(?:\d+\s+)?([A-Za-z0-9\s\-++]+?)\s+Members/i,
+    );
     if (targetMatch) {
       const rawTarget = targetMatch[1].trim().toUpperCase();
-      return rawTarget.replace(/[[]]/g, '').replace(/\bTYPE\b/g, '').trim();
+      return rawTarget
+        .replace(/[[]]/g, "")
+        .replace(/\bTYPE\b/g, "")
+        .trim();
     }
-    return 'self'; // Default to self for active/special combat triggers
+    return "self"; // Default to self for active/special combat triggers
   };
 
   // Helper to extract target limit
@@ -60,24 +146,32 @@ const parseSkillModifier = (text) => {
 
   // 1. Match standard Stat UPs: e.g., "Sense UP 45%", "All Stats UP 50%", "+50% Stats"
   const statRegexes = [
-    { pattern: /(Sense|Technique|Performance|All Stats)\s+UP\s+(\d+)%/i, type: 'standard' },
-    { pattern: /\+(\d+)%\s+(Stats|All Stats)/i, type: 'prefix' }
+    {
+      pattern: /(Sense|Technique|Performance|All Stats)\s+UP\s+(\d+)%/i,
+      type: "standard",
+    },
+    { pattern: /\+(\d+)%\s+(Stats|All Stats)/i, type: "prefix" },
   ];
 
-  statRegexes.forEach(reg => {
-    const re = new RegExp(reg.pattern, 'gi');
+  statRegexes.forEach((reg) => {
+    const re = new RegExp(reg.pattern, "gi");
     let m;
     while ((m = re.exec(text)) !== null) {
-      let stat = '';
+      let stat = "";
       let percentage = 0;
-      if (reg.type === 'standard') {
+      if (reg.type === "standard") {
         stat = m[1].toLowerCase();
         percentage = parseInt(m[2]);
       } else {
-        stat = 'all stats';
+        stat = "all stats";
         percentage = parseInt(m[1]);
       }
-      modifiers.push({ stat, percentage, target: getTarget(text), limit: getLimit(text) });
+      modifiers.push({
+        stat,
+        percentage,
+        target: getTarget(text),
+        limit: getLimit(text),
+      });
     }
   });
 
@@ -85,26 +179,41 @@ const parseSkillModifier = (text) => {
   const scoreUpRe = /Score\s+UP\s+(\d+)%/gi;
   let m1;
   while ((m1 = scoreUpRe.exec(text)) !== null) {
-    modifiers.push({ stat: 'score_up', percentage: parseInt(m1[1]), target: getTarget(text), limit: getLimit(text) });
+    modifiers.push({
+      stat: "score_up",
+      percentage: parseInt(m1[1]),
+      target: getTarget(text),
+      limit: getLimit(text),
+    });
   }
 
   // 3. Match Skill Activation Rate UP: e.g., "Skill Activation Rate UP 55%"
   const actRateRe = /Skill\s+Activation\s+Rate\s+UP\s+(\d+)%/gi;
   let m2;
   while ((m2 = actRateRe.exec(text)) !== null) {
-    modifiers.push({ stat: 'activation_rate', percentage: parseInt(m2[1]), target: getTarget(text), limit: getLimit(text) });
+    modifiers.push({
+      stat: "activation_rate",
+      percentage: parseInt(m2[1]),
+      target: getTarget(text),
+      limit: getLimit(text),
+    });
   }
 
   // 4. Match Score Support Effect: e.g., "Grants Score Support Effect of 160%"
   const supportRe = /Score\s+Support\s+Effect\s+(?:of|UP)?\s*(\d+)%/gi;
   let m3;
   while ((m3 = supportRe.exec(text)) !== null) {
-    modifiers.push({ stat: 'support_effect', percentage: parseInt(m3[1]), target: getTarget(text), limit: getLimit(text) });
+    modifiers.push({
+      stat: "support_effect",
+      percentage: parseInt(m3[1]),
+      target: getTarget(text),
+      limit: getLimit(text),
+    });
   }
 
   // Filter modifiers: group by (stat, target) and take only the maximum percentage to prevent double-counting conditional steps
   const grouped = {};
-  modifiers.forEach(mod => {
+  modifiers.forEach((mod) => {
     const key = `${mod.stat}_${mod.target}`;
     if (!grouped[key] || grouped[key].percentage < mod.percentage) {
       grouped[key] = mod;
@@ -116,18 +225,25 @@ const parseSkillModifier = (text) => {
 
 const isSkillActive = (text, team, characters) => {
   if (!text) return false;
-  const match = text.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
+  const match = text.match(
+    /(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i,
+  );
   if (!match) return true;
   const requiredCount = parseInt(match[1] || match[2]) || 2;
   const rawTarget = match[3].trim().toUpperCase();
-  const condTarget = rawTarget.replace(/[[]]/g, '').replace(/\bTYPE\b/g, '').trim();
-  
+  const condTarget = rawTarget
+    .replace(/[[]]/g, "")
+    .replace(/\bTYPE\b/g, "")
+    .trim();
+
   let count = 0;
-  team.forEach(activeId => {
-    const activeChar = characters.find(c => c.id === activeId);
+  team.forEach((activeId) => {
+    const activeChar = characters.find((c) => c.id === activeId);
     if (activeChar) {
-      if (activeChar.group.toUpperCase() === condTarget || 
-          activeChar.type.toUpperCase() === condTarget) {
+      if (
+        activeChar.group.toUpperCase() === condTarget ||
+        activeChar.type.toUpperCase() === condTarget
+      ) {
         count++;
       }
     }
@@ -138,11 +254,16 @@ const isSkillActive = (text, team, characters) => {
 // Intent: Pre-parse activation conditions from skill text to avoid regex matching inside the simulation loop.
 const parseSkillCondition = (text) => {
   if (!text) return null;
-  const match = text.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
+  const match = text.match(
+    /(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i,
+  );
   if (!match) return null;
   const requiredCount = parseInt(match[1] || match[2]) || 2;
   const rawTarget = match[3].trim().toUpperCase();
-  const condTarget = rawTarget.replace(/[[]]/g, '').replace(/\bTYPE\b/g, '').trim();
+  const condTarget = rawTarget
+    .replace(/[[]]/g, "")
+    .replace(/\bTYPE\b/g, "")
+    .trim();
   return { requiredCount, condTarget };
 };
 
@@ -150,11 +271,13 @@ const parseSkillCondition = (text) => {
 const isSkillActiveOptimized = (cond, team, characters) => {
   if (!cond) return true;
   let count = 0;
-  team.forEach(activeId => {
-    const activeChar = characters.find(c => c.id === activeId);
+  team.forEach((activeId) => {
+    const activeChar = characters.find((c) => c.id === activeId);
     if (activeChar) {
-      if (activeChar.group.toUpperCase() === cond.condTarget || 
-          activeChar.type.toUpperCase() === cond.condTarget) {
+      if (
+        activeChar.group.toUpperCase() === cond.condTarget ||
+        activeChar.type.toUpperCase() === cond.condTarget
+      ) {
         count++;
       }
     }
@@ -162,516 +285,1335 @@ const isSkillActiveOptimized = (cond, team, characters) => {
   return count >= cond.requiredCount;
 };
 
-const getTeamSimulatedScore = (team, leader, characters, preparsedSkills = null) => {
-  const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
-  
-  const senseBuffs = {};
-  const techniqueBuffs = {};
-  const performanceBuffs = {};
-  const activeScoreBuffs = {};
-  const specialScoreBuffs = {};
-  const activationRateBuffs = {};
-  
-  uniqueActiveIds.forEach(id => {
-    senseBuffs[id] = 0.0;
-    techniqueBuffs[id] = 0.0;
-    performanceBuffs[id] = 0.0;
-    activeScoreBuffs[id] = 0.0;
-    specialScoreBuffs[id] = 0.0;
-    activationRateBuffs[id] = 0.0;
-  });
-
-  const applyModifier = (mod, ownerId, isSpecial = false) => {
-    if (!mod) return;
-    const { stat, percentage, target, limit } = mod;
-    const val = percentage / 100;
-
-    let appliedCount = 0;
-    uniqueActiveIds.forEach(id => {
-      const char = characters.find(c => c.id === id);
-      if (!char) return;
-
-      let match = false;
-      if (target === 'all') {
-        match = true;
-      } else if (target === 'self') {
-        match = id === ownerId;
-      } else {
-        if (char.group.toUpperCase() === target || char.type.toUpperCase() === target) {
-          match = true;
-        }
-      }
-
-      if (match) {
-        if (limit !== undefined && limit !== null) {
-          if (appliedCount >= limit) {
-            return;
-          }
-          appliedCount++;
-        }
-
-        if (stat === 'all stats') {
-          senseBuffs[id] += val;
-          techniqueBuffs[id] += val;
-          performanceBuffs[id] += val;
-        } else if (stat === 'sense') {
-          senseBuffs[id] += val;
-        } else if (stat === 'technique') {
-          techniqueBuffs[id] += val;
-        } else if (stat === 'performance') {
-          performanceBuffs[id] += val;
-        } else if (stat === 'score_up' || stat === 'support_effect') {
-          if (isSpecial) {
-            specialScoreBuffs[id] += val;
-          } else {
-            activeScoreBuffs[id] += val;
-          }
-        } else if (stat === 'activation_rate') {
-          activationRateBuffs[id] += val;
-        }
-      }
-    });
-  };
-
-  // Evaluate all active skills on the team
-  uniqueActiveIds.forEach(id => {
-    const char = characters.find(c => c.id === id);
-    if (!char || !char.skills) return;
-
-    const ps = preparsedSkills ? preparsedSkills[id] : null;
-
-    if (id === leader && char.skills.outfit) {
-      const active = ps ? isSkillActiveOptimized(ps.outfit.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.outfit, uniqueActiveIds, characters);
-      if (active) {
-        const mods = ps ? ps.outfit.mods : parseSkillModifier(char.skills.outfit);
-        mods.forEach(mod => applyModifier(mod, id, false));
-      }
-    }
-
-    if (char.skills.passive) {
-      const active = ps ? isSkillActiveOptimized(ps.passive.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.passive, uniqueActiveIds, characters);
-      if (active) {
-        const mods = ps ? ps.passive.mods : parseSkillModifier(char.skills.passive);
-        mods.forEach(mod => applyModifier(mod, id, false));
-      }
-    }
-
-    if (char.skills.active) {
-      const active = ps ? isSkillActiveOptimized(ps.active.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.active, uniqueActiveIds, characters);
-      if (active) {
-        const mods = ps ? ps.active.mods : parseSkillModifier(char.skills.active);
-        mods.forEach(mod => applyModifier(mod, id, false));
-      }
-    }
-
-    if (char.skills.special) {
-      const active = ps ? isSkillActiveOptimized(ps.special.cond, uniqueActiveIds, characters) : isSkillActive(char.skills.special, uniqueActiveIds, characters);
-      if (active) {
-        const mods = ps ? ps.special.mods : parseSkillModifier(char.skills.special);
-        mods.forEach(mod => applyModifier(mod, id, true));
-      }
-    }
-  });
-
-  let totalUnitScore = 0;
-  uniqueActiveIds.forEach(id => {
-    const char = characters.find(c => c.id === id);
-    if (char) {
-      // Scale up base parameters to standard 25,000 max-level total range if it's currently low level to ensure fair team suggestions
-      const scale = char.stats.total < 1000 ? 100 : 1;
-      const baseSense = char.stats.sense * scale;
-      const baseTech = char.stats.technique * scale;
-      const basePerf = char.stats.performance * scale;
-      
-      // Calculate overall power by applying buffs to their respective parameters
-      const finalSense = baseSense * (1 + senseBuffs[id]);
-      const finalTech = baseTech * (1 + techniqueBuffs[id]);
-      const finalPerf = basePerf * (1 + performanceBuffs[id]);
-      const overallPower = finalSense + finalTech + finalPerf;
-
-      // Determine character-specific base activation rate based on active skill description probability text
-      let baseActivationRate = 0.50;
-      const activeText = char.skills?.active || '';
-      if (/low\s+probability/i.test(activeText)) {
-        baseActivationRate = 0.37;
-      } else if (/medium\s+probability/i.test(activeText)) {
-        baseActivationRate = 0.46;
-      } else if (/high\s+probability/i.test(activeText)) {
-        baseActivationRate = 0.55;
-      }
-
-      // Parse active skill duration and interval
-      const durationMatch = activeText.match(/For\s+(\d+)s/i);
-      const intervalMatch = activeText.match(/Every\s+(\d+)s/i);
-      const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
-      const interval = intervalMatch ? parseInt(intervalMatch[1]) : 30;
-
-      // Calculate expected active trigger rate and uptime ratio over a 2m 45s (165s) song
-      const triggerRate = baseActivationRate + activationRateBuffs[id];
-      const songDuration = 165;
-      const triggers = Math.floor(songDuration / interval);
-      const expectedUptime = triggers * duration * triggerRate;
-      const uptimeRatio = Math.min(1.0, expectedUptime / songDuration);
-
-      // Calculate expected Score Bonus (Active Buff scaled by Uptime + Special Buff at 100%)
-      const activeBonus = activeScoreBuffs[id] * uptimeRatio;
-      const specialBonus = specialScoreBuffs[id] * 1.0; // SP skills trigger with 100% certainty
-      const expectedScoreBonus = activeBonus + specialBonus;
-
-      // Calculate Unit Score: Overall Power * (1 + expected Score Bonus)
-      const unitScore = overallPower * (1 + expectedScoreBonus);
-      totalUnitScore += unitScore;
-    }
-  });
-
-  return Math.round(totalUnitScore);
+// Intent: Resolve specific card variant from character's available cards list (or return character primary card)
+const getEffectiveCardVariant = (c, cardId) => {
+  if (!c) return null;
+  if (cardId && Array.isArray(c.cards) && c.cards.length > 0) {
+    const match = c.cards.find((variant) => variant.id === cardId);
+    if (match) return { ...c, ...match, originalCharId: c.id };
+  }
+  return c;
 };
 
-const recommendBestTeam = (ownedIds, characters) => {
-  if (ownedIds.length < 5) return null;
-  
-  // Pre-parse skills and conditions for all characters to optimize simulation performance
-  const preparsedSkills = {};
-  characters.forEach(char => {
-    preparsedSkills[char.id] = {
-      outfit: {
-        mods: parseSkillModifier(char.skills?.outfit),
-        cond: parseSkillCondition(char.skills?.outfit)
-      },
-      passive: {
-        mods: parseSkillModifier(char.skills?.passive),
-        cond: parseSkillCondition(char.skills?.passive)
-      },
-      active: {
-        mods: parseSkillModifier(char.skills?.active),
-        cond: parseSkillCondition(char.skills?.active)
-      },
-      special: {
-        mods: parseSkillModifier(char.skills?.special),
-        cond: parseSkillCondition(char.skills?.special)
-      }
-    };
-  });
+// Intent: Get card base stats at any exact Level (1..80) and Bloom Stage (0..5) using levelBaseValues and statPermil weights.
+const getEffectiveCardStats = (c, level = 70, bloomStage = 0) => {
+  if (!c) return { performance: 0, technique: 0, sense: 0, total: 0 };
+  const lvl = Math.max(1, Math.min(80, level || 70));
+  const stage = bloomStage !== undefined ? bloomStage : 0;
+  const bonus = stage >= 2 ? 0.1 : 0.0; // Bloom Node 2+ = +10% All Parameters
 
-  const charScores = ownedIds.map(id => {
-    const char = characters.find(c => c.id === id);
-    if (!char) return { id, score: 0 };
-    
-    const sameGenCount = ownedIds.filter(oid => {
-      const ochar = characters.find(c => c.id === oid);
-      return ochar && ochar.id !== id && ochar.group === char.group;
-    }).length;
-    
-    const sameTypeCount = ownedIds.filter(oid => {
-      const ochar = characters.find(c => c.id === oid);
-      return ochar && ochar.id !== id && ochar.type === char.type;
-    }).length;
+  let baseVal = 0;
+  let weights = [333, 333, 334];
 
-    // Parse active skill details
-    const activeText = char.skills?.active || '';
-    const durationMatch = activeText.match(/For\s+(\d+)s/i);
-    const intervalMatch = activeText.match(/Every\s+(\d+)s/i);
-    const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
-    const interval = intervalMatch ? parseInt(intervalMatch[1]) : 30;
+  if (
+    c.cardData &&
+    Array.isArray(c.cardData.levelBaseValues) &&
+    c.cardData.levelBaseValues[lvl - 1]
+  ) {
+    baseVal = c.cardData.levelBaseValues[lvl - 1];
+    weights = c.cardData.statPermil || [333, 333, 334];
+  } else {
+    // 5-star level base value scaling (Level 1: 5200 to Level 80: 25974; Level 70 = 24534)
+    baseVal = Math.round(5200 + ((lvl - 1) * (25974 - 5200)) / 79);
+    const totalStat = c.stats?.total || 25974;
+    weights = [
+      Math.round(((c.stats?.performance || 8600) / totalStat) * 1000),
+      Math.round(((c.stats?.technique || 8600) / totalStat) * 1000),
+      Math.round(((c.stats?.sense || 8600) / totalStat) * 1000),
+    ];
+  }
 
-    let baseActivationRate = 0.50;
-    if (/low\s+probability/i.test(activeText)) baseActivationRate = 0.37;
-    else if (/medium\s+probability/i.test(activeText)) baseActivationRate = 0.46;
-    else if (/high\s+probability/i.test(activeText)) baseActivationRate = 0.55;
+  const perf = Math.ceil(baseVal * (weights[0] / 1000) * (1 + bonus));
+  const tech = Math.ceil(baseVal * (weights[1] / 1000) * (1 + bonus));
+  const sense = Math.ceil(baseVal * (weights[2] / 1000) * (1 + bonus));
 
-    const triggers = Math.floor(165 / interval);
-    const expectedUptime = triggers * duration * baseActivationRate;
-    const uptimeRatio = Math.min(1.0, expectedUptime / 165);
-
-    // Grab active buff percentage
-    const activeMods = preparsedSkills[id]?.active?.mods || [];
-    const activePercent = activeMods.length > 0 ? activeMods[0].percentage : 60;
-    const activeUptimeScore = activePercent * uptimeRatio;
-
-    // Unified heuristic score: stat weight + synergy weight + active uptime weight
-    const statIndex = char.stats.total / 800;
-    const synergyIndex = (sameGenCount * 6) + (sameTypeCount * 1.5);
-    const score = statIndex + synergyIndex + activeUptimeScore;
-
-    return { id, score };
-  });
-  
-  charScores.sort((a, b) => b.score - a.score);
-  const candidates = charScores.slice(0, 20).map(c => c.id);
-  
-  const getCombinations = (arr, k) => {
-    const result = [];
-    const helper = (start, combo) => {
-      if (combo.length === k) {
-        result.push([...combo]);
-        return;
-      }
-      for (let i = start; i < arr.length; i++) {
-        combo.push(arr[i]);
-        helper(i + 1, combo);
-        combo.pop();
-      }
-    };
-    helper(0, []);
-    return result;
+  return {
+    performance: perf,
+    technique: tech,
+    sense: sense,
+    total: perf + tech + sense,
   };
-  
-  const combos = getCombinations(candidates, 5);
-  
-  let bestTeam = null;
-  let bestLeader = null;
-  let maxScore = -1;
-  
-  combos.forEach(team => {
-    team.forEach(leader => {
-      const score = getTeamSimulatedScore(team, leader, characters, preparsedSkills);
-      if (score > maxScore) {
-        maxScore = score;
-        bestTeam = team;
-        bestLeader = leader;
-      }
-    });
-  });
-  
-  const passiveCount = getPassiveCount(bestTeam, bestLeader, characters);
-  return { team: bestTeam, leader: bestLeader, passiveCount, simulatedScore: maxScore };
 };
-const getTeamCalculationDetails = (team, leader, characters) => {
-  const uniqueActiveIds = Array.from(new Set([...team, leader].filter(Boolean)));
-  
-  const senseBuffs = {};
-  const techniqueBuffs = {};
-  const performanceBuffs = {};
-  const activeScoreBuffs = {};
-  const specialScoreBuffs = {};
-  const activationRateBuffs = {};
-  
-  uniqueActiveIds.forEach(id => {
-    senseBuffs[id] = 0.0;
-    techniqueBuffs[id] = 0.0;
-    performanceBuffs[id] = 0.0;
-    activeScoreBuffs[id] = 0.0;
-    specialScoreBuffs[id] = 0.0;
-    activationRateBuffs[id] = 0.0;
-  });
 
-  const applyModifier = (mod, ownerId, isSpecial = false) => {
-    if (!mod) return;
-    const { stat, percentage, target, limit } = mod;
-    const val = percentage / 100;
+// Intent: Get skill text for a given bloom stage (supporting Lv. 1 vs Lv. 2 skill text)
+const getSkillTextForStage = (c, skillType, bloomStage = 0) => {
+  if (!c || !c.skills) return "";
+  const stage = bloomStage !== undefined ? bloomStage : 0;
+  if (c.skills.levels && c.skills.levels[skillType]) {
+    if (skillType === "active")
+      return c.skills.levels.active[stage >= 1 ? "2" : "1"] || c.skills.active;
+    if (skillType === "passive")
+      return (
+        c.skills.levels.passive[stage >= 4 ? "2" : "1"] || c.skills.passive
+      );
+    if (skillType === "special")
+      return (
+        c.skills.levels.special[stage >= 3 ? "2" : "1"] || c.skills.special
+      );
+  }
+  return c.skills[skillType] || "";
+};
 
-    let appliedCount = 0;
-    uniqueActiveIds.forEach(id => {
-      const char = characters.find(c => c.id === id);
-      if (!char) return;
+// Reference weights from int3rrupt3d/holodori-optimizer (positional by team slot)
+const COMBO_SPECIAL_WEIGHTS = [0.894342157744536, 1.1912388493878143, 1.4104057162046644, 1.5165205256249472, 1.062966970534175];
+const NEUTRAL_SPECIAL_WEIGHTS = [1, 1, 1, 1, 1];
 
-      let match = false;
-      if (target === 'all') {
-        match = true;
-      } else if (target === 'self') {
-        match = id === ownerId;
-      } else {
-        if (char.group.toUpperCase() === target || char.type.toUpperCase() === target) {
-          match = true;
-        }
+// 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+// HOLODORI OPTIMIZER -EXACT SCORING ENGINE
+// Ported directly from the official worker.js (holodori-optimizer on GitHub)
+// 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+
+const SONG = 140; // song duration in seconds
+const WORDS = Math.ceil(SONG / 32); // 32-bit words for bitmask
+
+// Intent: For a card at a given bloom stage, resolve which skill tier (level 1 or 2) applies
+const resolveSkillLevel = (char, skillType, bloomStage) => {
+  const cd = char?.cardData || char;
+  if (!cd || !cd.bloomStages) return null;
+  const stage = bloomStage !== undefined ? bloomStage : 0;
+  const bs = cd.bloomStages.find((s) => s.stage === stage) || cd.bloomStages[0];
+  if (!bs) return null;
+  if (skillType === "active")
+    return cd.activeLevels?.[String(bs.activeLevel)] || null;
+  if (skillType === "passive")
+    return cd.passiveLevels?.[String(bs.passiveLevel)] || null;
+  if (skillType === "special")
+    return cd.specialLevels?.[String(bs.specialLevel)] || null;
+  if (skillType === "outfit") return cd.outfit || null;
+  return null;
+};
+
+// Intent: Materialize a team card with all pre-parsed skill data, stats, and bitmask
+const materializeCard = (char, bloomStage, cardLevel) => {
+  const cd = char?.cardData || char;
+  const bloom = bloomStage !== undefined ? bloomStage : 0;
+  const lvl = Math.max(1, Math.min(80, cardLevel || 70));
+
+  // Stats from levelBaseValues + statPermil + bloom statBonus
+  let perf, tech, sense, total;
+  if (cd && cd.levelBaseValues && cd.statPermil) {
+    const bStageData =
+      cd.bloomStages?.find((s) => s.stage === bloom) || cd.bloomStages?.[0];
+    const statBonus = bStageData?.statBonus || 0;
+    const baseVal = cd.levelBaseValues[lvl - 1];
+    const perm = cd.statPermil;
+    perf = Math.ceil(((baseVal * perm[0]) / 1000) * (1 + statBonus));
+    tech = Math.ceil(((baseVal * perm[1]) / 1000) * (1 + statBonus));
+    sense = Math.ceil(((baseVal * perm[2]) / 1000) * (1 + statBonus));
+    total = perf + tech + sense;
+  } else {
+    // Fallback: approximate from max stats
+    const maxTotal = char.stats?.total || 25974;
+    const approxBase = Math.round(5200 + ((lvl - 1) * (maxTotal - 5200)) / 79);
+    const statBonus = bloom >= 2 ? 0.1 : 0.0;
+    perf = Math.ceil(
+      approxBase *
+        ((char.stats?.performance || maxTotal / 3) / maxTotal) *
+        (1 + statBonus),
+    );
+    tech = Math.ceil(
+      approxBase *
+        ((char.stats?.technique || maxTotal / 3) / maxTotal) *
+        (1 + statBonus),
+    );
+    sense = Math.ceil(
+      approxBase *
+        ((char.stats?.sense || maxTotal / 3) / maxTotal) *
+        (1 + statBonus),
+    );
+    total = perf + tech + sense;
+  }
+
+  const active = resolveSkillLevel(char, "active", bloom) || {
+    baseMagnitude: 75,
+    conditionalMagnitude: null,
+    trigger: null,
+    duration: 10,
+    interval: 30,
+    probability: 0.46,
+  };
+  const passive = resolveSkillLevel(char, "passive", bloom);
+  const special = resolveSkillLevel(char, "special", bloom) || {
+    magnitude: 120,
+    duration: 10,
+    sarPct: 0,
+    sarTrigger: null,
+  };
+  const outfit = resolveSkillLevel(char, "outfit", bloom);
+
+  // Build active skill bitmask (1-indexed seconds)
+  const mask = new Uint32Array(WORDS);
+  const d = active.duration,
+    iv = active.interval;
+  if (d > 0 && iv > 0) {
+    for (let t = 1; t <= SONG; t++) {
+      if (t >= iv && t % iv < d) {
+        const z = t - 1;
+        mask[z >>> 5] |= 1 << (z & 31);
       }
+    }
+  }
 
-      if (match) {
-        if (limit !== undefined && limit !== null) {
-          if (appliedCount >= limit) {
-            return;
-          }
-          appliedCount++;
-        }
-
-        if (stat === 'all stats') {
-          senseBuffs[id] += val;
-          techniqueBuffs[id] += val;
-          performanceBuffs[id] += val;
-        } else if (stat === 'sense') {
-          senseBuffs[id] += val;
-        } else if (stat === 'technique') {
-          techniqueBuffs[id] += val;
-        } else if (stat === 'performance') {
-          performanceBuffs[id] += val;
-        } else if (stat === 'score_up' || stat === 'support_effect') {
-          if (isSpecial) {
-            specialScoreBuffs[id] += val;
-          } else {
-            activeScoreBuffs[id] += val;
-          }
-        } else if (stat === 'activation_rate') {
-          activationRateBuffs[id] += val;
-        }
-      }
-    });
+  // Group and attribute membership
+  const GROUP_MAP = {
+    "Gen 0": "grp-gen_0",
+    "Gen 1": "grp-gen_1",
+    "Gen 2": "grp-gen_2",
+    GAMERS: "grp-gamers",
+    "Gen 3": "grp-gen_3",
+    "Gen 4": "grp-gen_4",
+    "Gen 5": "grp-gen_5",
+    holoX: "grp-holox",
+    "ID Gen 1": "grp-indonesia-gen_1",
+    "ID Gen 2": "grp-indonesia-gen_2",
+    "ID Gen 3": "grp-indonesia-gen_3",
+    Myth: "grp-myth",
+    Promise: "grp-promise",
+    Advent: "grp-advent",
+    ReGLOSS: "grp-regloss",
+  };
+  // Verified from database.json passive/active trigger IDs — CUTE=1, PURE=2, HAPPY=3
+  const ATTR_MAP = {
+    CUTE: "CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_1",
+    PURE: "CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_2",
+    HAPPY: "CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_3",
+    COOL: "CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_1",
+    ACTIVE: "CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_3",
   };
 
-  // Evaluate all active skills on the team
-  uniqueActiveIds.forEach(id => {
-    const char = characters.find(c => c.id === id);
-    if (!char || !char.skills) return;
+  const groupId =
+    char.groupIds?.[0] ||
+    GROUP_MAP[char.group] ||
+    `grp-${(char.group || "").toLowerCase().replace(/\s+/g, "_")}`;
+  const attributeId =
+    char.attributeId ||
+    (char.type
+      ? ATTR_MAP[char.type]
+      : char.attribute
+        ? ATTR_MAP[char.attribute.toUpperCase()]
+        : "CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_2");
+  const memberName = char.member || char.name;
 
-    if (id === leader && char.skills.outfit) {
-      if (isSkillActive(char.skills.outfit, uniqueActiveIds, characters)) {
-        parseSkillModifier(char.skills.outfit).forEach(mod => applyModifier(mod, id, false));
-      }
+  return {
+    id: char.id,
+    member: memberName,
+    groupId,
+    attributeId,
+    perf,
+    tech,
+    sense,
+    total,
+    active,
+    passive,
+    special,
+    outfit,
+    mask,
+    bloom,
+    level: lvl,
+  };
+};
+
+// Intent: Build a reference-engine-shaped card (search_worker.js format) from
+// a character's cardData so the vendored reference search can score it directly.
+// Stats/skills are bit-identical to reference materializeCard for the same level/bloom.
+const materializeReferenceCard = (char, bloomStage, cardLevel) => {
+  const cd = char?.cardData;
+  if (!cd || !cd.levelBaseValues || !cd.statPermil || !cd.bloomStages) return null;
+  const bloom = Math.max(0, Math.min(5, Math.round(Number(bloomStage) || 0)));
+  const level = Math.max(
+    1,
+    Math.min(cd.maxLevel || 80, Math.round(Number(cardLevel) || cd.maxLevel || 70)),
+  );
+  const stage = cd.bloomStages[bloom];
+  const base = cd.levelBaseValues[level - 1];
+  const mult = 1 + (stage?.statBonus || 0);
+  const stats = cd.statPermil.map((p) => Math.ceil((base * p) / 1000 * mult));
+  const active = structuredClone(cd.activeLevels?.[String(stage?.activeLevel)]);
+  const passive = structuredClone(cd.passiveLevels?.[String(stage?.passiveLevel)]);
+  const special = structuredClone(cd.specialLevels?.[String(stage?.specialLevel)]);
+  if (active && Number(active.interval) > 0) {
+    active.baseInterval = Number(active.interval);
+    active.boardActiveFrequencyNodes = 0;
+    active.boardActiveFrequencyPct = 0;
+  }
+  return {
+    id: cd.id,
+    assetId: cd.assetId || null,
+    key: cd.key || cd.id,
+    displayKey: `${cd.rarity}*${cd.member} | ${cd.name}`,
+    member: cd.member,
+    skin: cd.name,
+    characterId: cd.characterId,
+    rarity: cd.rarity,
+    attributeId: cd.attributeId,
+    type: cd.attribute,
+    groupIds: [...(cd.groupIds || [])],
+    generation: cd.generation || "",
+    perf: stats[0],
+    tech: stats[1],
+    sense: stats[2],
+    total: stats[0] + stats[1] + stats[2],
+    level,
+    bloom,
+    maxLevel: cd.maxLevel || 80,
+    boardActiveFrequencyNodes: 0,
+    boardActiveFrequencyPct: 0,
+    passive,
+    outfit: structuredClone(cd.outfit),
+    active,
+    special,
+  };
+};
+
+// Intent: Build per-card eligibility bitmasks for fast group/attribute membership lookup
+const buildEligibility = (cards) => {
+  const idMap = new Map();
+  let nextCode = 0;
+  const code = (id) => {
+    if (!id) return -1;
+    if (!idMap.has(id)) idMap.set(id, nextCode++);
+    return idMap.get(id);
+  };
+
+  const registerEligibility = (x) => {
+    if (x && (x.kind === "attribute" || x.kind === "group")) code(x.id);
+  };
+  cards.forEach((c) => {
+    code(c.attributeId);
+    code(c.groupId);
+    registerEligibility(c.active?.trigger);
+    if (c.passive) {
+      registerEligibility(c.passive.target);
+      registerEligibility(c.passive.trigger);
     }
-    if (char.skills.passive) {
-      if (isSkillActive(char.skills.passive, uniqueActiveIds, characters)) {
-        parseSkillModifier(char.skills.passive).forEach(mod => applyModifier(mod, id, false));
-      }
-    }
-    if (char.skills.active) {
-      if (isSkillActive(char.skills.active, uniqueActiveIds, characters)) {
-        parseSkillModifier(char.skills.active).forEach(mod => applyModifier(mod, id, false));
-      }
-    }
-    if (char.skills.special) {
-      if (isSkillActive(char.skills.special, uniqueActiveIds, characters)) {
-        parseSkillModifier(char.skills.special).forEach(mod => applyModifier(mod, id, true));
-      }
-    }
+    registerEligibility(c.special?.sarTrigger);
+    (c.outfit?.effects || []).forEach((e) => registerEligibility(e.trigger));
   });
 
-  return uniqueActiveIds.map(id => {
-    const char = characters.find(c => c.id === id);
-    if (!char) return null;
+  const words = Math.max(1, Math.ceil(idMap.size / 32));
+  cards.forEach((c) => {
+    const ew = new Uint32Array(words);
+    const setElig = (id) => {
+      const ci = idMap.get(id);
+      if (ci !== undefined) ew[ci >>> 5] |= 1 << (ci & 31);
+    };
+    setElig(c.attributeId);
+    setElig(c.groupId);
+    c._ew = ew;
+  });
 
-    const scale = char.stats.total < 1000 ? 100 : 1;
-    const baseSense = char.stats.sense * scale;
-    const baseTech = char.stats.technique * scale;
-    const basePerf = char.stats.performance * scale;
-    
-    const finalSense = baseSense * (1 + senseBuffs[id]);
-    const finalTech = baseTech * (1 + techniqueBuffs[id]);
-    const finalPerf = basePerf * (1 + performanceBuffs[id]);
-    const overallPower = finalSense + finalTech + finalPerf;
+  const annotate = (x) => {
+    if (!x || (x.kind !== "attribute" && x.kind !== "group")) return;
+    const ci = idMap.get(x.id);
+    if (ci !== undefined) {
+      x._w = ci >>> 5;
+      x._b = 1 << (ci & 31);
+    }
+  };
+  cards.forEach((c) => {
+    annotate(c.active?.trigger);
+    if (c.passive) {
+      annotate(c.passive.target);
+      annotate(c.passive.trigger);
+    }
+    annotate(c.special?.sarTrigger);
+    (c.outfit?.effects || []).forEach((e) => annotate(e.trigger));
+  });
+};
 
-    let baseActivationRate = 0.50;
-    const activeText = char.skills?.active || '';
-    if (/low\s+probability/i.test(activeText)) {
-      baseActivationRate = 0.37;
-    } else if (/medium\s+probability/i.test(activeText)) {
-      baseActivationRate = 0.46;
-    } else if (/high\s+probability/i.test(activeText)) {
-      baseActivationRate = 0.55;
+// Intent: One-time global eligibility build over the entire roster — avoids per-combo re-annotation.
+// Must be called before the optimizer loop, passing ALL pre-materialized cards.
+const buildGlobalEligibility = (allCards) => {
+  // Build the global ID space from the entire roster
+  const idMap = new Map();
+  let nextCode = 0;
+  const code = (id) => {
+    if (!id) return -1;
+    if (!idMap.has(id)) idMap.set(id, nextCode++);
+    return idMap.get(id);
+  };
+  const reg = (x) => {
+    if (x && (x.kind === "attribute" || x.kind === "group")) code(x.id);
+  };
+  allCards.forEach((c) => {
+    code(c.attributeId);
+    code(c.groupId);
+    reg(c.active?.trigger);
+    if (c.passive) {
+      reg(c.passive.target);
+      reg(c.passive.trigger);
+    }
+    reg(c.special?.sarTrigger);
+    (c.outfit?.effects || []).forEach((e) => reg(e.trigger));
+  });
+
+  const words = Math.max(1, Math.ceil(idMap.size / 32));
+  // Assign stable _ew to every card
+  allCards.forEach((c) => {
+    const ew = new Uint32Array(words);
+    const se = (id) => {
+      const ci = idMap.get(id);
+      if (ci !== undefined) ew[ci >>> 5] |= 1 << (ci & 31);
+    };
+    se(c.attributeId);
+    se(c.groupId);
+    c._ew = ew;
+  });
+
+  // Annotate all skill trigger _w/_b once — shared objects are safe since IDs are stable
+  const ann = (x) => {
+    if (!x || (x.kind !== "attribute" && x.kind !== "group")) return;
+    const ci = idMap.get(x.id);
+    if (ci !== undefined) {
+      x._w = ci >>> 5;
+      x._b = 1 << (ci & 31);
+    }
+  };
+  allCards.forEach((c) => {
+    ann(c.active?.trigger);
+    if (c.passive) {
+      ann(c.passive.target);
+      ann(c.passive.trigger);
+    }
+    ann(c.special?.sarTrigger);
+    (c.outfit?.effects || []).forEach((e) => ann(e.trigger));
+  });
+};
+
+// Intent: Test if a card matches a target descriptor
+const cardMatchesTarget = (card, target) => {
+  if (!target) return false;
+  if (target.kind === "all") return true;
+  if (
+    (target.kind === "attribute" || target.kind === "group") &&
+    target._w !== undefined
+  ) {
+    return (card._ew[target._w] & target._b) !== 0;
+  }
+  return false;
+};
+
+// Intent: Count how many cards satisfy a trigger requirement.
+// Gameplay-state triggers (combo_gte, life_gte, etc.) are assumed always satisfied
+// to match the reference Perfect-FC scoring model.
+const triggerSatisfied = (trigger, cards) => {
+  if (!trigger) return true;
+  if (trigger.kind === "attribute" || trigger.kind === "group") {
+    if (trigger._w === undefined) return true;
+    let n = 0;
+    for (let i = 0; i < 5; i++)
+      if (cards[i] && cards[i]._ew[trigger._w] & trigger._b) n++;
+    return n >= (trigger.count || 1);
+  }
+  // Perfect-FC model: assume gameplay-state conditions are always met
+  if (
+    trigger.kind === "combo_gte" ||
+    trigger.kind === "life_gte" ||
+    trigger.kind === "life_lte" ||
+    trigger.kind === "judgement_gte"
+  )
+    return true;
+  return false;
+};
+
+// Intent: Get effective active magnitude (conditional or base)
+const getActiveMagnitude = (card, cards) => {
+  const a = card.active;
+  if (
+    a.conditionalMagnitude !== null &&
+    a.conditionalMagnitude !== undefined &&
+    triggerSatisfied(a.trigger, cards)
+  ) {
+    return a.conditionalMagnitude;
+  }
+  return a.baseMagnitude;
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HOLODORI OPTIMIZER — SCORING KERNEL
+// Ported from int3rrupt3d/holodori-optimizer src/search_worker.js
+// Adapted: CARDS[ids[i]] → cards[i] objects; MASKS[ids[i]][w] → cards[i].mask[w]
+// ══════════════════════════════════════════════════════════════════════════════
+
+// SUBSET_POP[s] = popcount of s (for 5-bit inclusion-exclusion subsets)
+const SUBSET_POP = new Int8Array(32);
+for (let s = 1; s < 32; s++) SUBSET_POP[s] = SUBSET_POP[s >> 1] + (s & 1);
+// BIT_INDEX: LSB of a 1-hot 5-bit mask → position index 0-4
+const BIT_INDEX = new Int8Array(32);
+BIT_INDEX[1] = 0; BIT_INDEX[2] = 1; BIT_INDEX[4] = 2; BIT_INDEX[8] = 3; BIT_INDEX[16] = 4;
+
+// Intent: Hamming-weight popcount for a 32-bit integer (ref: popcount32)
+function popcount32(x) {
+  x = x - ((x >>> 1) & 0x55555555);
+  x = (x & 0x33333333) + ((x >>> 2) & 0x33333333);
+  return (((x + (x >>> 4)) & 0x0f0f0f0f) * 0x01010101) >>> 24;
+}
+
+// Intent: Active probability helpers — clamp and apply SAR multiplier
+const baseActiveProbability = (card) =>
+  Math.max(0, Math.min(1, Number(card.active?.probability) || 0));
+const effectiveActiveProbability = (card, sarMultiplier = 1) =>
+  Math.min(1, baseActiveProbability(card) * sarMultiplier);
+
+// Intent: Return effective active magnitude — conditional if trigger is satisfied, else base
+const activeMagnitude = (card, cards) => {
+  const a = card.active;
+  if (
+    a.conditionalMagnitude !== null &&
+    a.conditionalMagnitude !== undefined &&
+    triggerSatisfied(a.trigger, cards)
+  )
+    return a.conditionalMagnitude;
+  return a.baseMagnitude;
+};
+
+// Intent: Resolve SAR pct and exposure data for one card's special skill
+const specialData = (card, cards) => {
+  const s = card.special || { magnitude: 0, duration: 0, sarPct: 0, sarTrigger: null };
+  const sarPct = s.sarPct > 0 && triggerSatisfied(s.sarTrigger, cards) ? s.sarPct : 0;
+  return {
+    magnitude: Number(s.magnitude) || 0,
+    duration: Number(s.duration) || 0,
+    hasSar: sarPct > 0,
+    sarPct,
+  };
+};
+
+// Intent: Build per-position special exposure table.
+// Weights are applied by POSITION (cards[0] gets weights[0], etc.).
+// The caller evaluates every permutation (PERMS_5) to find the optimal placement.
+const specialForOrder = (cards, specialMode = "combo") => {
+  if (specialMode === "off")
+    return { supportExposure: 0, supportUplift: 0, values: [], sarWindows: [], sarCount: 0 };
+  const weights = specialMode === "neutral" ? NEUTRAL_SPECIAL_WEIGHTS : COMBO_SPECIAL_WEIGHTS;
+  let supportExposure = 0;
+  const values = [], sarWindows = [];
+  for (let i = 0; i < 5; i++) {
+    const sp = specialData(cards[i], cards);
+    const exposure = Math.min(sp.duration, SONG) / SONG;
+    const weight = weights[i];
+    const supportPct = sp.magnitude / 100;
+    const weightedExposure = exposure * weight;
+    supportExposure += supportPct * weightedExposure;
+    const value = {
+      position: i + 1, magnitude: sp.magnitude, supportPct, duration: sp.duration,
+      weight, exposure, weightedExposure, bonus: 0, hasSar: sp.hasSar, sarPct: sp.sarPct,
+    };
+    values.push(value);
+    if (sp.sarPct > 0 && sp.duration > 0)
+      sarWindows.push({ ...value, multiplier: 1 + sp.sarPct });
+  }
+  return { supportExposure, supportUplift: 0, values, sarWindows, sarCount: sarWindows.length };
+};
+
+// Intent: Inclusion-exclusion count of simultaneous active windows across all 5 cards
+const calcCounts = (cards) => {
+  const counts = new Int32Array(32);
+  const inter = new Uint32Array(32);
+  for (let w = 0; w < WORDS; w++) {
+    inter[0] = 0xffffffff;
+    for (let s = 1; s < 32; s++) {
+      const bit = s & -s;
+      const idx = BIT_INDEX[bit];
+      inter[s] = inter[s ^ bit] & (cards[idx] ? cards[idx].mask[w] : 0);
+      counts[s] += popcount32(inter[s]);
+    }
+  }
+  return counts;
+};
+
+// Intent: Compute expected active score contribution — raw (no passive) and supported (with passive)
+// Ref: timing() from search_worker.js
+const timingRef = (cards, counts, support, sarMultiplier = 1) => {
+  const p = new Float64Array(5);
+  const magnitudes = new Float64Array(5);
+  const priority = [0, 1, 2, 3, 4];
+  for (let i = 0; i < 5; i++) {
+    p[i] = effectiveActiveProbability(cards[i], sarMultiplier);
+    magnitudes[i] = activeMagnitude(cards[i], cards);
+  }
+  priority.sort((a, b) => magnitudes[b] - magnitudes[a] || a - b);
+  const rank = new Uint8Array(5);
+  for (let r = 0; r < 5; r++) rank[priority[r]] = r;
+  let raw = 0, supported = 0;
+  for (let i = 0; i < 5; i++) {
+    let higher = 0;
+    for (let j = 0; j < 5; j++) if (rank[j] < rank[i]) higher |= 1 << j;
+    let factor = 0, sub = higher;
+    for (;;) {
+      let prod = 1;
+      for (let j = 0; j < 5; j++) if (sub & (1 << j)) prod *= p[j];
+      factor += (SUBSET_POP[sub] & 1 ? -1 : 1) * prod * counts[(1 << i) | sub];
+      if (sub === 0) break;
+      sub = (sub - 1) & higher;
+    }
+    const contribution = (magnitudes[i] * p[i] * factor) / SONG;
+    raw += contribution;
+    supported += contribution * (1 + support[i]);
+  }
+  return { raw, supported };
+};
+
+// Intent: Compute SAR (Success Rate Up) uplift from special-skill active windows
+// Ref: sarForOrder() from search_worker.js
+const sarForOrder = (cards, counts, support, sp, baseTiming) => {
+  if (!sp.sarWindows.length)
+    return { rawUplift: 0, passiveUplift: 0, specialSupportUplift: 0 };
+  let rawUplift = 0, passiveUplift = 0, specialSupportUplift = 0;
+  for (const window of sp.sarWindows) {
+    const boosted = timingRef(cards, counts, support, window.multiplier);
+    const scale = window.exposure * window.weight;
+    const rawDelta = (boosted.raw - baseTiming.raw) * scale;
+    const passiveDelta = (boosted.supported - baseTiming.supported) * scale;
+    rawUplift += rawDelta;
+    passiveUplift += passiveDelta;
+    specialSupportUplift += rawDelta * window.supportPct;
+  }
+  return { rawUplift, passiveUplift, specialSupportUplift };
+};
+
+// Intent: Compute outfit stat bonuses triggered by the current team composition
+const outfitBonuses = (cards, outfitOwner) => {
+  if (!outfitOwner?.outfit?.effects)
+    return { perf: 0, tech: 0, sense: 0, all: 0, support: 0 };
+  let perf = 0, tech = 0, sense = 0, all = 0, support = 0;
+  for (const effect of outfitOwner.outfit.effects) {
+    if (!triggerSatisfied(effect.trigger, cards)) continue;
+    if (effect.kind === "perf") perf += effect.pct;
+    else if (effect.kind === "tech") tech += effect.pct;
+    else if (effect.kind === "sense") sense += effect.pct;
+    else if (effect.kind === "all") all += effect.pct;
+    else if (effect.kind === "support") support += effect.pct;
+  }
+  return { perf, tech, sense, all, support };
+};
+
+// Intent: Compute final index score for one outfit-leader choice.
+// This formula is the critical difference from the prior engine — ref: outfitOutcome().
+const outfitOutcome = (cards, outfitOwner, outfitIndex, baseStat, sumPerf, sumTech, sumSense, tm, sp, sar) => {
+  const bon = outfitBonuses(cards, outfitOwner);
+  const stat =
+    baseStat +
+    sumPerf * (bon.perf + bon.all) +
+    sumTech * (bon.tech + bon.all) +
+    sumSense * (bon.sense + bon.all);
+  // Ref: supportUplift = (tm.supported - tm.raw) + bon.support * tm.raw
+  const supportUplift = (tm.supported - tm.raw) + bon.support * tm.raw;
+  // Ref: specialSupportUplift = sp.supportUplift = tm.raw * sp.supportExposure (set after timing)
+  const specialSupportUplift = Number(sp.supportUplift) || 0;
+  // Ref: sarUplift = sar.passiveUplift + bon.support * sar.rawUplift + sar.specialSupportUplift
+  const sarUplift =
+    (Number(sar.passiveUplift) || 0) +
+    bon.support * (Number(sar.rawUplift) || 0) +
+    (Number(sar.specialSupportUplift) || 0);
+  const adjusted = tm.raw + supportUplift + specialSupportUplift + sarUplift;
+  // params.other = 0 in our app (no external bonus modifier)
+  const score = stat * (1 + adjusted / 100);
+  return {
+    score,
+    stat,
+    raw: tm.raw,
+    uplift: supportUplift,
+    sarUplift,
+    specialSupportUplift,
+    supported: adjusted,
+    totalBonus: adjusted,
+    outfitLeaderIndex: outfitIndex,
+    outfitCard: cards[outfitIndex]?.id || outfitOwner?.id,
+    outfitOwner: cards[outfitIndex]?.member || cards[outfitIndex]?.name,
+  };
+};
+
+// Intent: Determine passive recipients with reference insertion-sort (desc total stat, asc index tiebreak)
+// Ref: passiveRecipients() + RECIPIENT_BUF from search_worker.js
+const RECIPIENT_BUF = new Int8Array(5);
+const passiveRecipients = (cards, sourceIndex, pa) => {
+  if (!pa) return 0;
+  if (!triggerSatisfied(pa.trigger, cards)) return 0;
+  if (pa.target?.kind === "self") { RECIPIENT_BUF[0] = sourceIndex; return 1; }
+  let n = 0;
+  for (let i = 0; i < 5; i++)
+    if (cardMatchesTarget(cards[i], pa.target)) RECIPIENT_BUF[n++] = i;
+  const count = pa.target?.count || n;
+  if (n < count) return 0;
+  // Insertion sort: descending by total stat, ascending index as tiebreak (ref exact)
+  for (let i = 1; i < n; i++) {
+    const v = RECIPIENT_BUF[i], vt = cards[v]?.total || 0;
+    let j = i - 1;
+    while (j >= 0) {
+      const u = RECIPIENT_BUF[j], ut = cards[u]?.total || 0;
+      if (ut > vt || (ut === vt && u < v)) break;
+      RECIPIENT_BUF[j + 1] = u; j--;
+    }
+    RECIPIENT_BUF[j + 1] = v;
+  }
+  return count;
+};
+
+// Intent: Full scoring of one specific team ordering — the reference kernel.
+// Ref: evaluateOrderGenericBase() from search_worker.js
+const evaluateOrderGenericBase = (cards, specialMode = "combo") => {
+  const perf = new Float64Array(5), tech = new Float64Array(5),
+        sense = new Float64Array(5), all = new Float64Array(5),
+        support = new Float64Array(5);
+
+  // Step 1: Apply passives via reference insertion-sort recipient selection
+  for (let s = 0; s < 5; s++) {
+    const pa = cards[s]?.passive;
+    const nRecipients = passiveRecipients(cards, s, pa);
+    if (!nRecipients) continue;
+    for (let q = 0; q < nRecipients; q++) {
+      const i = RECIPIENT_BUF[q];
+      if (pa.kind === "support") support[i] += pa.pct;
+      else if (pa.kind === "perf") perf[i] += pa.pct;
+      else if (pa.kind === "tech") tech[i] += pa.pct;
+      else if (pa.kind === "sense") sense[i] += pa.pct;
+      else if (pa.kind === "all") all[i] += pa.pct;
+    }
+  }
+
+  // Step 2: Compute buffed base stat (without outfit leader)
+  let baseStat = 0, sumPerf = 0, sumTech = 0, sumSense = 0;
+  for (let i = 0; i < 5; i++) {
+    const c = cards[i];
+    if (!c) continue;
+    sumPerf += c.perf; sumTech += c.tech; sumSense += c.sense;
+    baseStat +=
+      c.perf * (1 + perf[i] + all[i]) +
+      c.tech * (1 + tech[i] + all[i]) +
+      c.sense * (1 + sense[i] + all[i]);
+  }
+
+  // Step 3: Special exposure + timing + SAR (counts computed once, reused)
+  const counts = calcCounts(cards);
+  const sp = specialForOrder(cards, specialMode);
+  const tm = timingRef(cards, counts, support);
+  // Ref: sp.supportUplift MUST be set after timing (it depends on tm.raw)
+  sp.supportUplift = tm.raw * sp.supportExposure;
+  for (const v of sp.values) v.bonus = tm.raw * v.supportPct * v.weightedExposure;
+  const sar = sarForOrder(cards, counts, support, sp, tm);
+
+  // Step 4: Try each team card as outfit leader, return the one with best score
+  let best = null;
+  for (let o = 0; o < 5; o++) {
+    const x = outfitOutcome(cards, cards[o], o, baseStat, sumPerf, sumTech, sumSense, tm, sp, sar);
+    if (!best || x.score > best.score) best = x;
+  }
+  return best;
+};
+
+// Pre-generate all 120 position permutations for 5 items once
+const PERMS_5 = (() => {
+  const res = [];
+  const permute = (arr, m = []) => {
+    if (arr.length === 0) res.push(m);
+    else {
+      for (let i = 0; i < arr.length; i++) {
+        const curr = arr.slice();
+        const next = curr.splice(i, 1);
+        permute(curr.slice(), m.concat(next));
+      }
+    }
+  };
+  permute([0, 1, 2, 3, 4]);
+  return res;
+})();
+
+// Intent: Evaluate a team across ALL 120 position permutations and return the best result.
+// Matches the reference optimizer, which searches every ordering because combo-special
+// weighting is position-dependent.
+const evaluateTeamOrder = (cards, specialMode = "combo") => {
+  let best = null;
+  for (const perm of PERMS_5) {
+    const ordered = perm.map((i) => cards[i]);
+    const result = evaluateOrderGenericBase(ordered, specialMode);
+    if (result && (!best || result.score > best.score)) best = result;
+  }
+  return best;
+};
+
+// Intent: Main scoring entry-point — materialize cards, build eligibility, score, return rounded total.
+const getTeamSimulatedScore = (
+  team,
+  leader,
+  characters,
+  _preparsedSkills = null,
+  bloomLevels = [0, 0, 0, 0, 0],
+  cardLevels = [70, 70, 70, 70, 70],
+  selectedCards = [null, null, null, null, null],
+) => {
+  const ids = team.filter(Boolean);
+  if (ids.length < 5) return 0;
+
+  const cards = team
+    .map((id, idx) => {
+      if (!id) return null;
+      const char = findChar(id, characters);
+      if (!char) return null;
+      const effectiveCard = getEffectiveCardVariant(char, selectedCards[idx] || null);
+      return materializeCard(effectiveCard, bloomLevels[idx] || 0, cardLevels[idx] || 70);
+    })
+    .filter(Boolean);
+
+  if (cards.length < 5) return 0;
+  buildEligibility(cards);
+  const result = evaluateTeamOrder(cards, "combo");
+  return result ? Math.round(result.score) : 0;
+};
+
+// Intent: Get active passive summaries for current team cards
+const getPassiveEffectSummaries = (cards) => {
+  const summaries = [];
+  for (let s = 0; s < 5; s++) {
+    const c = cards[s];
+    const pa = c?.passive;
+    if (!pa) continue;
+    if (!triggerSatisfied(pa.trigger, cards)) continue;
+
+    let recipients = [];
+    if (pa.target?.kind === "self") {
+      recipients = [s];
+    } else {
+      for (let i = 0; i < 5; i++) {
+        if (cardMatchesTarget(cards[i], pa.target)) recipients.push(i);
+      }
+      const count = pa.target?.count || recipients.length;
+      if (recipients.length < count) continue;
+      recipients.sort(
+        (a, b) => (cards[b]?.total || 0) - (cards[a]?.total || 0),
+      );
+      recipients = recipients.slice(0, count);
     }
 
-    const durationMatch = activeText.match(/For\s+(\d+)s/i);
-    const intervalMatch = activeText.match(/Every\s+(\d+)s/i);
-    const duration = durationMatch ? parseInt(durationMatch[1]) : 10;
-    const interval = intervalMatch ? parseInt(intervalMatch[1]) : 30;
+    const recipientNames = recipients.map(
+      (i) => cards[i]?.member || cards[i]?.name,
+    );
 
-    const triggerRate = baseActivationRate + activationRateBuffs[id];
-    const songDuration = 165;
-    const triggers = Math.floor(songDuration / interval);
-    const expectedUptime = triggers * duration * triggerRate;
-    const uptimeRatio = Math.min(1.0, expectedUptime / songDuration);
-
-    const activeBonus = activeScoreBuffs[id] * uptimeRatio;
-    const specialBonus = specialScoreBuffs[id] * 1.0;
-    const expectedScoreBonus = activeBonus + specialBonus;
-
-    const unitScore = Math.round(overallPower * (1 + expectedScoreBonus));
-
-    // Compile list of applied buffs for display
-    const appliedBuffLabels = [];
-    if (id === leader && char.skills.outfit && isSkillActive(char.skills.outfit, uniqueActiveIds, characters)) {
-      appliedBuffLabels.push(`${char.name} Leader (+50% All)`);
+    let trigStr = "";
+    if (pa.trigger) {
+      if (pa.trigger.kind === "group") {
+        const grpName = (pa.trigger.id || "")
+          .replace(/^grp-/, "")
+          .replace(/_/g, " ");
+        const capGrp = grpName.replace(/\b\w/g, (l) => l.toUpperCase());
+        trigStr = `${pa.trigger.count || 1}+ ${capGrp}`;
+      } else if (pa.trigger.kind === "attribute") {
+        const attrMap = {
+          CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_1: "Cute Type",
+          CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_2: "Pure Type",
+          CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_3: "Happy Type",
+        };
+        const attrName = attrMap[pa.trigger.id] || "Type";
+        trigStr = `${pa.trigger.count || 1}+ ${attrName}`;
+      }
     }
-    // Check if other characters' outfit/passives apply to this character
-    uniqueActiveIds.forEach(otherId => {
-      const otherChar = characters.find(c => c.id === otherId);
-      if (!otherChar) return;
 
-      // Leader outfit buff to all
-      if (otherId === leader && otherId !== id && otherChar.skills.outfit && isSkillActive(otherChar.skills.outfit, uniqueActiveIds, characters)) {
-        const mods = parseSkillModifier(otherChar.skills.outfit);
-        mods.forEach(mod => {
-          if (mod.target === 'all') {
-            appliedBuffLabels.push(`${otherChar.name} Leader (+${mod.percentage}% All)`);
-          }
-        });
-      }
+    let statStr = "";
+    const pctVal = Math.round(pa.pct > 1 ? pa.pct : pa.pct * 100);
+    if (pa.kind === "all") statStr = `All Stats +${pctVal}%`;
+    else if (pa.kind === "perf") statStr = `Performance +${pctVal}%`;
+    else if (pa.kind === "tech") statStr = `Technique +${pctVal}%`;
+    else if (pa.kind === "sense") statStr = `Sense +${pctVal}%`;
+    else if (pa.kind === "support") statStr = `Score Support +${pctVal}%`;
 
-      // Passives
-      if (otherChar.skills.passive && isSkillActive(otherChar.skills.passive, uniqueActiveIds, characters)) {
-        const mods = parseSkillModifier(otherChar.skills.passive);
-        // Find if this passive targets the character 'id'
-        mods.forEach(mod => {
-          let applies = false;
-          if (mod.target === 'all') applies = true;
-          else if (mod.target === 'self' && otherId === id) applies = true;
-          else if (char.group.toUpperCase() === mod.target || char.type.toUpperCase() === mod.target) {
-            let matchedIds = uniqueActiveIds.filter(uid => {
-              const c = characters.find(x => x.id === uid);
-              return c && (c.group.toUpperCase() === mod.target || c.type.toUpperCase() === mod.target);
-            });
-            const limit = mod.limit;
-            if (limit !== null && limit !== undefined) {
-              matchedIds = matchedIds.slice(0, limit);
-            }
-            if (matchedIds.includes(id)) {
-              applies = true;
-            }
-          }
-          if (applies) {
-            const statLabel = mod.stat === 'all stats' ? 'All' : mod.stat === 'score_up' || mod.stat === 'support_effect' ? 'Score' : mod.stat;
-            appliedBuffLabels.push(`${otherChar.name} Passive (+${mod.percentage}% ${statLabel})`);
-          }
-        });
-      }
+    const parts = [c.member || c.name];
+    if (trigStr) parts.push(trigStr);
+    parts.push(statStr);
+
+    summaries.push({
+      text: `${parts.join(" · ")} → ${recipientNames.join(", ")}`,
     });
+  }
+  return summaries;
+};
 
+// Intent: Compute detailed breakdown for the Score Breakdown UI panel
+const getTeamCalculationSummary = (
+  team,
+  leader,
+  characters,
+  bloomLevels = [0, 0, 0, 0, 0],
+  cardLevels = [70, 70, 70, 70, 70],
+  selectedCards = [null, null, null, null, null],
+) => {
+  const ids = team.filter(Boolean);
+  if (ids.length < 5) return null;
+
+  const cards = team
+    .map((id, idx) => {
+      if (!id) return null;
+      const char = findChar(id, characters);
+      if (!char) return null;
+      const effectiveCard = getEffectiveCardVariant(
+        char,
+        selectedCards[idx] || null,
+      );
+      return materializeCard(
+        effectiveCard,
+        bloomLevels[idx] || 0,
+        cardLevels[idx] || 70,
+      );
+    })
+    .filter(Boolean);
+
+  if (cards.length < 5) return null;
+  buildEligibility(cards);
+
+  const result = evaluateTeamOrder(cards, "combo");
+  if (!result) return null;
+
+  const positionDetails = cards.map((c, idx) => {
+    const activeMag = getActiveMagnitude(c, cards);
+    const procProb = c.active?.probability
+      ? (c.active.probability * 100).toFixed(1) + "%"
+      : "46.0%";
+    const specMag = (c.special?.magnitude || 0) + "%";
     return {
-      id,
-      name: char.name,
-      accentColor: char.accentColor,
+      pos: idx + 1,
+      id: c.id,
+      name: c.member || c.name,
+      procRate: procProb,
+      activeMag: activeMag + "%",
+      specialMag: specMag,
+      overallPower: c.perf + c.tech + c.sense,
+    };
+  });
+
+  const passiveEffects = getPassiveEffectSummaries(cards);
+  const outfitLeaderCard = cards[result.outfitLeaderIndex] || cards[0];
+  const leaderChar = findChar(outfitLeaderCard?.id, characters);
+
+  return {
+    totalTeamStat: Math.round(result.stat),
+    activePct: result.raw.toFixed(2) + "%",
+    supportPct: "+0.00%",
+    sarPct: "+" + result.sarUplift.toFixed(2) + "%",
+    specialSupportPct: "+" + result.specialSupportUplift.toFixed(2) + "%",
+    totalBonusPct: result.totalBonus.toFixed(2) + "%",
+    expectedIndex: Math.round(result.score),
+    positionDetails,
+    passiveEffects,
+    outfitLeaderCard,
+    leaderChar,
+    cards,
+  };
+};
+
+// Intent: Per-card stat detail breakdown for the Detailed Math panel
+const getTeamCalculationDetails = (
+  team,
+  leader,
+  characters,
+  bloomLevels = [0, 0, 0, 0, 0],
+  cardLevels = [70, 70, 70, 70, 70],
+  selectedCards = [null, null, null, null, null],
+) => {
+  const ids = team.filter(Boolean);
+  if (ids.length < 5) return [];
+
+  const cards = team
+    .map((id, idx) => {
+      if (!id) return null;
+      const char = characters.find(
+        (c) =>
+          c.id === id ||
+          c.assetId === id ||
+          c.cardData?.cardId === id ||
+          c.characterId === id,
+      );
+      if (!char) return null;
+      const effectiveCard = getEffectiveCardVariant(
+        char,
+        selectedCards[idx] || null,
+      );
+      return materializeCard(
+        effectiveCard,
+        bloomLevels[idx] || 0,
+        cardLevels[idx] || 70,
+      );
+    })
+    .filter(Boolean);
+
+  if (cards.length < 5) return [];
+  buildEligibility(cards);
+
+  // Collect passive buffs for per-card breakdown
+  const perf = new Float64Array(5);
+  const tech = new Float64Array(5);
+  const sense = new Float64Array(5);
+  const all = new Float64Array(5);
+
+  for (let s = 0; s < 5; s++) {
+    const pa = cards[s]?.passive;
+    if (!pa || !triggerSatisfied(pa.trigger, cards)) continue;
+    let recipients = [];
+    if (pa.target?.kind === "self") {
+      recipients = [s];
+    } else {
+      for (let i = 0; i < 5; i++)
+        if (cardMatchesTarget(cards[i], pa.target)) recipients.push(i);
+      const count = pa.target?.count || recipients.length;
+      if (recipients.length < count) continue;
+      recipients.sort(
+        (a, b) => (cards[b]?.total || 0) - (cards[a]?.total || 0),
+      );
+      recipients = recipients.slice(0, count);
+    }
+    for (const i of recipients) {
+      if (pa.kind === "perf") perf[i] += pa.pct;
+      else if (pa.kind === "tech") tech[i] += pa.pct;
+      else if (pa.kind === "sense") sense[i] += pa.pct;
+      else if (pa.kind === "all") all[i] += pa.pct;
+    }
+  }
+
+  const allTeamChars = team.map((id) => characters.find((c) => c.id === id));
+
+  return cards.map((c, idx) => {
+    const char = allTeamChars[idx];
+    const baseSense = c.sense;
+    const baseTech = c.tech;
+    const basePerf = c.perf;
+    const finalSense = baseSense * (1 + sense[idx] + all[idx]);
+    const finalTech = baseTech * (1 + tech[idx] + all[idx]);
+    const finalPerf = basePerf * (1 + perf[idx] + all[idx]);
+    const overallPower = finalSense + finalTech + finalPerf;
+    const a = c.active;
+    return {
+      id: c.id,
+      name: c.member,
+      accentColor: char?.accentColor || "#ffffff",
       stats: {
-        sense: { raw: baseSense, final: finalSense, buff: senseBuffs[id] },
-        technique: { raw: baseTech, final: finalTech, buff: techniqueBuffs[id] },
-        performance: { raw: basePerf, final: finalPerf, buff: performanceBuffs[id] }
+        sense: {
+          raw: baseSense,
+          final: finalSense,
+          buff: sense[idx] + all[idx],
+        },
+        technique: {
+          raw: baseTech,
+          final: finalTech,
+          buff: tech[idx] + all[idx],
+        },
+        performance: {
+          raw: basePerf,
+          final: finalPerf,
+          buff: perf[idx] + all[idx],
+        },
       },
       overallPower,
-      activeBuff: activeScoreBuffs[id],
+      activeBuff: a?.baseMagnitude || 0,
       uptime: {
-        triggers,
-        duration,
-        interval,
-        baseActivationRate,
-        triggerRate,
-        uptimeRatio
+        triggers: a ? Math.floor(SONG / a.interval) : 0,
+        duration: a?.duration || 0,
+        interval: a?.interval || 0,
+        baseActivationRate: a?.probability || 0.46,
+        triggerRate: a?.probability || 0.46,
+        uptimeRatio: 0,
       },
-      specialBuff: specialScoreBuffs[id],
-      totalBonus: expectedScoreBonus,
-      unitScore,
-      appliedBuffLabels
+      specialBuff: c.special?.magnitude || 0,
+      totalBonus: 0,
+      unitScore: Math.round(overallPower),
+      appliedBuffLabels: [],
     };
-  }).filter(Boolean);
+  });
 };
 
 
-export default function TeamBuilder({ presets, selectedPresetId, setSelectedPresetId, onUpdatePreset, onSavePresets, ownedRoster = [], onUpdateOwnedRoster, characters = [] }) {
+// Map the reference engine's phase progress messages onto a single 0-100 bar.
+const mapSearchProgress = (msg) => {
+  const pct = msg.total > 0 ? Math.min(1, msg.done / msg.total) : 0;
+  const phase = String(msg.phase);
+  let scaled;
+  const build = phase.match(/Building (\d)-card candidates/);
+  if (build) {
+    const n = Number(build[1]);
+    scaled = 2 + (n - 1) * 8 + pct * 8;
+  } else if (phase === "Local neighborhood polish") {
+    scaled = 42;
+  } else if (phase.indexOf("Polishing") >= 0) {
+    scaled = 42 + pct * 16;
+  } else if (phase.indexOf("Refining") >= 0) {
+    scaled = 58 + pct * 32;
+  } else if (phase.indexOf("Exhaustive") >= 0) {
+    scaled = 90 + pct * 9;
+  } else {
+    scaled = 50;
+  }
+  return Math.max(0, Math.min(100, Math.round(scaled)));
+};
+
+export const recommendBestTeamAsync = (
+  ownedRoster,
+  characters,
+  onProgress,
+  onComplete,
+) => {
+  const charBloomMap = {};
+  const charLevelMap = {};
+  const ownedIds = [];
+
+  if (Array.isArray(ownedRoster)) {
+    ownedRoster.forEach((item) => {
+      if (typeof item === "string") {
+        ownedIds.push(item);
+        charBloomMap[item] = 0;
+        charLevelMap[item] = 1;
+      } else if (item && item.id) {
+        ownedIds.push(item.id);
+        charBloomMap[item.id] = item.bloom !== undefined ? item.bloom : 0;
+        charLevelMap[item.id] = item.level !== undefined ? item.level : 1;
+      }
+    });
+  }
+
+  // Reference-search bridge: materialize the owned roster into the reference
+  // engine's card shape so the vendored Holodori search scores it exactly.
+  const materialized = [];
+  const idByIndex = [];
+  ownedIds.forEach((id) => {
+    const char = findChar(id, characters);
+    if (!char) return;
+    const bloom = charBloomMap[id] !== undefined ? charBloomMap[id] : 0;
+    const level =
+      charLevelMap[id] && charLevelMap[id] > 1 ? charLevelMap[id] : 70;
+    const card = materializeReferenceCard(char, bloom, level);
+    if (card) {
+      idByIndex.push(id);
+      materialized.push(card);
+    }
+  });
+
+  if (materialized.length < 5) {
+    onComplete(null);
+    return;
+  }
+
+  let worker;
+  let done = false;
+  try {
+    const source = searchWorkerSource.replace(
+      "const CARDS = __CARDS__;",
+      `const CARDS = ${JSON.stringify(materialized)};`,
+    );
+    const url = URL.createObjectURL(
+      new Blob([source], { type: "application/javascript" }),
+    );
+    worker = new Worker(url);
+    worker.onmessage = (e) => {
+      const msg = e.data || {};
+      if (msg.type === "progress") {
+        if (onProgress) onProgress(mapSearchProgress(msg));
+      } else if (msg.type === "done") {
+        if (done) return;
+        done = true;
+        if (worker) worker.terminate();
+        URL.revokeObjectURL(url);
+        const topTeams = [];
+        for (const r of Array.isArray(msg.results) ? msg.results : []) {
+          if (!r || !Array.isArray(r.ids)) continue;
+          const team = r.ids.map((i) => idByIndex[i]).filter(Boolean);
+          if (team.length !== 5) continue;
+          const sig = [...team].sort().join(",");
+          if (topTeams.some((t) => t.sig === sig)) continue;
+          const teamCards = r.ids.map((i) => materialized[i]);
+          const leaderIndex = teamCards.findIndex((c) => c.id === r.outfitCard);
+          const leader = idByIndex[r.ids[leaderIndex >= 0 ? leaderIndex : 0]];
+          const bloomLevels = team.map((id) =>
+            charBloomMap[id] !== undefined ? charBloomMap[id] : 0,
+          );
+          const cardLevels = team.map((id) =>
+            charLevelMap[id] && charLevelMap[id] > 1 ? charLevelMap[id] : 70,
+          );
+          const summary = getTeamCalculationSummary(
+            team,
+            leader,
+            characters,
+            bloomLevels,
+            cardLevels,
+          );
+          topTeams.push({
+            sig,
+            rank: topTeams.length + 1,
+            team,
+            leader,
+            bloomLevels,
+            cardLevels,
+            passiveCount: 0,
+            simulatedScore: Math.round(r.score),
+            summary,
+          });
+          if (topTeams.length >= 10) break;
+        }
+        const bestResult = topTeams[0] || {
+          team: null,
+          leader: null,
+          passiveCount: 0,
+          simulatedScore: 0,
+          summary: null,
+        };
+        onComplete({
+          topTeams,
+          team: bestResult.team,
+          leader: bestResult.leader,
+          passiveCount: 0,
+          simulatedScore: bestResult.simulatedScore,
+          summary: bestResult.summary,
+        });
+      } else if (msg.type === "error") {
+        if (done) return;
+        done = true;
+        if (worker) worker.terminate();
+        URL.revokeObjectURL(url);
+        console.error("Team recommendation search failed:", msg.message);
+        onComplete(null);
+      }
+    };
+    worker.onerror = (e) => {
+      if (done) return;
+      done = true;
+      if (worker) worker.terminate();
+      URL.revokeObjectURL(url);
+      console.error("Team recommendation worker failed:", e.message);
+      onComplete(null);
+    };
+    worker.postMessage({
+      action: "optimize",
+      scoringMode: "generic",
+      specialMode: "combo",
+      outfitMode: "best",
+      song: 140,
+      other: 0,
+      ownedOnly: true,
+      ownedKeys: materialized.map((c) => c.key),
+      cardPool: "all",
+      searchQuality: "balanced",
+      topN: 10,
+      boardMode: "off",
+      boardFrequencyNodes: 0,
+      suppressProgress: false,
+    });
+  } catch (err) {
+    console.error("Team recommendation worker failed to start:", err);
+    onComplete(null);
+  }
+};
+
+export default function TeamBuilder({
+  presets,
+  selectedPresetId,
+  setSelectedPresetId,
+  onUpdatePreset,
+  onSavePresets,
+  ownedRoster = [],
+  onUpdateOwnedRoster,
+  characters = [],
+}) {
   const { t } = useLanguage();
   const [isActiveExpanded, setIsActiveExpanded] = useState(false);
   const [isDetailedMathExpanded, setIsDetailedMathExpanded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeSlotIndex, setActiveSlotIndex] = useState(null); // 'leader' or 0, 1, 2, 3, 4 or null
   const [isEditingName, setIsEditingName] = useState(false);
-  const [newNameInput, setNewNameInput] = useState('');
+  const [newNameInput, setNewNameInput] = useState("");
   const [isRosterExpanded, setIsRosterExpanded] = useState(false);
+  const [rosterSearchQuery, setRosterSearchQuery] = useState("");
   const [showRecommendationModal, setShowRecommendationModal] = useState(false);
+  const [isCalculatingRec, setIsCalculatingRec] = useState(false);
+  const [calcProgress, setCalcProgress] = useState(0);
   const [isRecSkillsExpanded, setIsRecSkillsExpanded] = useState(false);
   const [recommendedTeamResult, setRecommendedTeamResult] = useState(null);
-  const currentPreset = presets.find(p => p.id === selectedPresetId) || presets[0];
-  const activeTeam = currentPreset.team;
+  const currentPreset =
+    presets.find((p) => p.id === selectedPresetId) || presets[0];
+  const activeTeam = currentPreset.team || [null, null, null, null, null];
   const activeLeader = currentPreset.leader;
+
+  // Helper to parse roster item configuration (default Bloom 0, default Level 70)
+  function getRosterConfig(charId) {
+    if (!Array.isArray(ownedRoster))
+      return { isOwned: false, bloom: 0, level: 70 };
+    const found = ownedRoster.find((item) => {
+      if (typeof item === "string") return item === charId;
+      return item && item.id === charId;
+    });
+    if (!found) return { isOwned: false, bloom: 0, level: 70 };
+    if (typeof found === "string")
+      return { isOwned: true, bloom: 0, level: 70 };
+    const l = found.level !== undefined && found.level > 1 ? found.level : 70;
+    return {
+      isOwned: true,
+      bloom: found.bloom !== undefined ? found.bloom : 0,
+      level: l,
+    };
+  }
+
+  // Derive active bloom and level for each slot in current team from preset or roster (defaulting to level 70 if missing)
+  const activeBloomLevels = activeTeam.map((cardId, idx) => {
+    if (currentPreset.bloomLevels?.[idx] !== undefined)
+      return currentPreset.bloomLevels[idx];
+    if (cardId) {
+      const cfg = getRosterConfig(cardId);
+      if (cfg.isOwned && cfg.bloom !== undefined) return cfg.bloom;
+    }
+    return 0;
+  });
+
+  const activeLevels = activeTeam.map((cardId, idx) => {
+    if (
+      currentPreset.cardLevels?.[idx] !== undefined &&
+      currentPreset.cardLevels[idx] > 1
+    ) {
+      return currentPreset.cardLevels[idx];
+    }
+    if (cardId) {
+      const cfg = getRosterConfig(cardId);
+      if (cfg.isOwned && cfg.level && cfg.level > 1) return cfg.level;
+    }
+    return 70;
+  });
+
+  const activeSelectedCards = currentPreset.selectedCards || [
+    null,
+    null,
+    null,
+    null,
+    null,
+  ];
+
   const setActiveTeam = (newTeam) => {
     onUpdatePreset(selectedPresetId, { team: newTeam });
   };
   const setActiveLeader = (newLeader) => {
     onUpdatePreset(selectedPresetId, { leader: newLeader });
+  };
+
+  const handleSlotBloomChange = (slotIndex, bloomLevel) => {
+    const newBloomLevels = [...activeBloomLevels];
+    newBloomLevels[slotIndex] = bloomLevel;
+    onUpdatePreset(selectedPresetId, { bloomLevels: newBloomLevels });
+  };
+
+  const handleSlotLevelChange = (slotIndex, levelVal) => {
+    const lvl = Math.max(1, Math.min(80, parseInt(levelVal) || 70));
+    const newLevels = [...activeLevels];
+    newLevels[slotIndex] = lvl;
+    onUpdatePreset(selectedPresetId, { cardLevels: newLevels });
+  };
+
+  const handleSlotCardChange = (slotIndex, cardId) => {
+    const newSelectedCards = [...activeSelectedCards];
+    newSelectedCards[slotIndex] = cardId;
+    const cfg = getRosterConfig(cardId);
+    const newLevels = [...activeLevels];
+    const newBloomLevels = [...activeBloomLevels];
+    newLevels[slotIndex] =
+      cfg.isOwned && cfg.level && cfg.level > 1 ? cfg.level : 70;
+    newBloomLevels[slotIndex] =
+      cfg.isOwned && cfg.bloom !== undefined ? cfg.bloom : 0;
+    onUpdatePreset(selectedPresetId, {
+      selectedCards: newSelectedCards,
+      bloomLevels: newBloomLevels,
+      cardLevels: newLevels,
+    });
   };
   const handleStartRename = () => {
     setNewNameInput(currentPreset.name);
@@ -685,9 +1627,9 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
   };
   // Drag and Drop handlers for Team Units and Leader slot
   const handleDragStart = (e, sourceType, index) => {
-    e.dataTransfer.setData('sourceType', sourceType);
+    e.dataTransfer.setData("sourceType", sourceType);
     if (index !== null) {
-      e.dataTransfer.setData('sourceIndex', index.toString());
+      e.dataTransfer.setData("sourceIndex", index.toString());
     }
   };
   const handleDragOver = (e) => {
@@ -695,9 +1637,9 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
   };
   const handleDropOnTeamSlot = (e, targetIndex) => {
     e.preventDefault();
-    const sourceType = e.dataTransfer.getData('sourceType');
-    const sourceIndexStr = e.dataTransfer.getData('sourceIndex');
-    if (sourceType === 'team') {
+    const sourceType = e.dataTransfer.getData("sourceType");
+    const sourceIndexStr = e.dataTransfer.getData("sourceIndex");
+    if (sourceType === "team") {
       const sourceIndex = parseInt(sourceIndexStr);
       if (sourceIndex === targetIndex) return;
       const newTeam = [...activeTeam];
@@ -705,126 +1647,293 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       newTeam[targetIndex] = newTeam[sourceIndex];
       newTeam[sourceIndex] = temp;
       setActiveTeam(newTeam);
-    } else if (sourceType === 'leader') {
+    } else if (sourceType === "leader") {
       if (activeLeader) {
         const newTeam = [...activeTeam];
         const existingIdx = newTeam.indexOf(activeLeader);
         const temp = newTeam[targetIndex];
-        
+
         if (existingIdx !== -1) {
           newTeam[existingIdx] = temp;
         }
         newTeam[targetIndex] = activeLeader;
         setActiveTeam(newTeam);
-        
+
         setActiveLeader(temp || null); // Clear leader slot if target slot was empty
       }
     }
   };
   const handleDropOnLeaderSlot = (e) => {
     e.preventDefault();
-    const sourceType = e.dataTransfer.getData('sourceType');
-    const sourceIndexStr = e.dataTransfer.getData('sourceIndex');
-    if (sourceType === 'team') {
+    const sourceType = e.dataTransfer.getData("sourceType");
+    const sourceIndexStr = e.dataTransfer.getData("sourceIndex");
+    if (sourceType === "team") {
       const sourceIndex = parseInt(sourceIndexStr);
       const charId = activeTeam[sourceIndex];
       if (charId) {
         // Prevent duplicate if character is already leader
         if (activeLeader === charId) return;
-        
+
         // Swap leader with team slot unit
         const oldLeader = activeLeader;
         setActiveLeader(charId);
-        
+
         const newTeam = [...activeTeam];
         newTeam[sourceIndex] = oldLeader || null; // Clear team slot if no old leader exists to prevent duplication
         setActiveTeam(newTeam);
       }
     }
   };
+  // Helper to extract owned card IDs (supporting string IDs or object configs)
+  const getOwnedIds = (roster) => {
+    if (!Array.isArray(roster)) return [];
+    return roster
+      .map((item) => (typeof item === "string" ? item : item?.id))
+      .filter(Boolean);
+  };
+
   const handleToggleOwned = (charId) => {
-    if (ownedRoster.includes(charId)) {
-      onUpdateOwnedRoster(ownedRoster.filter(id => id !== charId));
+    const config = getRosterConfig(charId);
+    if (config.isOwned) {
+      const nextRoster = ownedRoster.filter((item) =>
+        typeof item === "string" ? item !== charId : item.id !== charId,
+      );
+      onUpdateOwnedRoster(nextRoster);
     } else {
-      onUpdateOwnedRoster([...ownedRoster, charId]);
+      const nextRoster = [...ownedRoster, { id: charId, bloom: 0, level: 70 }];
+      onUpdateOwnedRoster(nextRoster);
     }
   };
+
+  const handleRosterBloomChange = (charId, bloomVal) => {
+    const nextRoster = ownedRoster.map((item) => {
+      const id = typeof item === "string" ? item : item.id;
+      if (id === charId) {
+        const curLevel =
+          typeof item === "object" && item.level !== undefined && item.level > 1
+            ? item.level
+            : 70;
+        return { id: charId, bloom: parseInt(bloomVal), level: curLevel };
+      }
+      return item;
+    });
+    onUpdateOwnedRoster(nextRoster);
+  };
+
+  const handleRosterLevelChange = (charId, levelVal) => {
+    const lvl = Math.max(1, Math.min(80, parseInt(levelVal) || 70));
+    const nextRoster = ownedRoster.map((item) => {
+      const id = typeof item === "string" ? item : item.id;
+      if (id === charId) {
+        const curBloom =
+          typeof item === "object" && item.bloom !== undefined ? item.bloom : 0;
+        return { id: charId, bloom: curBloom, level: lvl };
+      }
+      return item;
+    });
+    onUpdateOwnedRoster(nextRoster);
+  };
+
+  const handleSelect5StarRoster = () => {
+    const activeCardList =
+      ALL_CARDS && ALL_CARDS.length > 0
+        ? ALL_CARDS
+        : characters.length > 0
+          ? characters
+          : [];
+    const fiveStars = activeCardList.filter(
+      (c) =>
+        c.rarity === 5 ||
+        c.rarity === "5" ||
+        c.rarity === "5-Star" ||
+        c.id?.includes("-5-"),
+    );
+    const nextRoster = fiveStars.map((c) => {
+      const existing = getRosterConfig(c.id);
+      return {
+        id: c.id,
+        bloom: existing.bloom !== undefined ? existing.bloom : 0,
+        level: existing.level !== undefined ? existing.level : 70,
+      };
+    });
+    onUpdateOwnedRoster(nextRoster);
+  };
+
+  const handleSelectAllRoster = () => {
+    const activeCardList =
+      ALL_CARDS && ALL_CARDS.length > 0
+        ? ALL_CARDS
+        : characters.length > 0
+          ? characters
+          : [];
+    const nextRoster = activeCardList.map((c) => {
+      const existing = getRosterConfig(c.id);
+      return {
+        id: c.id,
+        bloom: existing.bloom !== undefined ? existing.bloom : 0,
+        level: existing.level !== undefined ? existing.level : 70,
+      };
+    });
+    onUpdateOwnedRoster(nextRoster);
+  };
+
   const handleGenerateRecommendation = () => {
-    const result = recommendBestTeam(ownedRoster, characters);
-    if (result) {
-      setRecommendedTeamResult(result);
-      setIsRecSkillsExpanded(false);
-      setShowRecommendationModal(true);
-    } else {
-      alert("Please check at least 5 characters in your owned roster to generate a recommendation!");
-    }
+    const activeCardList =
+      ALL_CARDS && ALL_CARDS.length > 0
+        ? ALL_CARDS
+        : characters.length > 0
+          ? characters
+          : [];
+    setIsCalculatingRec(true);
+    setCalcProgress(0);
+    setTimeout(() => {
+      recommendBestTeamAsync(
+        ownedRoster,
+        activeCardList,
+        (percent) => {
+          setCalcProgress(percent);
+        },
+        (result) => {
+          if (result && result.topTeams && result.topTeams.length > 0) {
+            setRecommendedTeamResult(result);
+            setIsRecSkillsExpanded(false);
+            setShowRecommendationModal(true);
+          } else {
+            alert(
+              "Please check at least 5 characters in your owned roster to generate recommendations!",
+            );
+          }
+          setIsCalculatingRec(false);
+        },
+      );
+    }, 60);
   };
-  const handleApplyRecommendation = () => {
-    if (recommendedTeamResult) {
-      onUpdatePreset(selectedPresetId, {
-        team: recommendedTeamResult.team,
-        leader: recommendedTeamResult.leader
+
+  const handleApplyRecommendedTeam = (teamObj) => {
+    if (teamObj) {
+      const recTeam = teamObj.team;
+      const recLeader = teamObj.leader || recTeam[0];
+      const recBloomLevels =
+        teamObj.bloomLevels ||
+        recTeam.map((id) => getRosterConfig(id).bloom || 0);
+      const recCardLevels =
+        teamObj.cardLevels ||
+        recTeam.map((id) => getRosterConfig(id).level || 70);
+
+      const nextPresets = presets.map((p) => {
+        if (p.id === selectedPresetId) {
+          return {
+            ...p,
+            team: recTeam,
+            leader: recLeader,
+            bloomLevels: recBloomLevels,
+            cardLevels: recCardLevels,
+          };
+        }
+        return p;
       });
+
+      onUpdatePreset(selectedPresetId, {
+        team: recTeam,
+        leader: recLeader,
+        bloomLevels: recBloomLevels,
+        cardLevels: recCardLevels,
+      });
+
+      if (onSavePresets) {
+        onSavePresets(nextPresets);
+      }
+
       setShowRecommendationModal(false);
     }
   };
+
+  const handleApplyRecommendation = () => {
+    if (recommendedTeamResult) {
+      handleApplyRecommendedTeam(recommendedTeamResult);
+    }
+  };
   const typeDisplayMap = {
-    'PURE': 'Pure Type',
-    'CUTE': 'Cute Type',
-    'HAPPY': 'Happy Type'
+    PURE: "Pure Type",
+    CUTE: "Cute Type",
+    HAPPY: "Happy Type",
   };
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'PURE': return <Leaf size={11} />;
-      case 'CUTE': return <Heart size={11} />;
-      case 'HAPPY': return <Sun size={11} />;
-      default: return null;
+      case "PURE":
+        return <Leaf size={11} />;
+      case "CUTE":
+        return <Heart size={11} />;
+      case "HAPPY":
+        return <Sun size={11} />;
+      default:
+        return null;
     }
   };
   const getTypeColor = (type) => {
     switch (type) {
-      case 'PURE': return '#4caf50'; // Green
-      case 'CUTE': return '#ff4d6d'; // Pink
-      case 'HAPPY': return '#ff9f1c'; // Yellow/Orange
-      default: return 'var(--text-primary)';
+      case "PURE":
+        return "#4caf50"; // Green
+      case "CUTE":
+        return "#ff4d6d"; // Pink
+      case "HAPPY":
+        return "#ff9f1c"; // Yellow/Orange
+      default:
+        return "var(--text-primary)";
     }
   };
   const handleSelectCharacter = (charId) => {
-    // Check if character is already in team units
     const existingIdx = activeTeam.indexOf(charId);
-    if (activeSlotIndex === 'leader') {
+    const rosterCfg = getRosterConfig(charId);
+    const defaultBloom = rosterCfg.bloom !== undefined ? rosterCfg.bloom : 0;
+    const defaultLevel = rosterCfg.level !== undefined ? rosterCfg.level : 60;
+
+    if (activeSlotIndex === "leader") {
       setActiveLeader(charId);
       setActiveSlotIndex(null);
       return;
     }
     if (activeSlotIndex !== null) {
-      // Placing in a specific slot (0 to 4)
       const newTeam = [...activeTeam];
-      
-      // Prevent duplicates: if character is in another slot, clear that slot
       if (existingIdx !== -1) {
         newTeam[existingIdx] = null;
       }
-      
       newTeam[activeSlotIndex] = charId;
-      setActiveTeam(newTeam);
-      setActiveSlotIndex(null); // Reset focus
+
+      const newBloomLevels = [...activeBloomLevels];
+      newBloomLevels[activeSlotIndex] = defaultBloom;
+
+      const newLevels = [...activeLevels];
+      newLevels[activeSlotIndex] = defaultLevel;
+
+      onUpdatePreset(selectedPresetId, {
+        team: newTeam,
+        bloomLevels: newBloomLevels,
+        cardLevels: newLevels,
+      });
+      setActiveSlotIndex(null);
     } else {
-      // No slot is active
       const isAlreadyInTeam = activeTeam.includes(charId);
       if (isAlreadyInTeam) {
-        // Toggle off: remove
-        const newTeam = activeTeam.map(id => id === charId ? null : id);
+        const newTeam = activeTeam.map((id) => (id === charId ? null : id));
         setActiveTeam(newTeam);
       } else {
-        // Find first empty slot
-        const emptyIdx = activeTeam.findIndex(id => !id);
+        const emptyIdx = activeTeam.findIndex((id) => !id);
         if (emptyIdx !== -1) {
           const newTeam = [...activeTeam];
           newTeam[emptyIdx] = charId;
-          setActiveTeam(newTeam);
-        } else {
-          // Slots are full: do not allow adding more
+
+          const newBloomLevels = [...activeBloomLevels];
+          newBloomLevels[emptyIdx] = defaultBloom;
+
+          const newLevels = [...activeLevels];
+          newLevels[emptyIdx] = defaultLevel;
+
+          onUpdatePreset(selectedPresetId, {
+            team: newTeam,
+            bloomLevels: newBloomLevels,
+            cardLevels: newLevels,
+          });
         }
       }
     }
@@ -844,51 +1953,56 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
   const getSynergiesState = () => {
     const active = [];
     const inactive = [];
-    const uniqueActiveIds = Array.from(new Set([...activeTeam, activeLeader].filter(Boolean)));
+    const uniqueActiveIds = Array.from(
+      new Set([...activeTeam, activeLeader].filter(Boolean)),
+    );
     // 1. Evaluate Leader Passive (Outfit Skill)
     if (activeLeader) {
-      const leaderChar = characters.find(c => c.id === activeLeader);
+      const leaderChar = findChar(activeLeader, characters);
       if (leaderChar && leaderChar.skills && leaderChar.skills.outfit) {
         const outfitText = leaderChar.skills.outfit;
         let isActivated = false;
-        
-        const match = outfitText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
-        
+
+        const match = outfitText.match(
+          /(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i,
+        );
+
         if (!match) {
           isActivated = true;
         } else {
           const requiredCount = parseInt(match[1] || match[2]) || 2;
           const rawTarget = match[3].trim().toUpperCase();
           const condTarget = rawTarget
-            .replace(/[[\]]/g, '')
-            .replace(/\bTYPE\b/g, '')
-            
+            .replace(/[[\]]/g, "")
+            .replace(/\bTYPE\b/g, "")
             .trim();
-          
+
           let count = 0;
-          uniqueActiveIds.forEach(activeId => {
-            const activeChar = characters.find(c => c.id === activeId);
+          uniqueActiveIds.forEach((activeId) => {
+            const activeChar = findChar(activeId, characters);
             if (activeChar) {
-              if (activeChar.group.toUpperCase().includes(condTarget) || 
-                  activeChar.type.toUpperCase() === condTarget) {
+              if (
+                activeChar.group.toUpperCase().includes(condTarget) ||
+                activeChar.type.toUpperCase() === condTarget
+              ) {
                 count++;
               }
             }
           });
-          
+
           if (count >= requiredCount) {
             isActivated = true;
           }
         }
-        
+
         const item = {
           charId: leaderChar.id,
           charName: leaderChar.name,
-          accentColor: '#ffb703',
+          accentColor: "#ffb703",
           desc: outfitText,
-          isLeader: true
+          isLeader: true,
         };
-        
+
         if (isActivated) {
           active.push(item);
         } else {
@@ -897,49 +2011,52 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       }
     }
     // 2. Evaluate normal passives
-    uniqueActiveIds.forEach(id => {
-      const char = characters.find(c => c.id === id);
+    uniqueActiveIds.forEach((id) => {
+      const char = findChar(id, characters);
       if (char && char.skills && char.skills.passive) {
         const passiveText = char.skills.passive;
         let isActivated = false;
-        
-        const match = passiveText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
-        
+
+        const match = passiveText.match(
+          /(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i,
+        );
+
         if (!match) {
           isActivated = true;
         } else {
           const requiredCount = parseInt(match[1] || match[2]) || 2;
           const rawTarget = match[3].trim().toUpperCase();
           const condTarget = rawTarget
-            .replace(/[[\]]/g, '')
-            .replace(/\bTYPE\b/g, '')
-            
+            .replace(/[[\]]/g, "")
+            .replace(/\bTYPE\b/g, "")
             .trim();
-          
+
           let count = 0;
-          uniqueActiveIds.forEach(activeId => {
-            const activeChar = characters.find(c => c.id === activeId);
+          uniqueActiveIds.forEach((activeId) => {
+            const activeChar = findChar(activeId, characters);
             if (activeChar) {
-              if (activeChar.group.toUpperCase().includes(condTarget) || 
-                  activeChar.type.toUpperCase() === condTarget) {
+              if (
+                activeChar.group.toUpperCase().includes(condTarget) ||
+                activeChar.type.toUpperCase() === condTarget
+              ) {
                 count++;
               }
             }
           });
-          
+
           if (count >= requiredCount) {
             isActivated = true;
           }
         }
-        
+
         const item = {
           charId: char.id,
           charName: char.name,
           accentColor: char.accentColor,
           desc: passiveText,
-          isLeader: false
+          isLeader: false,
         };
-        
+
         if (isActivated) {
           active.push(item);
         } else {
@@ -958,144 +2075,199 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
   const getRecommendedSynergies = () => {
     if (!recommendedTeamResult) return [];
     const synergies = [];
-    const uniqueActiveIds = Array.from(new Set([...recommendedTeamResult.team, recommendedTeamResult.leader].filter(Boolean)));
-    
+    const uniqueActiveIds = Array.from(
+      new Set(
+        [...recommendedTeamResult.team, recommendedTeamResult.leader].filter(
+          Boolean,
+        ),
+      ),
+    );
+
     // 1. Leader Outfit Skill first
     const recLeader = recommendedTeamResult.leader;
     if (recLeader) {
-      const leaderChar = characters.find(c => c.id === recLeader);
+      const leaderChar = findChar(recLeader, characters);
       if (leaderChar && leaderChar.skills && leaderChar.skills.outfit) {
         const outfitText = leaderChar.skills.outfit;
         let isActivated = false;
-        
-        const match = outfitText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
-        
+
+        const match = outfitText.match(
+          /(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i,
+        );
+
         if (!match) {
           isActivated = true;
         } else {
           const requiredCount = parseInt(match[1] || match[2]) || 2;
           const rawTarget = match[3].trim().toUpperCase();
           const condTarget = rawTarget
-            .replace(/[[\]]/g, '')
-            .replace(/\bTYPE\b/g, '')
-            
+            .replace(/[[\]]/g, "")
+            .replace(/\bTYPE\b/g, "")
             .trim();
-          
+
           let count = 0;
-          uniqueActiveIds.forEach(activeId => {
-            const activeChar = characters.find(c => c.id === activeId);
+          uniqueActiveIds.forEach((activeId) => {
+            const activeChar = findChar(activeId, characters);
             if (activeChar) {
-              if (activeChar.group.toUpperCase().includes(condTarget) || 
-                  activeChar.type.toUpperCase() === condTarget) {
+              if (
+                activeChar.group.toUpperCase().includes(condTarget) ||
+                activeChar.type.toUpperCase() === condTarget
+              ) {
                 count++;
               }
             }
           });
-          
+
           if (count >= requiredCount) {
             isActivated = true;
           }
         }
-        
+
         if (isActivated) {
           synergies.push({
             charId: leaderChar.id,
             charName: leaderChar.name,
-            accentColor: '#ffb703', // Use Leader Gold color!
+            accentColor: "#ffb703", // Use Leader Gold color!
             desc: outfitText,
-            isLeader: true
+            isLeader: true,
           });
         }
       }
     }
     // 2. Normal Passives
-    uniqueActiveIds.forEach(id => {
-      const char = characters.find(c => c.id === id);
+    uniqueActiveIds.forEach((id) => {
+      const char = findChar(id, characters);
       if (char && char.skills && char.skills.passive) {
         const passiveText = char.skills.passive;
         let isActivated = false;
-        
-        const match = passiveText.match(/(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i);
-        
+
+        const match = passiveText.match(
+          /(?:with\s+(\d+)\s+or\s+more|to\s+(\d+))\s+([A-Za-z0-9\s\-++]+)\s+Members/i,
+        );
+
         if (!match) {
           isActivated = true;
         } else {
           const requiredCount = parseInt(match[1] || match[2]) || 2;
           const rawTarget = match[3].trim().toUpperCase();
           const condTarget = rawTarget
-            .replace(/[[\]]/g, '')
-            .replace(/\bTYPE\b/g, '')
-            
+            .replace(/[[\]]/g, "")
+            .replace(/\bTYPE\b/g, "")
             .trim();
-          
+
           let count = 0;
-          uniqueActiveIds.forEach(activeId => {
-            const activeChar = characters.find(c => c.id === activeId);
+          uniqueActiveIds.forEach((activeId) => {
+            const activeChar = findChar(activeId, characters);
             if (activeChar) {
-              if (activeChar.group.toUpperCase().includes(condTarget) || 
-                  activeChar.type.toUpperCase() === condTarget) {
+              if (
+                activeChar.group.toUpperCase().includes(condTarget) ||
+                activeChar.type.toUpperCase() === condTarget
+              ) {
                 count++;
               }
             }
           });
-          
+
           if (count >= requiredCount) {
             isActivated = true;
           }
         }
-        
+
         if (isActivated) {
           synergies.push({
             charId: char.id,
             charName: char.name,
             accentColor: char.accentColor,
             desc: passiveText,
-            isLeader: false
+            isLeader: false,
           });
         }
       }
     });
-    
+
     return synergies;
   };
   const { active: activeSynergies } = getSynergiesState();
-  const filteredRoster = characters.filter(char => char.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  
-  const leaderChar = characters.find(c => c.id === activeLeader);
-  const isLeaderInTeam = activeTeam.includes(activeLeader);
-  const activeCharsCount = [activeLeader, ...activeTeam].filter(Boolean).reduce((acc, charId, idx) => {
-    if (charId === activeLeader && idx > 0) return acc;
-    const isLeader = charId === activeLeader;
-    const char = characters.find(c => c.id === charId);
+  const filteredRoster = characters.filter((char) =>
+    char.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const activeCardList =
+    ALL_CARDS && ALL_CARDS.length > 0
+      ? ALL_CARDS
+      : characters.length > 0
+        ? characters
+        : [];
+
+  const matchingSearchCards = rosterSearchQuery.trim()
+    ? activeCardList.filter(
+        (c) =>
+          c.name.toLowerCase().includes(rosterSearchQuery.toLowerCase()) ||
+          (c.title &&
+            c.title.toLowerCase().includes(rosterSearchQuery.toLowerCase())) ||
+          c.group.toLowerCase().includes(rosterSearchQuery.toLowerCase()),
+      )
+    : [];
+
+  const ownedRosterCards = (Array.isArray(ownedRoster) ? ownedRoster : [])
+    .map((item) => {
+      const charId = typeof item === "string" ? item : item?.id;
+      return activeCardList.find((c) => c.id === charId);
+    })
+    .filter(Boolean);
+
+  const leaderChar = findChar(activeLeader, characters);
+  const isLeaderInTeam = activeTeam.some((id) => {
+    if (!id || !activeLeader) return false;
+    if (id === activeLeader) return true;
+    const cardObj = findChar(id, characters);
+    return (
+      cardObj &&
+      leaderChar &&
+      (cardObj.id === leaderChar.id ||
+        cardObj.characterId === leaderChar.characterId ||
+        cardObj.assetId === leaderChar.assetId ||
+        cardObj.name === leaderChar.name ||
+        cardObj.cardData?.id === leaderChar.cardData?.id)
+    );
+  });
+  const activeCharsCount = activeTeam.filter(Boolean).reduce((acc, charId) => {
+    const char = findChar(charId, characters);
     if (!char) return acc;
-    const isActivePassive = activeSynergies.some(s => s.charId === char.id && !s.isLeader);
-    const isLeaderSkillActive = !isLeader || activeSynergies.some(s => s.charId === char.id && s.isLeader);
-    return (isActivePassive && isLeaderSkillActive) ? acc + 1 : acc;
+    const isPassiveActive = activeSynergies.some(
+      (s) =>
+        s.charId === char.id ||
+        s.charId === char.cardData?.id ||
+        s.charId === char.assetId,
+    );
+    return isPassiveActive ? acc + 1 : acc;
   }, 0);
   return (
     <div className="team-builder-page animate-fade-in">
       <div className="builder-header">
-        <h1 className="page-title">{t('builder_title')}</h1>
-        <p className="page-subtitle">{t('builder_desc')}</p>
+        <h1 className="page-title">{t("builder_title")}</h1>
+        <p className="page-subtitle">{t("builder_desc")}</p>
       </div>
       {/* Presets Manager */}
       <div className="presets-manager glass">
         <div className="presets-header">
-          <h3 className="section-title-small">{t('presets_manager')}</h3>
-          <span className="presets-info-text">{t('presets_desc')}</span>
+          <h3 className="section-title-small">{t("presets_manager")}</h3>
+          <span className="presets-info-text">{t("presets_desc")}</span>
         </div>
-        
+
         <div className="presets-list-bar">
           {presets.map((preset) => (
             <button
               key={preset.id}
-              className={`preset-selector-btn ${selectedPresetId === preset.id ? 'selected' : ''} ${preset.isActive ? 'active-deck' : ''}`}
+              className={`preset-selector-btn ${selectedPresetId === preset.id ? "selected" : ""} ${preset.isActive ? "active-deck" : ""}`}
               onClick={() => {
                 setSelectedPresetId(preset.id);
                 setIsEditingName(false);
               }}
             >
-              {preset.isActive && <Award size={12} className="text-gold mr-1" />}
+              {preset.isActive && (
+                <Award size={12} className="text-gold mr-1" />
+              )}
               <span className="preset-btn-name">{preset.name}</span>
             </button>
           ))}
@@ -1112,272 +2284,742 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                   maxLength={25}
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSaveRename();
-                    if (e.key === 'Escape') setIsEditingName(false);
+                    if (e.key === "Enter") handleSaveRename();
+                    if (e.key === "Escape") setIsEditingName(false);
                   }}
                 />
-                <button className="btn-rename-save" onClick={handleSaveRename}>Save</button>
-                <button className="btn-rename-cancel" onClick={() => setIsEditingName(false)}>{t('cancel')}</button>
+                <button className="btn-rename-save" onClick={handleSaveRename}>
+                  Save
+                </button>
+                <button
+                  className="btn-rename-cancel"
+                  onClick={() => setIsEditingName(false)}
+                >
+                  {t("cancel")}
+                </button>
               </div>
             ) : (
               <div className="preset-name-display">
-                <span className="current-preset-label">{t('editing_label')}</span>
-                <strong className="current-preset-value">{currentPreset.name}</strong>
-                <button className="btn-icon-rename" onClick={handleStartRename} title="Rename preset">
-                  {t('rename_preset')}
+                <span className="current-preset-label">
+                  {t("editing_label")}
+                </span>
+                <strong className="current-preset-value">
+                  {currentPreset.name}
+                </strong>
+                <button
+                  className="btn-icon-rename"
+                  onClick={handleStartRename}
+                  title="Rename preset"
+                >
+                  {t("rename_preset")}
                 </button>
               </div>
             )}
           </div>
           <div className="preset-control-buttons">
             {!currentPreset.isActive && (
-              <button 
-                className="btn-activate-preset" 
-                onClick={() => onUpdatePreset(selectedPresetId, { isActive: true })}
+              <button
+                className="btn-activate-preset"
+                onClick={() =>
+                  onUpdatePreset(selectedPresetId, { isActive: true })
+                }
               >
-                {t('make_active')}
+                {t("make_active")}
               </button>
             )}
             {currentPreset.isActive && (
               <span className="active-party-badge">
-                <CheckCircle2 size={12} className="text-green" /> {t('primary_active_party')}
+                <CheckCircle2 size={12} className="text-green" />{" "}
+                {t("primary_active_party")}
               </span>
             )}
-            <button 
-              className="btn-clear-preset" 
+            <button
+              className="btn-clear-preset"
               onClick={() => {
-                if (window.confirm(`Are you sure you want to clear "${currentPreset.name}" slots?`)) {
-                  onUpdatePreset(selectedPresetId, { team: [null, null, null, null, null], leader: null });
+                if (
+                  window.confirm(
+                    `Are you sure you want to clear "${currentPreset.name}" slots?`,
+                  )
+                ) {
+                  onUpdatePreset(selectedPresetId, {
+                    team: [null, null, null, null, null],
+                    leader: null,
+                  });
                 }
               }}
             >
-              {t('clear_slots')}
+              {t("clear_slots")}
             </button>
           </div>
         </div>
       </div>
       {/* Owned Roster Manager */}
       <div className="roster-manager glass">
-        <div className="roster-header" onClick={() => setIsRosterExpanded(!isRosterExpanded)}>
+        <div
+          className="roster-header"
+          onClick={() => setIsRosterExpanded(!isRosterExpanded)}
+        >
           <div className="roster-header-title-block">
-            <h3 className="section-title-small">{t('my_character_roster')}</h3>
+            <h3 className="section-title-small">{t("my_character_roster")}</h3>
             <span className="presets-info-text">
-              {t('roster_desc', { owned: ownedRoster.length, total: characters.length })}
+              {t("roster_desc", {
+                owned: ownedRoster.length,
+                total: characters.length,
+              })}
             </span>
           </div>
           <button className="btn-toggle-roster">
-            {isRosterExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            {isRosterExpanded ? (
+              <ChevronUp size={18} />
+            ) : (
+              <ChevronDown size={18} />
+            )}
           </button>
         </div>
         {isRosterExpanded && (
           <div className="roster-body animate-slide-down">
-            <div className="roster-controls">
-              <button className="btn-icon-rename" onClick={() => onUpdateOwnedRoster(characters.map(c => c.id))}>
-                {t('select_all')}
-              </button>
-              <button className="btn-icon-rename" onClick={() => onUpdateOwnedRoster([])}>
-                {t('deselect_all')}
-              </button>
-              <button 
-                className="btn-activate-preset" 
-                onClick={handleGenerateRecommendation}
-                disabled={ownedRoster.length < 5}
-                style={{ opacity: ownedRoster.length < 5 ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-              >
-                <Sparkles size={12} /> {t('smart_suggest')}
-              </button>
-            </div>
-            <div className="roster-groups-container">
-              {GROUPS.map(groupName => {
-                const groupMembers = characters.filter(c => c.group === groupName);
-                if (groupMembers.length === 0) return null;
-                return (
-                  <div key={groupName} className="roster-group-section">
-                    <h5 className="roster-group-title">{groupName}</h5>
-                    <div className="roster-group-grid">
-                      {groupMembers.map(char => {
-                        const isOwned = ownedRoster.includes(char.id);
+            {/* Search & Add Bar */}
+            <div className="roster-search-section">
+              <div className="roster-search-input-wrapper glass">
+                <Search size={16} className="text-secondary mr-2" />
+                <input
+                  type="text"
+                  placeholder="Search character name or card title to add to roster..."
+                  value={rosterSearchQuery}
+                  onChange={(e) => setRosterSearchQuery(e.target.value)}
+                  className="roster-search-input"
+                />
+                {rosterSearchQuery && (
+                  <button
+                    className="btn-clear-search"
+                    onClick={() => setRosterSearchQuery("")}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Live Search Results Dropdown */}
+              {rosterSearchQuery.trim().length > 0 && (
+                <div className="roster-search-results-dropdown glass animate-fade-in">
+                  <div className="search-results-header">
+                    <span>
+                      Search Results ({matchingSearchCards.length} cards match)
+                    </span>
+                  </div>
+                  {matchingSearchCards.length === 0 ? (
+                    <p className="no-search-results">
+                      No matching characters or card titles found.
+                    </p>
+                  ) : (
+                    <div className="search-results-grid">
+                      {matchingSearchCards.map((char) => {
+                        const cfg = getRosterConfig(char.id);
+                        const isOwned = cfg.isOwned;
                         return (
-                          <div 
-                            key={char.id} 
-                            className={`roster-char-item ${isOwned ? 'owned' : 'not-owned'}`}
-                            onClick={() => handleToggleOwned(char.id)}
+                          <div
+                            key={char.id}
+                            className="search-card-result-item glass"
                           >
-                            <input 
-                              type="checkbox" 
-                              checked={isOwned} 
-                              readOnly 
-                              className="roster-char-checkbox"
-                            />
-                            <div className="roster-char-avatar-mini" style={{ borderLeft: `3px solid ${char.accentColor}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div className="search-card-thumb">
                               {char.image ? (
-                                <img src={char.image} alt={char.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img
+                                  src={char.image}
+                                  alt={char.name}
+                                  className="search-thumb-img"
+                                />
                               ) : (
-                                char.avatar
+                                <span className="avatar-fallback">
+                                  {char.avatar}
+                                </span>
                               )}
                             </div>
-                            <span className="roster-char-name" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2' }}>
-                              <span>{char.name}</span>
-                              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>{char.title}</span>
-                            </span>
+                            <div className="search-card-info">
+                              <span className="search-card-name">
+                                {char.name}
+                              </span>
+                              <span className="search-card-title">
+                                {char.title}
+                              </span>
+                              <div className="search-card-badges">
+                                <span className="badge-role-mini">
+                                  {char.group}
+                                </span>
+                                <span
+                                  className="badge-type-mini"
+                                  style={{ color: getTypeColor(char.type) }}
+                                >
+                                  {char.type}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              className={`btn-add-roster ${isOwned ? "added" : ""}`}
+                              onClick={() => handleToggleOwned(char.id)}
+                            >
+                              {isOwned ? "In Roster" : "+ Add Card"}
+                            </button>
                           </div>
                         );
                       })}
                     </div>
-                  </div>
-                );
-              })}
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Roster Controls & Quick Actions */}
+            <div className="roster-controls">
+              <button
+                className="btn-icon-rename"
+                onClick={handleSelect5StarRoster}
+              >
+                Add All 5★ Cards
+              </button>
+              <button
+                className="btn-icon-rename"
+                onClick={handleSelectAllRoster}
+              >
+                Add All Cards
+              </button>
+              <button
+                className="btn-icon-rename"
+                onClick={() => onUpdateOwnedRoster([])}
+              >
+                Clear Roster
+              </button>
+              <button
+                className="btn-activate-preset"
+                onClick={handleGenerateRecommendation}
+                disabled={ownedRoster.length < 5}
+                style={{
+                  opacity: ownedRoster.length < 5 ? 0.5 : 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                }}
+              >
+                <Sparkles size={12} /> {t("smart_suggest")}
+              </button>
+            </div>
+
+            {/* Saved Roster Cards List */}
+            <div className="owned-cards-section">
+              <h4 className="owned-grid-heading">
+                My Saved Roster ({ownedRosterCards.length} Cards)
+              </h4>
+
+              {ownedRosterCards.length === 0 ? (
+                <div className="empty-roster-placeholder glass">
+                  <p>
+                    Your roster is empty. Use the search bar above or click "Add
+                    All 5★ Cards" to quickly build your roster.
+                  </p>
+                </div>
+              ) : (
+                <div className="owned-cards-grid">
+                  {ownedRosterCards.map((char) => {
+                    const cfg = getRosterConfig(char.id);
+                    return (
+                      <div
+                        key={char.id}
+                        className="owned-roster-card glass"
+                        style={{ borderLeft: `3px solid ${char.accentColor}` }}
+                      >
+                        <button
+                          className="btn-remove-roster-card"
+                          onClick={() => handleToggleOwned(char.id)}
+                          title="Remove from Roster"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+
+                        <div className="owned-card-media">
+                          {char.image ? (
+                            <img
+                              src={char.image}
+                              alt={char.name}
+                              className="owned-card-img"
+                            />
+                          ) : (
+                            <span className="avatar-fallback">
+                              {char.avatar}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="owned-card-details">
+                          <span className="owned-card-name">{char.name}</span>
+                          <span className="owned-card-title">{char.title}</span>
+                          <div className="owned-card-badges">
+                            <span className="badge-role-mini">
+                              {char.group}
+                            </span>
+                            <span
+                              className="badge-type-mini"
+                              style={{ color: getTypeColor(char.type) }}
+                            >
+                              {char.type}
+                            </span>
+                          </div>
+
+                          {/* Level and Bloom Progression Selectors */}
+                          <div className="owned-card-progression">
+                            <div className="progression-field">
+                              <label>Lv</label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={80}
+                                value={cfg.level}
+                                onChange={(e) =>
+                                  handleRosterLevelChange(
+                                    char.id,
+                                    e.target.value,
+                                  )
+                                }
+                                className="roster-level-input"
+                              />
+                            </div>
+
+                            <div className="progression-field">
+                              <label>Bloom</label>
+                              <select
+                                value={cfg.bloom}
+                                onChange={(e) =>
+                                  handleRosterBloomChange(
+                                    char.id,
+                                    e.target.value,
+                                  )
+                                }
+                                className="roster-bloom-select"
+                              >
+                                <option value={0}>Bloom 0</option>
+                                <option value={1}>Bloom 1</option>
+                                <option value={2}>Bloom 2 (+10%)</option>
+                                <option value={3}>Bloom 3</option>
+                                <option value={4}>Bloom 4</option>
+                                <option value={5}>Bloom 5</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
-      {/* Recommendation Modal */}
+      {/* Loading Spinner Modal */}
+      {isCalculatingRec && (
+        <div
+          className="modal-overlay"
+          style={{
+            backdropFilter: "blur(10px)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            className="modal-content glass animate-fade-in"
+            style={{
+              maxWidth: "420px",
+              textAlign: "center",
+              padding: "2.5rem 1.5rem",
+              borderRadius: "16px",
+              background: "#0e172a",
+              border: "1px solid #233458",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+            }}
+          >
+            <h3
+              style={{
+                fontSize: "1.2rem",
+                fontWeight: 800,
+                color: "var(--text-primary)",
+                margin: "0 0 0.5rem",
+              }}
+            >
+              Optimizing Roster Teams...
+            </h3>
+            <p
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--text-muted)",
+                margin: "0 0 1rem",
+              }}
+            >
+              Evaluating permutations and active skill overlaps across your
+              roster cards.
+            </p>
+            <div
+              style={{
+                width: "100%",
+                background: "#1e293b",
+                height: "8px",
+                borderRadius: "6px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${Math.max(5, calcProgress)}%`,
+                  background: "linear-gradient(90deg, #3a86ff, #ffd700)",
+                  height: "100%",
+                  transition: "width 0.1s ease",
+                }}
+              />
+            </div>
+            <span
+              style={{
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                color: "#ffd700",
+                display: "block",
+                marginTop: "0.5rem",
+              }}
+            >
+              {calcProgress}% Completed
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Top 10 Recommendation Modal */}
       {showRecommendationModal && recommendedTeamResult && (
-        <div className="modal-overlay" onClick={() => setShowRecommendationModal(false)}>
-          <div className="modal-content glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '850px' }}>
-            <div className="modal-header">
-              <div className="modal-header-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowRecommendationModal(false)}
+        >
+          <div
+            className="modal-content glass animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "920px", maxHeight: "88vh", overflowY: "auto" }}
+          >
+            <div
+              className="modal-header"
+              style={{
+                paddingTop: "0.5rem",
+                paddingBottom: "0.75rem",
+                border: "none",
+                background: "transparent",
+              }}
+            >
+              <div
+                className="modal-header-title"
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
                 <Sparkles size={20} className="text-gold animate-pulse" />
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>Smart Team Recommendation</h2>
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0 }}>
+                  Top 10 Recommended Teams
+                </h2>
               </div>
-              <button className="btn-close-modal" onClick={() => setShowRecommendationModal(false)}>
+              <button
+                className="btn-close-modal"
+                onClick={() => setShowRecommendationModal(false)}
+              >
                 <X size={18} />
               </button>
             </div>
-            <div className="modal-body">
-              <p className="recommendation-desc">
-                We simulated all team combinations from your roster to find the team with the highest raw performance potential (Score: <strong>{recommendedTeamResult.simulatedScore.toLocaleString()}</strong>, <strong>{recommendedTeamResult.passiveCount} passives</strong> triggered).
+            <div className="modal-body" style={{ marginTop: "1rem" }}>
+              <p
+                className="recommendation-desc"
+                style={{ marginBottom: "1.25rem" }}
+              >
+                We evaluated all team combinations from your roster using
+                Holodori Optimizer scoring engine. These results are already
+                ordered for their best modeled positions. Here are the{" "}
+                <strong>Top 10 highest-scoring team configurations</strong>:
               </p>
-              <h3 className="modal-section-title">Recommended Party</h3>
-              <div className="recommended-team-slots">
-                {recommendedTeamResult.team.map((charId) => {
-                  const char = characters.find(c => c.id === charId);
-                  const isLeader = charId === recommendedTeamResult.leader;
-                  if (!char) return null;
+
+              <div
+                className="top-10-teams-list"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1rem",
+                }}
+              >
+                {(
+                  recommendedTeamResult.topTeams || [recommendedTeamResult]
+                ).map((teamItem, teamIdx) => {
+                  const rankNum = teamItem.rank || teamIdx + 1;
+                  const isTop1 = rankNum === 1;
+                  const ldrChar = findChar(teamItem.leader, characters);
                   return (
-                    <div key={charId} className={`recommended-slot-card ${isLeader ? 'border-gold' : ''}`}>
-                      {isLeader && <span className="leader-tag-mini">L</span>}
-                      <div className="recommended-avatar-circle" style={{ border: `2px solid ${char.accentColor}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {char.image ? (
-                          <img src={char.image} alt={char.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <span className="recommended-avatar-text">{char.avatar}</span>
-                        )}
-                      </div>
-                      <div className="recommended-slot-info">
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <strong className="recommended-char-name">{char.name}</strong>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px' }}>{char.title}</span>
+                    <div
+                      key={teamIdx}
+                      className="top-team-card glass"
+                      style={{
+                        padding: "1rem 1.25rem",
+                        borderRadius: "14px",
+                        border: isTop1
+                          ? "1px solid #ffd700"
+                          : "1px solid #233458",
+                        background: isTop1
+                          ? "linear-gradient(135deg, rgba(255,215,0,0.08), rgba(15,23,42,0.9))"
+                          : "rgba(15,23,42,0.7)",
+                        boxShadow: isTop1
+                          ? "0 8px 30px rgba(255,215,0,0.15)"
+                          : "none",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "0.85rem",
+                          flexWrap: "wrap",
+                          gap: "0.75rem",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.85rem",
+                          }}
+                        >
+                          <span
+                            style={{
+                              padding: "4px 12px",
+                              borderRadius: "999px",
+                              fontSize: "0.85rem",
+                              fontWeight: 800,
+                              background: isTop1
+                                ? "linear-gradient(135deg, #ffd700, #ff9f1c)"
+                                : "#233458",
+                              color: isTop1 ? "#071226" : "#f3f6ff",
+                              boxShadow: isTop1
+                                ? "0 0 12px rgba(255,215,0,0.4)"
+                                : "none",
+                            }}
+                          >
+                            {isTop1 ? "#1 BEST" : `#${rankNum}`}
+                          </span>
+                          <div>
+                            <span
+                              style={{
+                                fontSize: "1.35rem",
+                                fontWeight: 800,
+                                color: isTop1
+                                  ? "#ffd700"
+                                  : "var(--text-primary)",
+                              }}
+                            >
+                              {teamItem.simulatedScore.toLocaleString()}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--text-muted)",
+                                marginLeft: "8px",
+                              }}
+                            >
+                              Generic Expected Index
+                            </span>
+                          </div>
                         </div>
-                        <span className="recommended-char-meta" style={{ color: getTypeColor(char.type) }}>
-                          {getTypeIcon(char.type)} {typeDisplayMap[char.type] || char.type} • {char.group}
-                        </span>
+
+                        <button
+                          className="btn-primary"
+                          onClick={() => handleApplyRecommendedTeam(teamItem)}
+                          style={{
+                            padding: "8px 18px",
+                            fontSize: "0.85rem",
+                            fontWeight: 700,
+                            background: isTop1
+                              ? "linear-gradient(135deg, #3a86ff, #4361ee)"
+                              : "#233458",
+                            border: isTop1 ? "none" : "1px solid #425174",
+                          }}
+                        >
+                          Apply to {currentPreset?.name || "Preset"}
+                        </button>
                       </div>
+
+                      {/* 5 Card Avatars */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(5, 1fr)",
+                          gap: "0.65rem",
+                        }}
+                      >
+                        {teamItem.team.map((charId, cIdx) => {
+                          const char = findChar(charId, characters);
+                          const isLeader =
+                            charId === teamItem.leader ||
+                            char?.id === teamItem.leader ||
+                            char?.cardData?.id === teamItem.leader;
+                          const name =
+                            char?.member ||
+                            char?.cardData?.member ||
+                            char?.name ||
+                            char?.cardData?.name ||
+                            `Unit ${cIdx + 1}`;
+                          const cardTitle =
+                            char?.title || char?.cardData?.name || "";
+                          const type = char?.type || char?.attribute || "Pure";
+                          const displayImg =
+                            char?.image ||
+                            char?.fallbackImage ||
+                            char?.cardData?.image;
+                          return (
+                            <div
+                              key={cIdx}
+                              style={{
+                                background: "#0e172a",
+                                border: isLeader
+                                  ? "1px solid #ffd700"
+                                  : "1px solid #233458",
+                                borderRadius: "10px",
+                                padding: "0.6rem 0.4rem",
+                                textAlign: "center",
+                                position: "relative",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                              }}
+                            >
+                              {isLeader && (
+                                <span
+                                  style={{
+                                    position: "absolute",
+                                    top: "4px",
+                                    left: "4px",
+                                    background: "#ffd700",
+                                    color: "#071226",
+                                    fontSize: "0.65rem",
+                                    fontWeight: 900,
+                                    padding: "1px 5px",
+                                    borderRadius: "4px",
+                                  }}
+                                >
+                                  L
+                                </span>
+                              )}
+                              <div
+                                style={{
+                                  width: "46px",
+                                  height: "46px",
+                                  borderRadius: "50%",
+                                  border: `2px solid ${char?.accentColor || "#3b82f6"}`,
+                                  overflow: "hidden",
+                                  margin: "0 auto 6px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "#1e293b",
+                                }}
+                              >
+                                {displayImg ? (
+                                  <img
+                                    src={displayImg}
+                                    alt={name}
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                ) : (
+                                  <span
+                                    style={{
+                                      fontSize: "1.1rem",
+                                      fontWeight: 800,
+                                      color: char?.accentColor || "#3b82f6",
+                                    }}
+                                  >
+                                    {char?.avatar || name.substring(0, 2)}
+                                  </span>
+                                )}
+                              </div>
+                              <strong
+                                style={{
+                                  fontSize: "0.78rem",
+                                  color: "var(--text-primary)",
+                                  display: "block",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  maxWidth: "100%",
+                                }}
+                              >
+                                {name}
+                              </strong>
+                              {cardTitle && (
+                                <span
+                                  style={{
+                                    fontSize: "0.68rem",
+                                    color: "var(--text-secondary)",
+                                    display: "block",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    maxWidth: "100%",
+                                  }}
+                                >
+                                  {cardTitle}
+                                </span>
+                              )}
+                              <span
+                                style={{
+                                  fontSize: "0.68rem",
+                                  color: getTypeColor(type),
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {type}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Leader Outfit summary */}
+                      {ldrChar && ldrChar.skills && ldrChar.skills.outfit && (
+                        <div
+                          style={{
+                            marginTop: "0.65rem",
+                            padding: "6px 10px",
+                            background: "#0b1428",
+                            border: "1px solid #233458",
+                            borderRadius: "8px",
+                            fontSize: "0.75rem",
+                            color: "var(--text-muted)",
+                          }}
+                        >
+                          <strong style={{ color: "#ffd700" }}>
+                            Leader Outfit ({ldrChar.name}):
+                          </strong>{" "}
+                          {ldrChar.skills.outfit}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-              {/* Collapsible Dropdown for Recommended Team Skills */}
-              <div className="roster-manager glass" style={{ marginTop: '1.25rem', width: '100%' }}>
-                <div 
-                  className="roster-header" 
-                  onClick={() => setIsRecSkillsExpanded(!isRecSkillsExpanded)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="roster-header-title-block">
-                    <h3 className="section-title-small" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <CheckCircle2 size={16} className="text-green" />
-                      {t('active_passives')} ({(() => {
-                      const recSynergies = getRecommendedSynergies();
-                      return recommendedTeamResult.team.filter(Boolean).reduce((acc, charId) => {
-                        const isLeader = charId === recommendedTeamResult.leader;
-                        const char = characters.find(c => c.id === charId);
-                        if (!char) return acc;
-                        const isActivePassive = recSynergies.some(s => s.charId === char.id && !s.isLeader);
-                        const isLeaderSkillActive = !isLeader || recSynergies.some(s => s.charId === char.id && s.isLeader);
-                        return (isActivePassive && isLeaderSkillActive) ? acc + 1 : acc;
-                      }, 0);
-                    })()}/5 {t('characters')})
-                    </h3>
-                    <span className="presets-info-text">
-                      Detailed active, special, and passive skill overview for recommended team members
-                    </span>
-                  </div>
-                  <button className="btn-toggle-roster" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                    {isRecSkillsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                  </button>
-                </div>
-                
-                {isRecSkillsExpanded && (
-                  <div className="roster-body animate-slide-down" style={{ marginTop: '1rem' }}>
-                    <div className="recommended-passives-list" style={{ maxHeight: '350px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {recommendedTeamResult.team.map((charId) => {
-                        const char = characters.find(c => c.id === charId);
-                        if (!char) return null;
-                        
-                        const isLeader = charId === recommendedTeamResult.leader;
-                        const recSynergies = getRecommendedSynergies();
-                        const isActivePassive = recSynergies.some(s => s.charId === char.id && !s.isLeader);
-                        const passiveText = char.skills.passive;
-                        return (
-                          <div key={char.id} className="synergy-bonus-item glass" style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '0.5rem', display: 'block' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: char.accentColor }} />
-                                <strong style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{char.name}</strong>
-                                <span style={{ fontSize: '0.7rem', color: isLeader ? '#ffb703' : 'var(--text-muted)', fontWeight: 700 }}>
-                                  {isLeader ? `(${t('leader_tag')})` : `(${t('member_tag')})`}
-                                </span>
-                              </div>
-                              
-                              {passiveText && (
-                                <span style={{ 
-                                  fontSize: '0.65rem', 
-                                  fontWeight: 700, 
-                                  padding: '1px 6px', 
-                                  borderRadius: '4px',
-                                  background: isActivePassive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.05)',
-                                  color: isActivePassive ? '#10b981' : 'var(--text-muted)',
-                                  border: isActivePassive ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border-color)'
-                                }}>
-                                  {isActivePassive ? 'ALL SKILLS ACTIVE' : 'SKILLS INACTIVE'}
-                                </span>
-                              )}
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: passiveText ? '0.65rem' : 0 }}>
-                              <div style={{ background: 'rgba(255,255,255,0.01)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>{t('special_skill')}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{char.skills.special}</div>
-                              </div>
-                              <div style={{ background: 'rgba(255,255,255,0.01)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>{t('active_skill')}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{char.skills.active}</div>
-                              </div>
-                            </div>
-                            {passiveText && (
-                              <div style={{ background: isActivePassive ? 'rgba(16, 185, 129, 0.02)' : 'rgba(255, 255, 255, 0.01)', padding: '6px 8px', borderRadius: '6px', border: isActivePassive ? '1px solid rgba(16, 185, 129, 0.1)' : '1px solid rgba(255, 255, 255, 0.04)' }}>
-                                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>
-                                  {t('passive_skill')}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: isActivePassive ? 'var(--text-primary)' : 'var(--text-muted)', lineHeight: '1.4' }}>
-                                  {passiveText}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div> {/* Closing modal-body */}
-            <div className="modal-footer" style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button className="btn-clear-preset" onClick={() => setShowRecommendationModal(false)}>
-                {t('cancel')}
-              </button>
-              <button className="btn-activate-preset" onClick={handleApplyRecommendation}>
-                Apply to {currentPreset.name}
+            </div>
+            <div
+              className="modal-footer"
+              style={{
+                marginTop: "1.5rem",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                className="btn-clear-preset"
+                onClick={() => setShowRecommendationModal(false)}
+              >
+                Close
               </button>
             </div>
           </div>
@@ -1386,19 +3028,35 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       <div className="builder-single-column-layout">
         {/* Row 1: Team Configuration Container */}
         <div className="slots-container glass">
-          <h2 className="section-title"><Users className="title-icon" /> Current Team</h2>
-          
+          <h2 className="section-title">
+            <Users className="title-icon" /> Current Team
+          </h2>
+
           <div className="config-grid">
             {/* {t('leader_slot_title')} */}
             <div className="leader-config-block">
-              <h4 className="config-block-title"><Award size={14} className="text-gold" /> {t('leader_slot_title')}</h4>
-              
-              <div 
-                className={`leader-slot glass ${leaderChar ? 'occupied border-gold' : 'empty'} ${activeSlotIndex === 'leader' ? 'active-focused-slot' : ''}`}
-                style={leaderChar ? { '--char-glow': leaderChar.accentColor, cursor: leaderChar ? 'grab' : 'pointer' } : null}
-                onClick={() => setActiveSlotIndex(activeSlotIndex === 'leader' ? null : 'leader')}
+              <h4 className="config-block-title">
+                <Award size={14} className="text-gold" />{" "}
+                {t("leader_slot_title")}
+              </h4>
+
+              <div
+                className={`leader-slot glass ${leaderChar ? "occupied border-gold" : "empty"} ${activeSlotIndex === "leader" ? "active-focused-slot" : ""}`}
+                style={
+                  leaderChar
+                    ? {
+                        "--char-glow": leaderChar.accentColor,
+                        cursor: leaderChar ? "grab" : "pointer",
+                      }
+                    : null
+                }
+                onClick={() =>
+                  setActiveSlotIndex(
+                    activeSlotIndex === "leader" ? null : "leader",
+                  )
+                }
                 draggable={!!leaderChar}
-                onDragStart={(e) => handleDragStart(e, 'leader', null)}
+                onDragStart={(e) => handleDragStart(e, "leader", null)}
                 onDragOver={handleDragOver}
                 onDrop={handleDropOnLeaderSlot}
               >
@@ -1407,32 +3065,53 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                     <span className="leader-badge-ribbon">LEADER</span>
                     <div className="slot-img-wrapper border-gold">
                       {leaderChar.image ? (
-                        <img src={leaderChar.image} alt={leaderChar.name} className="slot-img" />
+                        <img
+                          src={leaderChar.image}
+                          alt={leaderChar.name}
+                          className="slot-img"
+                        />
                       ) : (
                         <span className="slot-avatar">{leaderChar.avatar}</span>
                       )}
                     </div>
                     <div className="slot-details">
                       <h4 className="slot-name">{leaderChar.name}</h4>
-                      <span className="slot-title" style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'block', margin: '2px 0' }}>{leaderChar.title}</span>
+                      <span
+                        className="slot-title"
+                        style={{
+                          fontSize: "0.72rem",
+                          color: "var(--text-secondary)",
+                          display: "block",
+                          margin: "2px 0",
+                        }}
+                      >
+                        {leaderChar.title}
+                      </span>
                       <span className="slot-role">{leaderChar.group}</span>
-                      <span className="slot-element" style={{ color: getTypeColor(leaderChar.type) }}>
+                      <span
+                        className="slot-element"
+                        style={{ color: getTypeColor(leaderChar.type) }}
+                      >
                         {getTypeIcon(leaderChar.type)}
                         {typeDisplayMap[leaderChar.type] || leaderChar.type}
                       </span>
                     </div>
-                    <button 
-                      className="btn-remove-slot" 
+                    <button
+                      className="btn-remove-slot"
                       onClick={handleClearLeader}
-                      title="Gỡ bỏ Leader"
+                      title="Remove Leader"
                     >
                       <Trash2 size={14} />
                     </button>
                   </div>
                 ) : (
                   <div className="slot-placeholder text-gold">
-                    <span className="plus-sign">★</span>
-                    <span>{activeSlotIndex === 'leader' ? t('selecting_leader_placeholder') : t('empty_leader_placeholder')}</span>
+                    <span className="plus-sign">+</span>
+                    <span>
+                      {activeSlotIndex === "leader"
+                        ? t("selecting_leader_placeholder")
+                        : t("empty_leader_placeholder")}
+                    </span>
                   </div>
                 )}
               </div>
@@ -1440,92 +3119,376 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                 <div className="recommendation-badge-container">
                   {isLeaderInTeam ? (
                     <div className="recommendation-badge success-badge">
-                      <CheckCircle2 size={12} /> Leader is a Team Unit (Recommended)
+                      <CheckCircle2 size={12} /> Leader is a Team Unit
+                      (Recommended)
                     </div>
                   ) : (
                     <div className="recommendation-badge warning-badge">
-                      <AlertCircle size={12} /> Leader is not in Team Units (Not recommended)
+                      <AlertCircle size={12} /> Leader is not in Team Units (Not
+                      recommended)
                     </div>
                   )}
                 </div>
               )}
-              {activeLeader && leaderChar && (() => {
-                const isLeaderSkillActive = activeSynergies.some(s => s.charId === activeLeader && s.isLeader);
-                return (
-                  <div 
-                    className="leader-skill-box glass animate-slide-down" 
-                    style={{ 
-                      marginTop: '0.75rem', 
-                      padding: '0.85rem', 
-                      borderRadius: '10px', 
-                      border: isLeaderSkillActive ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)', 
-                      background: isLeaderSkillActive ? 'rgba(16, 185, 129, 0.02)' : 'rgba(239, 68, 68, 0.02)', 
-                      textAlign: 'left' 
-                    }}
-                  >
-                    <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 800, color: isLeaderSkillActive ? '#10b981' : '#ef4444', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                      {isLeaderSkillActive ? <CheckCircle2 size={13} style={{ color: '#10b981' }} /> : <AlertTriangle size={13} style={{ color: '#ef4444' }} />}
-                      {t('leader_skill')} (Outfit Skill)
-                    </h5>
-                    <p style={{ margin: 0, fontSize: '0.75rem', color: isLeaderSkillActive ? 'var(--text-primary)' : 'var(--text-muted)', lineHeight: '1.45' }}>
-                      {leaderChar.skills.outfit}
-                    </p>
-                  </div>
-                );
-              })()}
+              {activeLeader &&
+                leaderChar &&
+                (() => {
+                  const isLeaderSkillActive = activeSynergies.some(
+                    (s) =>
+                      s.isLeader &&
+                      (s.charId === activeLeader ||
+                        (leaderChar &&
+                          (s.charId === leaderChar.id ||
+                            s.charId === leaderChar.cardData?.id ||
+                            s.charId === leaderChar.assetId))),
+                  );
+                  return (
+                    <div
+                      className="leader-skill-box glass animate-slide-down"
+                      style={{
+                        marginTop: "0.75rem",
+                        padding: "0.85rem",
+                        borderRadius: "10px",
+                        border: isLeaderSkillActive
+                          ? "1px solid rgba(16, 185, 129, 0.25)"
+                          : "1px solid rgba(239, 68, 68, 0.25)",
+                        background: isLeaderSkillActive
+                          ? "rgba(16, 185, 129, 0.02)"
+                          : "rgba(239, 68, 68, 0.02)",
+                        textAlign: "left",
+                      }}
+                    >
+                      <h5
+                        style={{
+                          margin: 0,
+                          fontSize: "0.75rem",
+                          fontWeight: 800,
+                          color: isLeaderSkillActive ? "#10b981" : "#ef4444",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          marginBottom: "6px",
+                        }}
+                      >
+                        {isLeaderSkillActive ? (
+                          <CheckCircle2
+                            size={13}
+                            style={{ color: "#10b981" }}
+                          />
+                        ) : (
+                          <AlertTriangle
+                            size={13}
+                            style={{ color: "#ef4444" }}
+                          />
+                        )}
+                        {t("leader_skill")} (Outfit Skill)
+                      </h5>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "0.75rem",
+                          color: isLeaderSkillActive
+                            ? "var(--text-primary)"
+                            : "var(--text-muted)",
+                          lineHeight: "1.45",
+                        }}
+                      >
+                        {leaderChar.skills.outfit}
+                      </p>
+                    </div>
+                  );
+                })()}
             </div>
             {/* Members Slots Grid */}
             <div className="members-config-block">
-              <h4 className="config-block-title"><Users size={14} /> {t('team_units_title')}</h4>
+              <h4 className="config-block-title">
+                <Users size={14} /> {t("team_units_title")}
+              </h4>
               <div className="slots-grid five-slots">
                 {[0, 1, 2, 3, 4].map((index) => {
                   const charId = activeTeam[index];
-                  const char = characters.find(c => c.id === charId);
+                  const char = findChar(charId, characters);
                   const isSlotFocused = activeSlotIndex === index;
                   return (
-                    <div 
-                      key={index} 
-                      className={`builder-slot glass ${char ? 'occupied' : 'empty'} ${isSlotFocused ? 'active-focused-slot' : ''}`}
-                      style={char ? { '--char-glow': char.accentColor, cursor: char ? 'grab' : 'pointer' } : null}
-                      onClick={() => setActiveSlotIndex(isSlotFocused ? null : index)}
+                    <div
+                      key={index}
+                      className={`builder-slot glass ${char ? "occupied" : "empty"} ${isSlotFocused ? "active-focused-slot" : ""}`}
+                      style={
+                        char
+                          ? {
+                              "--char-glow": char.accentColor,
+                              cursor: char ? "grab" : "pointer",
+                            }
+                          : null
+                      }
+                      onClick={() =>
+                        setActiveSlotIndex(isSlotFocused ? null : index)
+                      }
                       draggable={!!char}
-                      onDragStart={(e) => handleDragStart(e, 'team', index)}
+                      onDragStart={(e) => handleDragStart(e, "team", index)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDropOnTeamSlot(e, index)}
                     >
                       {char ? (
-                        <div className="slot-content">
-                          {activeLeader === char.id && <span className="leader-tag-mini">L</span>}
-                          <div className="slot-img-wrapper">
+                        <div
+                          className="slot-content"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "1.25rem",
+                            padding: "0.65rem 1.25rem",
+                            width: "100%",
+                          }}
+                        >
+                          {activeLeader === char.id && (
+                            <span className="leader-tag-mini">L</span>
+                          )}
+
+                          {/* Bigger Avatar Card Icon */}
+                          <div
+                            className="slot-img-wrapper"
+                            style={{
+                              width: "58px",
+                              height: "76px",
+                              minWidth: "58px",
+                              aspectRatio: "3 / 4",
+                              borderRadius: "10px",
+                              overflow: "hidden",
+                              border: `2px solid ${char.accentColor}`,
+                            }}
+                          >
                             {char.image ? (
-                              <img src={char.image} alt={char.name} className="slot-img" />
+                              <img
+                                src={char.image}
+                                alt={char.name}
+                                className="slot-img"
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  objectPosition: "top center",
+                                }}
+                              />
                             ) : (
                               <span className="slot-avatar">{char.avatar}</span>
                             )}
                           </div>
-                          <div className="slot-details">
-                            <div className="slot-name-block" style={{ display: 'flex', flexDirection: 'column', gap: '2px', lineHeight: '1.2' }}>
-                              <h4 className="slot-name" style={{ margin: 0, fontSize: '0.92rem' }}>{char.name}</h4>
-                              <span className="slot-title" style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{char.title}</span>
+
+                          {/* Slot Details Layout */}
+                          <div
+                            className="slot-details"
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "minmax(220px, 1.2fr) minmax(100px, 0.8fr) minmax(130px, 1fr)",
+                              alignItems: "center",
+                              gap: "1.5rem",
+                              flex: 1,
+                              marginRight: "auto",
+                            }}
+                          >
+                            {/* Column 1: Name, Title, and Lv/Bloom inputs below */}
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "6px",
+                              }}
+                            >
+                              <div
+                                className="slot-name-block"
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "2px",
+                                  lineHeight: "1.2",
+                                }}
+                              >
+                                <h4
+                                  className="slot-name"
+                                  style={{
+                                    margin: 0,
+                                    fontSize: "0.95rem",
+                                    fontWeight: 800,
+                                    color: "var(--text-primary)",
+                                  }}
+                                >
+                                  {char.name}
+                                </h4>
+                                <span
+                                  className="slot-title"
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "var(--text-secondary)",
+                                  }}
+                                >
+                                  {char.title}
+                                </span>
+                              </div>
+
+                              <div
+                                className="slot-controls-block"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  alignItems: "center",
+                                  marginTop: "2px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: "65px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "2px",
+                                  }}
+                                >
+                                  <label
+                                    style={{
+                                      fontSize: "11px",
+                                      color: "var(--text-muted)",
+                                      margin: 0,
+                                      fontWeight: 500,
+                                      lineHeight: 1,
+                                    }}
+                                  >
+                                    Lv
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={80}
+                                    value={activeLevels[index] || 60}
+                                    onChange={(e) =>
+                                      handleSlotLevelChange(
+                                        index,
+                                        e.target.value,
+                                      )
+                                    }
+                                    style={{
+                                      width: "100%",
+                                      padding: "5px 8px",
+                                      fontSize: "13px",
+                                      borderRadius: "8px",
+                                      background: "#0e172a",
+                                      color: "#f3f6ff",
+                                      border: "1px solid #233458",
+                                      fontWeight: 600,
+                                      outline: "none",
+                                    }}
+                                  />
+                                </div>
+
+                                <div
+                                  style={{
+                                    width: "110px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "2px",
+                                  }}
+                                >
+                                  <label
+                                    style={{
+                                      fontSize: "11px",
+                                      color: "var(--text-muted)",
+                                      margin: 0,
+                                      fontWeight: 500,
+                                      lineHeight: 1,
+                                    }}
+                                  >
+                                    Bloom
+                                  </label>
+                                  <select
+                                    value={activeBloomLevels[index] || 0}
+                                    onChange={(e) =>
+                                      handleSlotBloomChange(
+                                        index,
+                                        parseInt(e.target.value),
+                                      )
+                                    }
+                                    style={{
+                                      width: "100%",
+                                      padding: "5px 8px",
+                                      fontSize: "13px",
+                                      borderRadius: "8px",
+                                      background: "#0e172a",
+                                      color: "#f3f6ff",
+                                      border: "1px solid #233458",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      outline: "none",
+                                    }}
+                                  >
+                                    <option value={0}>Bloom 0</option>
+                                    <option value={1}>Bloom 1</option>
+                                    <option value={2}>Bloom 2 (+10%)</option>
+                                    <option value={3}>Bloom 3</option>
+                                    <option value={4}>Bloom 4</option>
+                                    <option value={5}>Bloom 5</option>
+                                  </select>
+                                </div>
+                              </div>
                             </div>
-                            <span className="slot-role">{char.group}</span>
-                            <span className="slot-element" style={{ color: getTypeColor(char.type) }}>
+
+                            {/* Column 2: Gen (centered vertically) */}
+                            <span
+                              className="slot-role"
+                              style={{
+                                fontSize: "0.85rem",
+                                color: "var(--text-muted)",
+                                textAlign: "center",
+                              }}
+                            >
+                              {char.group}
+                            </span>
+
+                            {/* Column 3: Type (centered vertically) */}
+                            <span
+                              className="slot-element"
+                              style={{
+                                color: getTypeColor(char.type),
+                                fontSize: "0.85rem",
+                                fontWeight: 700,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                justifyContent: "center",
+                              }}
+                            >
                               {getTypeIcon(char.type)}
                               {typeDisplayMap[char.type] || char.type}
                             </span>
                           </div>
-                          <button 
-                            className="btn-remove-slot" 
+
+                          <button
+                            className="btn-remove-slot"
                             onClick={(e) => handleClearSlot(index, e)}
                             title="Remove"
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "var(--text-muted)",
+                              cursor: "pointer",
+                              padding: "4px",
+                              borderRadius: "4px",
+                            }}
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       ) : (
                         <div className="slot-placeholder">
                           <span className="plus-sign">+</span>
-                          <span>{isSlotFocused ? t('selecting_slot_placeholder', { num: index + 1 }) : t('empty_slot_placeholder', { num: index + 1 })}</span>
+                          <span>
+                            {isSlotFocused
+                              ? t("selecting_slot_placeholder", {
+                                  num: index + 1,
+                                })
+                              : t("empty_slot_placeholder", { num: index + 1 })}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -1534,108 +3497,354 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
               </div>
             </div>
           </div>
-          <button 
-            className="btn-primary w-full mt-4" 
-            onClick={() => onSavePresets()}
-            disabled={activeTeam.filter(Boolean).length === 0}
-            style={{ opacity: activeTeam.filter(Boolean).length === 0 ? 0.5 : 1 }}
-          >
-            {t('save_presets')}
-          </button>
+          <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
+            <button
+              className="btn-primary"
+              onClick={() => onSavePresets()}
+              disabled={activeTeam.filter(Boolean).length === 0}
+              style={{
+                flex: 1,
+                opacity: activeTeam.filter(Boolean).length === 0 ? 0.5 : 1,
+              }}
+            >
+              {t("save_presets")}
+            </button>
+          </div>
         </div>
         {/* Row 2: Unified Active Skills List styled like Roster Manager */}
-        <div className="roster-manager glass" style={{ marginTop: '1.25rem', width: '100%' }}>
-          <div 
-            className="roster-header" 
+        <div
+          className="roster-manager glass"
+          style={{ marginTop: "1.25rem", width: "100%" }}
+        >
+          <div
+            className="roster-header"
             onClick={() => setIsActiveExpanded(!isActiveExpanded)}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: "pointer" }}
           >
             <div className="roster-header-title-block">
-              <h3 className="section-title-small" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3
+                className="section-title-small"
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
                 <CheckCircle2 size={16} className="text-green" />
-                {t('active_passives')} ({activeCharsCount}/5 {t('characters')})
+                {t("active_passives")} ({activeCharsCount}/5 {t("characters")})
               </h3>
               <span className="presets-info-text">
                 {activeTeam.filter(Boolean).length > 0 || activeLeader
-                  ? 'Detailed active, special, and passive skill overview for current team members'
-                  : t('add_members_msg')
-                }
+                  ? "Detailed active, special, and passive skill overview for current team members"
+                  : t("add_members_msg")}
               </span>
             </div>
-            <button className="btn-toggle-roster" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-              {isActiveExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            <button
+              className="btn-toggle-roster"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {isActiveExpanded ? (
+                <ChevronUp size={18} />
+              ) : (
+                <ChevronDown size={18} />
+              )}
             </button>
           </div>
-          
+
           {isActiveExpanded && (
-            <div className="roster-body animate-slide-down" style={{ marginTop: '1rem' }}>
-              {(activeTeam.filter(Boolean).length > 0 || activeLeader) ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div
+              className="roster-body animate-slide-down"
+              style={{ marginTop: "1rem" }}
+            >
+              {activeTeam.filter(Boolean).length > 0 || activeLeader ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                  }}
+                >
                   {/* Leader first */}
-                  {[activeLeader, ...activeTeam].filter(Boolean).map((charId, idx) => {
-                    // Avoid duplicate rendering if leader is also in team units
-                    if (charId === activeLeader && idx > 0) return null;
-                    const isLeader = charId === activeLeader;
-                    const char = characters.find(c => c.id === charId);
-                    if (!char) return null;
-                    
-                    const isActivePassive = activeSynergies.some(s => s.charId === char.id && !s.isLeader);
-                    const passiveText = char.skills.passive;
-                    
-                    return (
-                      <div key={char.id} className="synergy-bonus-item glass" style={{ padding: '0.85rem', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'block' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: char.accentColor }} />
-                            <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{char.name}</strong>
-                            <span style={{ fontSize: '0.72rem', color: isLeader ? '#ffb703' : 'var(--text-muted)', fontWeight: 700 }}>
-                              {isLeader ? `(${t('leader_tag')})` : `(${t('member_tag')})`}
-                            </span>
+                  {[activeLeader, ...activeTeam]
+                    .filter(Boolean)
+                    .map((charId, idx) => {
+                      const char = findChar(charId, characters);
+                      if (!char) return null;
+
+                      const isLeader =
+                        charId === activeLeader ||
+                        (leaderChar &&
+                          (char.id === leaderChar.id ||
+                            char.cardData?.id === leaderChar.cardData?.id ||
+                            char.assetId === leaderChar.assetId));
+                      if (!isLeader && idx === 0 && activeLeader) return null;
+
+                      const slotIdx = activeTeam.findIndex(
+                        (id) =>
+                          id === charId ||
+                          id === char.id ||
+                          id === char.assetId ||
+                          id === char.cardData?.id,
+                      );
+                      const effectiveCard = getEffectiveCardVariant(
+                        char,
+                        slotIdx !== -1 ? activeSelectedCards[slotIdx] : null,
+                      );
+                      const bStage =
+                        slotIdx !== -1 ? activeBloomLevels[slotIdx] || 0 : 0;
+
+                      const isActivePassive = activeSynergies.some(
+                        (s) =>
+                          s.charId === char.id ||
+                          s.charId === char.cardData?.id ||
+                          s.charId === char.assetId ||
+                          (isLeader && s.isLeader),
+                      );
+                      const passiveText = getSkillTextForStage(
+                        effectiveCard,
+                        "passive",
+                        bStage,
+                      );
+                      const activeText = getSkillTextForStage(
+                        effectiveCard,
+                        "active",
+                        bStage,
+                      );
+                      const specialText = getSkillTextForStage(
+                        effectiveCard,
+                        "special",
+                        bStage,
+                      );
+
+                      return (
+                        <div
+                          key={char.id || idx}
+                          className="synergy-bonus-item glass"
+                          style={{
+                            padding: "0.85rem",
+                            borderRadius: "10px",
+                            border: "1px solid var(--border-color)",
+                            display: "block",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "8px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: "8px",
+                                  height: "8px",
+                                  borderRadius: "50%",
+                                  background: char.accentColor || "#38bdf8",
+                                }}
+                              />
+                              <strong
+                                style={{
+                                  fontSize: "0.9rem",
+                                  color: "var(--text-primary)",
+                                }}
+                              >
+                                {effectiveCard.title
+                                  ? `${char.name || effectiveCard.member} - ${effectiveCard.title}`
+                                  : char.name || effectiveCard.member}
+                              </strong>
+                              <span
+                                style={{
+                                  fontSize: "0.72rem",
+                                  color: isLeader
+                                    ? "#ffb703"
+                                    : "var(--text-muted)",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                {isLeader
+                                  ? `(${t("leader_tag")})`
+                                  : `(${t("member_tag")})`}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "0.68rem",
+                                  color: "#a855f7",
+                                  fontWeight: 800,
+                                  background: "rgba(168,85,247,0.08)",
+                                  padding: "1px 6px",
+                                  borderRadius: "4px",
+                                  border: "1px solid rgba(168,85,247,0.2)",
+                                }}
+                              >
+                                {effectiveCard.rarity || 5}★ •{" "}
+                                {effectiveCard.type || effectiveCard.attribute}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "0.68rem",
+                                  color: "#ffb703",
+                                  fontWeight: 800,
+                                  background: "rgba(255,183,3,0.08)",
+                                  padding: "1px 6px",
+                                  borderRadius: "4px",
+                                  border: "1px solid rgba(255,183,3,0.2)",
+                                }}
+                              >
+                                Bloom {bStage}
+                              </span>
+                            </div>
+
+                            {/* Passive status indicator */}
+                            {passiveText && (
+                              <span
+                                style={{
+                                  fontSize: "0.7rem",
+                                  fontWeight: 700,
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                  background: isActivePassive
+                                    ? "rgba(16, 185, 129, 0.12)"
+                                    : "rgba(255, 183, 3, 0.05)",
+                                  color: isActivePassive
+                                    ? "#10b981"
+                                    : "var(--text-muted)",
+                                  border: isActivePassive
+                                    ? "1px solid rgba(16, 185, 129, 0.2)"
+                                    : "1px solid var(--border-color)",
+                                }}
+                              >
+                                {isActivePassive
+                                  ? "ALL SKILLS ACTIVE"
+                                  : "SKILLS INACTIVE"}
+                              </span>
+                            )}
                           </div>
-                          
-                          {/* Passive status indicator */}
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "0.75rem",
+                              marginBottom: passiveText ? "0.75rem" : 0,
+                            }}
+                          >
+                            <div
+                              style={{
+                                background: "rgba(255,255,255,0.01)",
+                                padding: "6px 8px",
+                                borderRadius: "6px",
+                                border: "1px solid rgba(255,255,255,0.04)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "0.68rem",
+                                  fontWeight: 800,
+                                  color: char.accentColor,
+                                  marginBottom: "3px",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {t("special_skill")}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "var(--text-primary)",
+                                  lineHeight: "1.4",
+                                }}
+                              >
+                                {specialText}
+                              </div>
+                            </div>
+                            <div
+                              style={{
+                                background: "rgba(255,255,255,0.01)",
+                                padding: "6px 8px",
+                                borderRadius: "6px",
+                                border: "1px solid rgba(255,255,255,0.04)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "0.68rem",
+                                  fontWeight: 800,
+                                  color: char.accentColor,
+                                  marginBottom: "3px",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {t("active_skill")}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "var(--text-primary)",
+                                  lineHeight: "1.4",
+                                }}
+                              >
+                                {activeText}
+                              </div>
+                            </div>
+                          </div>
                           {passiveText && (
-                            <span style={{ 
-                              fontSize: '0.7rem', 
-                              fontWeight: 700, 
-                              padding: '2px 8px', 
-                              borderRadius: '4px',
-                              background: isActivePassive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 183, 3, 0.05)',
-                              color: isActivePassive ? '#10b981' : 'var(--text-muted)',
-                              border: isActivePassive ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid var(--border-color)'
-                            }}>
-                              {isActivePassive ? 'ALL SKILLS ACTIVE' : 'SKILLS INACTIVE'}
-                            </span>
+                            <div
+                              style={{
+                                background: isActivePassive
+                                  ? "rgba(16, 185, 129, 0.02)"
+                                  : "rgba(255,255,255,0.01)",
+                                padding: "8px 10px",
+                                borderRadius: "6px",
+                                border: isActivePassive
+                                  ? "1px solid rgba(16, 185, 129, 0.1)"
+                                  : "1px solid rgba(255,255,255,0.04)",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "0.68rem",
+                                  fontWeight: 800,
+                                  color: char.accentColor,
+                                  marginBottom: "3px",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                {t("passive_skill")}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: isActivePassive
+                                    ? "var(--text-primary)"
+                                    : "var(--text-muted)",
+                                  lineHeight: "1.4",
+                                }}
+                              >
+                                {passiveText}
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: passiveText ? '0.75rem' : 0 }}>
-                          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>{t('special_skill')}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{char.skills.special}</div>
-                          </div>
-                          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '6px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>{t('active_skill')}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', lineHeight: '1.4' }}>{char.skills.active}</div>
-                          </div>
-                        </div>
-                        {passiveText && (
-                          <div style={{ background: isActivePassive ? 'rgba(16, 185, 129, 0.02)' : 'rgba(255,255,255,0.01)', padding: '8px 10px', borderRadius: '6px', border: isActivePassive ? '1px solid rgba(16, 185, 129, 0.1)' : '1px solid rgba(255,255,255,0.04)' }}>
-                            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: char.accentColor, marginBottom: '3px', textTransform: 'uppercase' }}>
-                              {t('passive_skill')}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: isActivePassive ? 'var(--text-primary)' : 'var(--text-muted)', lineHeight: '1.4' }}>
-                              {passiveText}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               ) : (
-                <div className="empty-analytics" style={{ padding: '2rem 1rem' }}>
+                <div
+                  className="empty-analytics"
+                  style={{ padding: "2rem 1rem" }}
+                >
                   <AlertCircle size={24} className="text-muted" />
-                  <p>{t('add_members_msg')}</p>
+                  <p>{t("add_members_msg")}</p>
                 </div>
               )}
             </div>
@@ -1643,137 +3852,998 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
         </div>
 
         {/* Row 3: Detailed Score Calculation Breakdowns panel */}
-        <div className="roster-manager glass" style={{ marginTop: '1.25rem', width: '100%' }}>
-          <div 
-            className="roster-header" 
+        <div
+          className="roster-manager glass"
+          style={{ marginTop: "1.25rem", width: "100%" }}
+        >
+          <div
+            className="roster-header"
             onClick={() => setIsDetailedMathExpanded(!isDetailedMathExpanded)}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: "pointer" }}
           >
             <div className="roster-header-title-block">
-              <h3 className="section-title-small" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3
+                className="section-title-small"
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
                 <CheckCircle2 size={16} className="text-gold" />
-                {t('detailed_score_breakdowns')}
+                {t("detailed_score_breakdowns")}
               </h3>
               <span className="presets-info-text">
                 {activeTeam.filter(Boolean).length > 0 || activeLeader
-                  ? t('detailed_score_desc')
-                  : t('add_members_calc_msg')
-                }
+                  ? t("detailed_score_desc")
+                  : t("add_members_calc_msg")}
               </span>
             </div>
-            <button className="btn-toggle-roster" style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-              {isDetailedMathExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            <button
+              className="btn-toggle-roster"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {isDetailedMathExpanded ? (
+                <ChevronUp size={18} />
+              ) : (
+                <ChevronDown size={18} />
+              )}
             </button>
           </div>
-          
+
           {isDetailedMathExpanded && (
-            <div className="roster-body animate-slide-down" style={{ marginTop: '1rem' }}>
-              {(activeTeam.filter(Boolean).length > 0 || activeLeader) ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {/* Summary Table */}
-                  <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.01)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)' }}>
-                          <th style={{ padding: '10px' }}>{t('character')}</th>
-                          <th style={{ padding: '10px' }}>{t('final_stats_header')}</th>
-                          <th style={{ padding: '10px' }}>{t('power')}</th>
-                          <th style={{ padding: '10px' }}>{t('active_buff')}</th>
-                          <th style={{ padding: '10px' }}>{t('uptime')}</th>
-                          <th style={{ padding: '10px' }}>{t('special_buff')}</th>
-                          <th style={{ padding: '10px' }}>{t('score_bonus')}</th>
-                          <th style={{ padding: '10px' }}>{t('unit_score')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(() => {
-                          const detailsList = getTeamCalculationDetails(activeTeam, activeLeader, characters);
-                          const totalPower = detailsList.reduce((sum, item) => sum + item.overallPower, 0);
-                          const totalScore = detailsList.reduce((sum, item) => sum + item.unitScore, 0);
-                          return (
-                            <>
-                              {detailsList.map(details => (
-                                <tr key={details.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', color: 'var(--text-primary)' }}>
-                                  <td style={{ padding: '10px', fontWeight: 'bold' }}>{details.name}</td>
-                                  <td style={{ padding: '10px' }}>{Math.round(details.stats.sense.final).toLocaleString()} / {Math.round(details.stats.technique.final).toLocaleString()} / {Math.round(details.stats.performance.final).toLocaleString()}</td>
-                                  <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>{Math.round(details.overallPower).toLocaleString()}</td>
-                                  <td style={{ padding: '10px' }}>{Math.round(details.activeBuff * 100)}%</td>
-                                  <td style={{ padding: '10px' }}>{(details.uptime.uptimeRatio * 100).toFixed(1)}%</td>
-                                  <td style={{ padding: '10px' }}>{Math.round(details.specialBuff * 100)}%</td>
-                                  <td style={{ padding: '10px', color: '#10b981', fontWeight: 'bold' }}>+{(details.totalBonus * 100).toFixed(1)}%</td>
-                                  <td style={{ padding: '10px', fontWeight: 'bold' }}>{details.unitScore.toLocaleString()}</td>
-                                </tr>
-                              ))}
-                              <tr style={{ background: 'rgba(255,255,255,0.03)', borderTop: '2px solid var(--border-color)', color: 'var(--text-primary)' }}>
-                                <td style={{ padding: '10px', fontWeight: 'bold' }}>{t('total')}</td>
-                                <td style={{ padding: '10px' }}>-</td>
-                                <td style={{ padding: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{Math.round(totalPower).toLocaleString()}</td>
-                                <td style={{ padding: '10px' }}>-</td>
-                                <td style={{ padding: '10px' }}>-</td>
-                                <td style={{ padding: '10px' }}>-</td>
-                                <td style={{ padding: '10px' }}>-</td>
-                                <td style={{ padding: '10px', color: '#ffb703', fontWeight: 'bold', fontSize: '0.85rem' }}>{totalScore.toLocaleString()}</td>
-                              </tr>
-                            </>
-                          );
-                        })()}
-                      </tbody>
-                    </table>
-                  </div>
+            <div
+              className="roster-body animate-slide-down"
+              style={{ marginTop: "1rem" }}
+            >
+              {activeTeam.filter(Boolean).length > 0 || activeLeader ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1.5rem",
+                  }}
+                >
+                  {(() => {
+                    const summary = getTeamCalculationSummary(
+                      activeTeam,
+                      activeLeader,
+                      characters,
+                      activeBloomLevels,
+                      activeLevels,
+                      activeSelectedCards,
+                    );
+                    if (!summary) return null;
+                    return (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "1.25rem",
+                        }}
+                      >
+                        {/* Top Header Card & Roster Cards Grid matching Reference UI */}
+                        <div
+                          style={{
+                            background: "#0b1329",
+                            border: "1px solid #1e293b",
+                            borderRadius: "12px",
+                            padding: "1.25rem",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginBottom: "1rem",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.75rem",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  background: "#10b981",
+                                  color: "#000",
+                                  fontWeight: 900,
+                                  fontSize: "0.85rem",
+                                  padding: "2px 8px",
+                                  borderRadius: "4px",
+                                }}
+                              >
+                                #1
+                              </span>
+                              <h2
+                                style={{
+                                  margin: 0,
+                                  fontSize: "1.6rem",
+                                  fontWeight: 800,
+                                  color: "#ffffff",
+                                }}
+                              >
+                                {summary.expectedIndex.toLocaleString()}
+                              </h2>
+                              <span
+                                style={{
+                                  fontSize: "0.75rem",
+                                  color: "#94a3b8",
+                                }}
+                              >
+                                Generic Expected Index
+                              </span>
+                            </div>
+                            <span
+                              style={{
+                                background: "rgba(10, 185, 129, 0.15)",
+                                color: "#10b981",
+                                border: "1px solid rgba(10, 185, 129, 0.3)",
+                                padding: "2px 10px",
+                                borderRadius: "12px",
+                                fontSize: "0.75rem",
+                                fontWeight: 800,
+                              }}
+                            >
+                              BEST
+                            </span>
+                          </div>
+
+                          {/* 5 Roster Card Thumbnails */}
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(5, 1fr)",
+                              gap: "0.75rem",
+                              marginBottom: "1rem",
+                            }}
+                          >
+                            {summary.cards.map((card, idx) => {
+                              const charObj = findChar(card.id, characters);
+                              const bStage = activeBloomLevels[idx] || 0;
+                              const cLvl = activeLevels[idx] || 70;
+                              return (
+                                <div
+                                  key={idx}
+                                  style={{
+                                    background: "#0f172a",
+                                    border: "1px solid #1e293b",
+                                    borderRadius: "10px",
+                                    padding: "0.75rem 0.5rem",
+                                    textAlign: "center",
+                                    position: "relative",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      position: "absolute",
+                                      top: "6px",
+                                      left: "6px",
+                                      width: "20px",
+                                      height: "20px",
+                                      background: "#0f172a",
+                                      border: "1px solid #334155",
+                                      borderRadius: "50%",
+                                      fontSize: "0.7rem",
+                                      fontWeight: 800,
+                                      color: "#f8fafc",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    {idx + 1}
+                                  </span>
+                                  <div
+                                    style={{
+                                      width: "64px",
+                                      height: "64px",
+                                      borderRadius: "14px",
+                                      overflow: "hidden",
+                                      margin: "0 auto 8px",
+                                      border: "2px solid #3b82f6",
+                                    }}
+                                  >
+                                    {charObj?.image ? (
+                                      <img
+                                        src={charObj.image}
+                                        alt={card.member}
+                                        style={{
+                                          width: "100%",
+                                          height: "100%",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                    ) : (
+                                      <div
+                                        style={{
+                                          width: "100%",
+                                          height: "100%",
+                                          background: "#1e293b",
+                                          display: "flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          color: "#60a5fa",
+                                          fontWeight: 800,
+                                          fontSize: "1.2rem",
+                                        }}
+                                      >
+                                        {card.member?.substring(0, 2)}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: "0.82rem",
+                                      fontWeight: 800,
+                                      color: "#f8fafc",
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                    }}
+                                  >
+                                    {card.member}
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: "0.7rem",
+                                      color: "#94a3b8",
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      marginBottom: "4px",
+                                    }}
+                                  >
+                                    {charObj?.title || "SSR Card"}
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: "0.68rem",
+                                      color: "#64748b",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {charObj?.type || "Pure"} · Lv{cLvl} · B
+                                    {bStage}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Leader Outfit Used Box */}
+                          {summary.leaderChar && (
+                            <div
+                              style={{
+                                background: "#090e1a",
+                                border: "1px solid #1e293b",
+                                borderRadius: "8px",
+                                padding: "0.6rem 0.85rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.75rem",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: "36px",
+                                  height: "36px",
+                                  borderRadius: "8px",
+                                  overflow: "hidden",
+                                  border: "1px solid #f59e0b",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {summary.leaderChar.image ? (
+                                  <img
+                                    src={summary.leaderChar.image}
+                                    alt={summary.leaderChar.name}
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                ) : (
+                                  <div
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      background: "#f59e0b",
+                                      color: "#000",
+                                      fontWeight: 800,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    L
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div
+                                  style={{
+                                    fontSize: "0.65rem",
+                                    fontWeight: 800,
+                                    color: "#94a3b8",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                  }}
+                                >
+                                  OUTFIT USED
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "0.85rem",
+                                    fontWeight: 800,
+                                    color: "#ffffff",
+                                  }}
+                                >
+                                  {summary.leaderChar.name}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "#cbd5e1",
+                                  }}
+                                >
+                                  {summary.leaderChar.skills?.outfit ||
+                                    "Leader outfit effect active"}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 6 KPI Stat Cards Grid */}
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(6, 1fr)",
+                              gap: "0.6rem",
+                              marginTop: "1rem",
+                            }}
+                          >
+                            <div
+                              style={{
+                                background: "#0f172a",
+                                padding: "10px 8px",
+                                borderRadius: "8px",
+                                border: "1px solid #1e293b",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.65rem",
+                                  color: "#94a3b8",
+                                  textTransform: "uppercase",
+                                  display: "block",
+                                }}
+                              >
+                                TEAM STAT
+                              </span>
+                              <h4
+                                style={{
+                                  margin: "4px 0 0",
+                                  fontSize: "1.05rem",
+                                  fontWeight: 800,
+                                  color: "#ffffff",
+                                }}
+                              >
+                                {summary.totalTeamStat.toLocaleString()}
+                              </h4>
+                            </div>
+                            <div
+                              style={{
+                                background: "#0f172a",
+                                padding: "10px 8px",
+                                borderRadius: "8px",
+                                border: "1px solid #1e293b",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.65rem",
+                                  color: "#94a3b8",
+                                  textTransform: "uppercase",
+                                  display: "block",
+                                }}
+                              >
+                                TOTAL BONUS
+                              </span>
+                              <h4
+                                style={{
+                                  margin: "4px 0 0",
+                                  fontSize: "1.05rem",
+                                  fontWeight: 800,
+                                  color: "#ffffff",
+                                }}
+                              >
+                                {summary.totalBonusPct}
+                              </h4>
+                            </div>
+                            <div
+                              style={{
+                                background: "#0f172a",
+                                padding: "10px 8px",
+                                borderRadius: "8px",
+                                border: "1px solid #1e293b",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.65rem",
+                                  color: "#94a3b8",
+                                  textTransform: "uppercase",
+                                  display: "block",
+                                }}
+                              >
+                                ACTIVE
+                              </span>
+                              <h4
+                                style={{
+                                  margin: "4px 0 0",
+                                  fontSize: "1.05rem",
+                                  fontWeight: 800,
+                                  color: "#ffffff",
+                                }}
+                              >
+                                {summary.activePct}
+                              </h4>
+                            </div>
+                            <div
+                              style={{
+                                background: "#0f172a",
+                                padding: "10px 8px",
+                                borderRadius: "8px",
+                                border: "1px solid #1e293b",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.65rem",
+                                  color: "#94a3b8",
+                                  textTransform: "uppercase",
+                                  display: "block",
+                                }}
+                              >
+                                SUPPORT
+                              </span>
+                              <h4
+                                style={{
+                                  margin: "4px 0 0",
+                                  fontSize: "1.05rem",
+                                  fontWeight: 800,
+                                  color: "#ffffff",
+                                }}
+                              >
+                                {summary.supportPct}
+                              </h4>
+                            </div>
+                            <div
+                              style={{
+                                background: "#0f172a",
+                                padding: "10px 8px",
+                                borderRadius: "8px",
+                                border: "1px solid #1e293b",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.65rem",
+                                  color: "#94a3b8",
+                                  textTransform: "uppercase",
+                                  display: "block",
+                                }}
+                              >
+                                SAR
+                              </span>
+                              <h4
+                                style={{
+                                  margin: "4px 0 0",
+                                  fontSize: "1.05rem",
+                                  fontWeight: 800,
+                                  color: "#ffffff",
+                                }}
+                              >
+                                {summary.sarPct}
+                              </h4>
+                            </div>
+                            <div
+                              style={{
+                                background: "#0f172a",
+                                padding: "10px 8px",
+                                borderRadius: "8px",
+                                border: "1px solid #1e293b",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.65rem",
+                                  color: "#94a3b8",
+                                  textTransform: "uppercase",
+                                  display: "block",
+                                }}
+                              >
+                                SPECIAL SUPPORT
+                              </span>
+                              <h4
+                                style={{
+                                  margin: "4px 0 0",
+                                  fontSize: "1.05rem",
+                                  fontWeight: 800,
+                                  color: "#ffffff",
+                                }}
+                              >
+                                {summary.specialSupportPct}
+                              </h4>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Team Details Section */}
+                        <div
+                          style={{
+                            background: "#0b1329",
+                            border: "1px solid #1e293b",
+                            borderRadius: "12px",
+                            padding: "1.25rem",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "1rem",
+                            }}
+                          >
+                            <h3
+                              style={{
+                                margin: 0,
+                                fontSize: "1rem",
+                                fontWeight: 800,
+                                color: "#ffffff",
+                              }}
+                            >
+                              Team details
+                            </h3>
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "#64748b",
+                                cursor: "pointer",
+                              }}
+                            >
+                              Readable skill summary
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "1.25rem",
+                            }}
+                          >
+                            {/* Passive effects Left Panel */}
+                            <div
+                              style={{
+                                background: "#0f172a",
+                                border: "1px solid #1e293b",
+                                borderRadius: "10px",
+                                padding: "1rem",
+                              }}
+                            >
+                              <h4
+                                style={{
+                                  margin: "0 0 0.85rem",
+                                  fontSize: "0.85rem",
+                                  fontWeight: 800,
+                                  color: "#f8fafc",
+                                }}
+                              >
+                                Passive effects
+                              </h4>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "0.65rem",
+                                }}
+                              >
+                                {summary.passiveEffects.map((eff, i) => (
+                                  <div
+                                    key={i}
+                                    style={{
+                                      background: "rgba(255,255,255,0.02)",
+                                      border:
+                                        "1px solid rgba(255,255,255,0.04)",
+                                      borderRadius: "6px",
+                                      padding: "8px 10px",
+                                      fontSize: "0.75rem",
+                                      color: "#cbd5e1",
+                                      lineHeight: "1.4",
+                                    }}
+                                  >
+                                    {eff.text}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Skill summary by position Right Panel */}
+                            <div
+                              style={{
+                                background: "#0f172a",
+                                border: "1px solid #1e293b",
+                                borderRadius: "10px",
+                                padding: "1rem",
+                                overflowX: "auto",
+                              }}
+                            >
+                              <h4
+                                style={{
+                                  margin: "0 0 0.85rem",
+                                  fontSize: "0.85rem",
+                                  fontWeight: 800,
+                                  color: "#f8fafc",
+                                }}
+                              >
+                                Skill summary by position
+                              </h4>
+                              <table
+                                style={{
+                                  width: "100%",
+                                  borderCollapse: "collapse",
+                                  fontSize: "0.78rem",
+                                  textAlign: "left",
+                                }}
+                              >
+                                <thead>
+                                  <tr
+                                    style={{
+                                      borderBottom: "1px solid #334155",
+                                      color: "#94a3b8",
+                                    }}
+                                  >
+                                    <th style={{ padding: "8px 6px" }}>Pos.</th>
+                                    <th style={{ padding: "8px 6px" }}>
+                                      Member
+                                    </th>
+                                    <th
+                                      style={{
+                                        padding: "8px 6px",
+                                        textAlign: "right",
+                                      }}
+                                    >
+                                      Proc
+                                    </th>
+                                    <th
+                                      style={{
+                                        padding: "8px 6px",
+                                        textAlign: "right",
+                                      }}
+                                    >
+                                      Active
+                                    </th>
+                                    <th
+                                      style={{
+                                        padding: "8px 6px",
+                                        textAlign: "right",
+                                      }}
+                                    >
+                                      Special support
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {summary.positionDetails.map((pos) => (
+                                    <tr
+                                      key={pos.pos}
+                                      style={{
+                                        borderBottom:
+                                          "1px solid rgba(255,255,255,0.04)",
+                                        color: "#f8fafc",
+                                      }}
+                                    >
+                                      <td
+                                        style={{
+                                          padding: "8px 6px",
+                                          fontWeight: 700,
+                                        }}
+                                      >
+                                        {pos.pos}
+                                      </td>
+                                      <td
+                                        style={{
+                                          padding: "8px 6px",
+                                          fontWeight: 700,
+                                        }}
+                                      >
+                                        {pos.name}
+                                      </td>
+                                      <td
+                                        style={{
+                                          padding: "8px 6px",
+                                          textAlign: "right",
+                                          color: "#cbd5e1",
+                                        }}
+                                      >
+                                        {pos.procRate}
+                                      </td>
+                                      <td
+                                        style={{
+                                          padding: "8px 6px",
+                                          textAlign: "right",
+                                          color: "#cbd5e1",
+                                        }}
+                                      >
+                                        {pos.activeMag}
+                                      </td>
+                                      <td
+                                        style={{
+                                          padding: "8px 6px",
+                                          textAlign: "right",
+                                          color: "#cbd5e1",
+                                        }}
+                                      >
+                                        {pos.specialMag}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Cards for each character */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-                    {getTeamCalculationDetails(activeTeam, activeLeader, characters).map(details => (
-                      <div key={details.id} className="synergy-bonus-item glass" style={{ padding: '1rem', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: details.accentColor }} />
-                          <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{details.name} - {t('calculation_math')}</strong>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr",
+                      gap: "1rem",
+                    }}
+                  >
+                    {getTeamCalculationDetails(
+                      activeTeam,
+                      activeLeader,
+                      characters,
+                      activeBloomLevels,
+                      activeLevels,
+                      activeSelectedCards,
+                    ).map((details) => (
+                      <div
+                        key={details.id}
+                        className="synergy-bonus-item glass"
+                        style={{
+                          padding: "1rem",
+                          borderRadius: "10px",
+                          border: "1px solid var(--border-color)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            marginBottom: "12px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              background: details.accentColor,
+                            }}
+                          />
+                          <strong
+                            style={{
+                              fontSize: "0.95rem",
+                              color: "var(--text-primary)",
+                            }}
+                          >
+                            {details.name} - {t("calculation_math")}
+                          </strong>
                         </div>
-                        
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '8px', lineHeight: '1.5' }}>
+
+                        <div
+                          style={{
+                            fontSize: "0.78rem",
+                            color: "var(--text-secondary)",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px",
+                            lineHeight: "1.5",
+                          }}
+                        >
                           <div>
-                            <strong style={{ color: 'var(--text-primary)' }}>{t('final_stats_math')}:</strong>
-                            <div style={{ paddingLeft: '10px', marginTop: '2px', color: 'var(--text-muted)' }}>
-                              Sense: {details.stats.sense.raw.toLocaleString()} * (1 + {details.stats.sense.buff.toFixed(2)}) = {Math.round(details.stats.sense.final).toLocaleString()}<br />
-                              Technique: {details.stats.technique.raw.toLocaleString()} * (1 + {details.stats.technique.buff.toFixed(2)}) = {Math.round(details.stats.technique.final).toLocaleString()}<br />
-                              Performance: {details.stats.performance.raw.toLocaleString()} * (1 + {details.stats.performance.buff.toFixed(2)}) = {Math.round(details.stats.performance.final).toLocaleString()}
+                            <strong style={{ color: "var(--text-primary)" }}>
+                              {t("final_stats_math")}:
+                            </strong>
+                            <div
+                              style={{
+                                paddingLeft: "10px",
+                                marginTop: "2px",
+                                color: "var(--text-muted)",
+                              }}
+                            >
+                              Sense: {details.stats.sense.raw.toLocaleString()}{" "}
+                              * (1 + {details.stats.sense.buff.toFixed(2)}) ={" "}
+                              {Math.round(
+                                details.stats.sense.final,
+                              ).toLocaleString()}
+                              <br />
+                              Technique:{" "}
+                              {details.stats.technique.raw.toLocaleString()} *
+                              (1 + {details.stats.technique.buff.toFixed(2)}) ={" "}
+                              {Math.round(
+                                details.stats.technique.final,
+                              ).toLocaleString()}
+                              <br />
+                              Performance:{" "}
+                              {details.stats.performance.raw.toLocaleString()} *
+                              (1 + {details.stats.performance.buff.toFixed(2)})
+                              ={" "}
+                              {Math.round(
+                                details.stats.performance.final,
+                              ).toLocaleString()}
                             </div>
                             {details.appliedBuffLabels.length > 0 && (
-                              <div style={{ paddingLeft: '10px', marginTop: '4px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                {t('applied_buffs')}: {details.appliedBuffLabels.join(', ')}
+                              <div
+                                style={{
+                                  paddingLeft: "10px",
+                                  marginTop: "4px",
+                                  fontSize: "0.72rem",
+                                  color: "var(--text-muted)",
+                                }}
+                              >
+                                {t("applied_buffs")}:{" "}
+                                {details.appliedBuffLabels.join(", ")}
                               </div>
                             )}
                           </div>
 
                           <div>
-                            <strong style={{ color: 'var(--text-primary)' }}>{t('overall_power_math')}:</strong>
-                            <div style={{ paddingLeft: '10px', marginTop: '2px', color: 'var(--text-muted)' }}>
-                              {Math.round(details.stats.sense.final).toLocaleString()} (Sense) + {Math.round(details.stats.technique.final).toLocaleString()} (Tech) + {Math.round(details.stats.performance.final).toLocaleString()} (Perf) = {Math.round(details.overallPower).toLocaleString()} {t('power')}
+                            <strong style={{ color: "var(--text-primary)" }}>
+                              {t("overall_power_math")}:
+                            </strong>
+                            <div
+                              style={{
+                                paddingLeft: "10px",
+                                marginTop: "2px",
+                                color: "var(--text-muted)",
+                              }}
+                            >
+                              {Math.round(
+                                details.stats.sense.final,
+                              ).toLocaleString()}{" "}
+                              (Sense) +{" "}
+                              {Math.round(
+                                details.stats.technique.final,
+                              ).toLocaleString()}{" "}
+                              (Tech) +{" "}
+                              {Math.round(
+                                details.stats.performance.final,
+                              ).toLocaleString()}{" "}
+                              (Perf) ={" "}
+                              {Math.round(
+                                details.overallPower,
+                              ).toLocaleString()}{" "}
+                              {t("power")}
                             </div>
                           </div>
 
                           <div>
-                            <strong style={{ color: 'var(--text-primary)' }}>{t('active_uptime_math')}:</strong>
-                            <div style={{ paddingLeft: '10px', marginTop: '2px', color: 'var(--text-muted)' }}>
-                              {t('triggers_in')}: Math.floor(165 / {details.uptime.interval}) = {details.uptime.triggers}<br />
-                              {t('trigger_rate')}: {Math.round(details.uptime.baseActivationRate * 100)}% base + {Math.round((details.uptime.triggerRate - details.uptime.baseActivationRate) * 100)}% buff = {Math.round(details.uptime.triggerRate * 100)}%<br />
-                              {t('uptime_ratio')}: ({details.uptime.triggers} triggers * {details.uptime.duration}s duration * {Math.round(details.uptime.triggerRate * 100)}% trigger rate) / 165s = {(details.uptime.uptimeRatio * 100).toFixed(1)}%
+                            <strong style={{ color: "var(--text-primary)" }}>
+                              {t("active_uptime_math")}:
+                            </strong>
+                            <div
+                              style={{
+                                paddingLeft: "10px",
+                                marginTop: "2px",
+                                color: "var(--text-muted)",
+                              }}
+                            >
+                              {t("triggers_in")}: Math.floor(165 /{" "}
+                              {details.uptime.interval}) ={" "}
+                              {details.uptime.triggers}
+                              <br />
+                              {t("trigger_rate")}:{" "}
+                              {Math.round(
+                                details.uptime.baseActivationRate * 100,
+                              )}
+                              % base +{" "}
+                              {Math.round(
+                                (details.uptime.triggerRate -
+                                  details.uptime.baseActivationRate) *
+                                  100,
+                              )}
+                              % buff ={" "}
+                              {Math.round(details.uptime.triggerRate * 100)}%
+                              <br />
+                              {t("uptime_ratio")}: ({details.uptime.triggers}{" "}
+                              triggers * {details.uptime.duration}s duration *{" "}
+                              {Math.round(details.uptime.triggerRate * 100)}%
+                              trigger rate) / 165s ={" "}
+                              {(details.uptime.uptimeRatio * 100).toFixed(1)}%
                             </div>
                           </div>
 
                           <div>
-                            <strong style={{ color: 'var(--text-primary)' }}>{t('score_bonus_math')}:</strong>
-                            <div style={{ paddingLeft: '10px', marginTop: '2px', color: 'var(--text-muted)' }}>
-                              {t('active')}: {Math.round(details.activeBuff * 100)}% active buff * {(details.uptime.uptimeRatio * 100).toFixed(1)}% uptime = {(details.activeBuff * details.uptime.uptimeRatio * 100).toFixed(1)}% score bonus<br />
-                              {t('special')}: {Math.round(details.specialBuff * 100)}% special buff * 100% trigger rate = {Math.round(details.specialBuff * 100)}% score bonus<br />
-                              {t('total_expected_bonus')}: {(details.activeBuff * details.uptime.uptimeRatio * 100).toFixed(1)}% + {Math.round(details.specialBuff * 100)}% = +{(details.totalBonus * 100).toFixed(1)}%
+                            <strong style={{ color: "var(--text-primary)" }}>
+                              {t("score_bonus_math")}:
+                            </strong>
+                            <div
+                              style={{
+                                paddingLeft: "10px",
+                                marginTop: "2px",
+                                color: "var(--text-muted)",
+                              }}
+                            >
+                              {t("active")}:{" "}
+                              {Math.round(details.activeBuff * 100)}% active
+                              buff *{" "}
+                              {(details.uptime.uptimeRatio * 100).toFixed(1)}%
+                              uptime ={" "}
+                              {(
+                                details.activeBuff *
+                                details.uptime.uptimeRatio *
+                                100
+                              ).toFixed(1)}
+                              % score bonus
+                              <br />
+                              {t("special")}:{" "}
+                              {Math.round(details.specialBuff * 100)}% special
+                              buff * 100% trigger rate ={" "}
+                              {Math.round(details.specialBuff * 100)}% score
+                              bonus
+                              <br />
+                              {t("total_expected_bonus")}:{" "}
+                              {(
+                                details.activeBuff *
+                                details.uptime.uptimeRatio *
+                                100
+                              ).toFixed(1)}
+                              % + {Math.round(details.specialBuff * 100)}% = +
+                              {(details.totalBonus * 100).toFixed(1)}%
                             </div>
                           </div>
 
-                          <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px', marginTop: '4px' }}>
-                            <strong style={{ color: 'var(--text-primary)' }}>{t('final_unit_score_math')}:</strong>
-                            <div style={{ paddingLeft: '10px', marginTop: '2px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
-                              {Math.round(details.overallPower).toLocaleString()} Power * (1 + {details.totalBonus.toFixed(4)}) = {details.unitScore.toLocaleString()} Unit Score
+                          <div
+                            style={{
+                              borderTop: "1px solid rgba(255,255,255,0.04)",
+                              paddingTop: "6px",
+                              marginTop: "4px",
+                            }}
+                          >
+                            <strong style={{ color: "var(--text-primary)" }}>
+                              {t("final_unit_score_math")}:
+                            </strong>
+                            <div
+                              style={{
+                                paddingLeft: "10px",
+                                marginTop: "2px",
+                                fontWeight: "bold",
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              {Math.round(
+                                details.overallPower,
+                              ).toLocaleString()}{" "}
+                              Power * (1 + {details.totalBonus.toFixed(4)}) ={" "}
+                              {details.unitScore.toLocaleString()} Unit Score
                             </div>
                           </div>
                         </div>
@@ -1782,9 +4852,12 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
                   </div>
                 </div>
               ) : (
-                <div className="empty-analytics" style={{ padding: '2rem 1rem' }}>
+                <div
+                  className="empty-analytics"
+                  style={{ padding: "2rem 1rem" }}
+                >
                   <AlertCircle size={24} className="text-muted" />
-                  <p>{t('add_members_msg')}</p>
+                  <p>{t("add_members_msg")}</p>
                 </div>
               )}
             </div>
@@ -1794,74 +4867,191 @@ export default function TeamBuilder({ presets, selectedPresetId, setSelectedPres
       {/* Roster Character Selection Popup Modal */}
       {activeSlotIndex !== null && (
         <div className="modal-overlay" onClick={() => setActiveSlotIndex(null)}>
-          <div className="modal-content glass animate-scale-up" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '1150px', width: '95%' }}>
+          <div
+            className="modal-content glass animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "1150px", width: "95%" }}
+          >
             <div className="modal-header">
-              <div className="modal-header-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                className="modal-header-title"
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
                 <Users size={20} className="text-gold" />
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
-                  {activeSlotIndex === 'leader' ? 'Select Team Leader' : `Select Unit for Slot ${activeSlotIndex + 1}`}
+                <h2 style={{ fontSize: "1.25rem", fontWeight: 800 }}>
+                  {activeSlotIndex === "leader"
+                    ? "Select Team Leader"
+                    : `Select Unit for Slot ${activeSlotIndex + 1}`}
                 </h2>
               </div>
-              <button className="btn-close-modal" onClick={() => setActiveSlotIndex(null)}>
+              <button
+                className="btn-close-modal"
+                onClick={() => setActiveSlotIndex(null)}
+              >
                 <X size={18} />
               </button>
             </div>
-            
-            <div className="modal-body" style={{ maxHeight: '65vh', overflowY: 'auto', padding: '1.5rem' }}>
-              <div className="roster-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '15px' }}>
+
+            <div
+              className="modal-body"
+              style={{
+                maxHeight: "65vh",
+                overflowY: "auto",
+                padding: "1.5rem",
+              }}
+            >
+              <div
+                className="roster-header-row"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "1.5rem",
+                  gap: "15px",
+                }}
+              >
                 <p className="presets-info-text" style={{ margin: 0 }}>
-                  {activeSlotIndex === 'leader' 
-                    ? 'Assign a leader to activate their leader synergy bonuses.' 
-                    : `Choose a member card to occupy Slot ${activeSlotIndex + 1}.`
-                  }
+                  {activeSlotIndex === "leader"
+                    ? "Assign a leader to activate their leader synergy bonuses."
+                    : `Choose a member card to occupy Slot ${activeSlotIndex + 1}.`}
                 </p>
                 <input
                   type="text"
-                  placeholder={t('search_placeholder')}
+                  placeholder={t("search_placeholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="roster-search-input glass"
-                  style={{ width: '250px', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff' }}
+                  style={{
+                    width: "250px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(0,0,0,0.2)",
+                    color: "#fff",
+                  }}
                   autoFocus
                 />
               </div>
-              <div className="character-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(225px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+              <div
+                className="character-grid"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(225px, 1fr))",
+                  gap: "1rem",
+                  marginTop: "1rem",
+                }}
+              >
                 {filteredRoster.map((char) => {
                   const isSelected = activeTeam.includes(char.id);
                   return (
                     <div
                       key={char.id}
-                      className={`char-card glass ${isSelected ? 'selected' : ''}`}
+                      className={`char-card glass ${isSelected ? "selected" : ""}`}
                       onClick={() => handleSelectCharacter(char.id)}
-                      style={{ 
-                        '--hover-color': char.accentColor,
-                        cursor: 'pointer',
-                        position: 'relative',
-                        border: isSelected ? `2px solid ${char.accentColor}` : '1px solid rgba(255,255,255,0.08)',
-                        background: isSelected ? `${char.accentColor}10` : 'rgba(255,255,255,0.02)',
-                        boxShadow: isSelected ? `0 0 15px ${char.accentColor}30` : 'none',
-                        transform: 'none',
-                        margin: 0
+                      style={{
+                        "--hover-color": char.accentColor,
+                        cursor: "pointer",
+                        position: "relative",
+                        border: isSelected
+                          ? `2px solid ${char.accentColor}`
+                          : "1px solid rgba(255,255,255,0.08)",
+                        background: isSelected
+                          ? `${char.accentColor}10`
+                          : "rgba(255,255,255,0.02)",
+                        boxShadow: isSelected
+                          ? `0 0 15px ${char.accentColor}30`
+                          : "none",
+                        transform: "none",
+                        margin: 0,
                       }}
                     >
                       <div className="rarity-badge">{char.rarity}</div>
-                      <div className="char-card-body" style={{ padding: '0.5rem' }}>
-                        <div className="char-card-media-wrapper" style={{ width: '75px', height: '75px', borderRadius: '50%', overflow: 'hidden', border: `2px solid ${char.accentColor}`, marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.2))' }}>
+                      <div
+                        className="char-card-body"
+                        style={{ padding: "0.5rem" }}
+                      >
+                        <div
+                          className="char-card-media-wrapper"
+                          style={{
+                            width: "75px",
+                            height: "75px",
+                            borderRadius: "50%",
+                            overflow: "hidden",
+                            border: `2px solid ${char.accentColor}`,
+                            marginBottom: "12px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.2))",
+                          }}
+                        >
                           {char.image ? (
-                            <img src={char.image} alt={char.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img
+                              src={char.image}
+                              alt={char.name}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
                           ) : (
-                            <div className="char-card-avatar-fallback" style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{char.avatar}</div>
+                            <div
+                              className="char-card-avatar-fallback"
+                              style={{ fontSize: "1.6rem", fontWeight: "bold" }}
+                            >
+                              {char.avatar}
+                            </div>
                           )}
                         </div>
-                        <h3 className="char-card-name" style={{ fontSize: '1.05rem', fontWeight: '700', marginBottom: '4px' }}>{char.name}</h3>
-                        <p className="char-card-title" style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>{char.title}</p>
-                        
-                        <div className="char-card-badges" style={{ flexWrap: 'nowrap', gap: '0.4rem', justifyContent: 'center', width: '100%' }}>
-                          <span className="badge-role" style={{ whiteSpace: 'nowrap', padding: '0.25rem 0.45rem' }}>
+                        <h3
+                          className="char-card-name"
+                          style={{
+                            fontSize: "1.05rem",
+                            fontWeight: "700",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {char.name}
+                        </h3>
+                        <p
+                          className="char-card-title"
+                          style={{
+                            fontSize: "0.72rem",
+                            color: "var(--text-secondary)",
+                            marginBottom: "12px",
+                          }}
+                        >
+                          {char.title}
+                        </p>
+
+                        <div
+                          className="char-card-badges"
+                          style={{
+                            flexWrap: "nowrap",
+                            gap: "0.4rem",
+                            justifyContent: "center",
+                            width: "100%",
+                          }}
+                        >
+                          <span
+                            className="badge-role"
+                            style={{
+                              whiteSpace: "nowrap",
+                              padding: "0.25rem 0.45rem",
+                            }}
+                          >
                             <Users size={10} className="mr-1" />
                             {char.group}
                           </span>
-                          <span className="badge-elem" style={{ color: getTypeColor(char.type), whiteSpace: 'nowrap', padding: '0.25rem 0.45rem' }}>
+                          <span
+                            className="badge-elem"
+                            style={{
+                              color: getTypeColor(char.type),
+                              whiteSpace: "nowrap",
+                              padding: "0.25rem 0.45rem",
+                            }}
+                          >
                             {getTypeIcon(char.type)}
                             {typeDisplayMap[char.type] || char.type}
                           </span>

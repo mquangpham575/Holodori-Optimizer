@@ -311,7 +311,7 @@ function App() {
                 selectedPresetId={selectedPresetId}
                 setSelectedPresetId={setSelectedPresetId}
                 onUpdatePreset={handleUpdatePreset}
-                onSavePresets={() => handleSavePresets(presets)}
+                onSavePresets={(updated) => handleSavePresets(updated)}
                 ownedRoster={ownedRoster}
                 onUpdateOwnedRoster={handleUpdateOwnedRoster}
                 characters={characters}
@@ -326,7 +326,7 @@ function App() {
                 selectedPresetId={selectedPresetId}
                 setSelectedPresetId={setSelectedPresetId}
                 onUpdatePreset={handleUpdatePreset}
-                onSavePresets={() => handleSavePresets(presets)}
+                onSavePresets={(updated) => handleSavePresets(updated)}
                 ownedRoster={ownedRoster}
                 onUpdateOwnedRoster={handleUpdateOwnedRoster}
                 characters={characters}
