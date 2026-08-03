@@ -72,7 +72,7 @@ const TRANSLATIONS = {
     systems_degraded: "Some Systems Degraded",
     admin_dash: "Admin Dashboard",
     guide_detail: "Guide Details",
-    new_rpg_fan_game: "NEW RPG FAN-GAME",
+    new_rpg_fan_game: "RHYTHM AND ROLE-PLAYING GAME",
     hero_title: "HOLOLIVE DREAMS",
     hero_subtitle: "Embark on a colorful dreamscape alongside your favorite VTubers. Explore detailed stats, build optimal teams, and customize your showcase profile.",
     view_characters: "View Characters",

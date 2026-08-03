@@ -3156,6 +3156,7 @@ export default function TeamBuilder({
                                       width: "100%",
                                       height: "100%",
                                       objectFit: "cover",
+                                      objectPosition: "50% 25%",
                                     }}
                                   />
                                 ) : (
@@ -4282,11 +4283,11 @@ export default function TeamBuilder({
                                       <img
                                         src={charObj.fallbackImage || charObj.image}
                                         alt={card.member}
-                                        style={{
-                                          width: "100%",
-                                          height: "100%",
-                                          objectFit: "cover",
-                                        }}
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                    }}
                                       />
                                     ) : (
                                       <div

@@ -47,7 +47,15 @@ function App() {
   const [characters, setCharacters] = useState([]);
   const [presets, setPresets] = useState([]);
   const [selectedPresetId, setSelectedPresetId] = useState('preset_1');
-  const [ownedRoster, setOwnedRoster] = useState([]);
+  const [defaultRoster, setDefaultRoster] = useState([]);
+  const [rosterByPreset, setRosterByPreset] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('holodreams_roster_by_preset')) || {};
+    } catch {
+      return {};
+    }
+  });
+  const ownedRoster = rosterByPreset[selectedPresetId] ?? defaultRoster;
   const [guides, setGuides] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -107,7 +115,7 @@ function App() {
         
         setCharacters(chars);
         setPresets(presetsData);
-        setOwnedRoster(rosterData);
+        setDefaultRoster(rosterData);
         setGuides(guidesData);
       } catch (err) {
         console.error("Backend fetch failed, loading fallback state:", err);
@@ -141,9 +149,9 @@ function App() {
         // Load fallback roster
         const savedRoster = localStorage.getItem('holodreams_owned_roster');
         if (savedRoster) {
-          setOwnedRoster(JSON.parse(savedRoster));
+          setDefaultRoster(JSON.parse(savedRoster));
         } else {
-          setOwnedRoster(CHARACTERS.map(c => c.id));
+          setDefaultRoster(CHARACTERS.map(c => c.id));
         }
         
         setCharacters(CHARACTERS);
@@ -205,21 +213,16 @@ function App() {
     }
   };
 
-  const handleUpdateOwnedRoster = async (newRoster) => {
-    setOwnedRoster(newRoster);
-    try {
-      await fetch(`${API_BASE}/api/roster`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-device-id': deviceId
-        },
-        body: JSON.stringify(newRoster)
-      });
-    } catch (err) {
-      console.error("Error saving roster to backend:", err);
-      localStorage.setItem('holodreams_owned_roster', JSON.stringify(newRoster));
-    }
+  const handleUpdateOwnedRoster = (newRoster) => {
+    setRosterByPreset((prev) => {
+      const next = { ...prev, [selectedPresetId]: newRoster };
+      try {
+        localStorage.setItem('holodreams_roster_by_preset', JSON.stringify(next));
+      } catch (err) {
+        console.error("Error saving roster to localStorage:", err);
+      }
+      return next;
+    });
   };
 
   const showNotification = (message, type = 'success') => {

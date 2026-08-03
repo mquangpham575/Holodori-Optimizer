@@ -70,6 +70,7 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   width: 80px;
+  flex-shrink: 0;
 }
 
 .filter-options {
