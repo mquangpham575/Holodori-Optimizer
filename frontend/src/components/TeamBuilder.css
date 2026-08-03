@@ -339,7 +339,8 @@
     grid-template-columns: 1fr;
   }
   .builder-slot {
-    height: 110px;
+    min-height: 110px;
+    height: auto;
   }
   .slot-content {
     flex-direction: row;
@@ -358,10 +359,10 @@
 
 /* Slot and roster images in TeamBuilder */
 .slot-img-wrapper {
-  width: 58px;
-  height: 76px;
-  aspect-ratio: 3 / 4;
-  border-radius: 10px;
+  width: 90px;
+  height: 128px;
+  aspect-ratio: 192 / 272;
+  border-radius: 12px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.25);
   display: flex;
@@ -374,8 +375,7 @@
 .slot-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top center;
+  object-fit: fill;
 }
 
 .roster-item-media {
@@ -427,7 +427,8 @@
 }
 
 .leader-slot {
-  height: 190px;
+  min-height: 190px;
+  height: auto;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -435,7 +436,7 @@
   justify-content: center;
   position: relative;
   transition: all 0.3s ease;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .leader-slot.border-gold {
@@ -534,7 +535,7 @@
 }
 
 .builder-slot {
-  min-height: 95px;
+  min-height: 80px;
   height: auto;
   border-radius: 12px;
   display: flex;
@@ -546,7 +547,7 @@
   overflow: visible;
   cursor: pointer;
   border: 1px solid var(--border-color);
-  padding: 0.85rem 1.15rem;
+  padding: 0.55rem 1rem;
 }
 
 .builder-slot.active-focused-slot {
@@ -557,7 +558,8 @@
 }
 
 .leader-slot {
-  height: 190px;
+  min-height: 190px;
+  height: auto;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -565,7 +567,7 @@
   justify-content: center;
   position: relative;
   transition: all 0.3s ease;
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
   border: 1px solid var(--border-color);
 }
@@ -601,8 +603,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 0.65rem;
-  padding: 1.25rem 0.5rem 0.5rem 0.5rem;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem 0.35rem 0.5rem;
   width: 100%;
   height: 100%;
   text-align: center;
@@ -1392,11 +1394,16 @@
   background: rgba(255, 255, 255, 0.07);
 }
 
+.leader-slot .slot-img-wrapper {
+  width: 132px;
+  height: 187px;
+}
+
 .search-card-thumb {
-  width: 44px;
+  width: 41px;
   height: 58px;
-  aspect-ratio: 3 / 4;
-  border-radius: 8px;
+  aspect-ratio: 192 / 272;
+  border-radius: 7px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
@@ -1408,8 +1415,7 @@
 .search-thumb-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top center;
+  object-fit: fill;
 }
 
 .search-card-info {
@@ -1532,10 +1538,10 @@
 }
 
 .owned-card-media {
-  width: 52px;
-  height: 68px;
-  aspect-ratio: 3 / 4;
-  border-radius: 8px;
+  width: 46px;
+  height: 65px;
+  aspect-ratio: 192 / 272;
+  border-radius: 7px;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
@@ -1547,8 +1553,7 @@
 .owned-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top center;
+  object-fit: fill;
 }
 
 .owned-card-details {

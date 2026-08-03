@@ -15,13 +15,6 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Serve static images from frontend public folder
-const imagesDir = path.join(__dirname, '../frontend/public/images');
-if (!fs.existsSync(imagesDir)) {
-  fs.mkdirSync(imagesDir, { recursive: true });
-}
-app.use('/images', express.static(imagesDir));
-
 const dbPath = path.join(__dirname, 'database.json');
 const isProd = !!process.env.DATABASE_URL;
 let pgPool = null;

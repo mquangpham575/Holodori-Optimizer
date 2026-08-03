@@ -20,7 +20,19 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
     'ID Gen 1', 'ID Gen 2', 'ID Gen 3', 'Myth', 'Promise', 'Advent', 'ReGLOSS'
   ];
 
-  const presentGroups = Array.from(new Set(displayList.map((c) => c.group).filter(Boolean)));
+  const charGroupLabels = (char) => {
+    const labels = new Set();
+    if (char.group) labels.add(char.group);
+    if (char.cardData?.groupLabels) char.cardData.groupLabels.forEach((l) => l && labels.add(l));
+    if (char.groupLabels) (Array.isArray(char.groupLabels) ? char.groupLabels : [char.groupLabels]).forEach((l) => l && labels.add(l));
+    return Array.from(labels).sort((a, b) => {
+      const idxA = GROUP_ORDER.indexOf(a);
+      const idxB = GROUP_ORDER.indexOf(b);
+      return (idxA !== -1 ? idxA : 99) - (idxB !== -1 ? idxB : 99);
+    });
+  };
+
+  const presentGroups = Array.from(new Set(displayList.flatMap((c) => charGroupLabels(c)))).filter(Boolean);
   presentGroups.sort((a, b) => {
     const idxA = GROUP_ORDER.indexOf(a);
     const idxB = GROUP_ORDER.indexOf(b);
@@ -38,7 +50,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
   };
 
   const filteredCharacters = displayList.filter((char) => {
-    const matchesGroup = selectedGroup === 'All' || char.group === selectedGroup;
+    const matchesGroup = selectedGroup === 'All' || charGroupLabels(char).includes(selectedGroup);
     const matchesType = selectedType === 'All' || char.type === selectedType;
     const matchesRarity = selectedRarity === 'All' || char.rarity === selectedRarity || (char.rarityNum && char.rarityNum === parseInt(selectedRarity));
     const matchesSearch = char.name.toLowerCase().includes(searchQuery.toLowerCase()) || (char.title && char.title.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -56,10 +68,10 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
 
   const getTypeColor = (type) => {
     switch (type) {
-      case 'PURE': return '#38bdf8';
-      case 'CUTE': return '#ec4899';
-      case 'HAPPY': return '#f59e0b';
-      default: return '#38bdf8';
+      case 'PURE': return '#4caf50';
+      case 'CUTE': return '#ff4d6d';
+      case 'HAPPY': return '#ff9f1c';
+      default: return '#4caf50';
     }
   };
 
@@ -226,7 +238,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
           <div
             key={char.id}
             className="char-card glass"
-            style={{ '--hover-color': char.accentColor }}
+            style={{ '--hover-color': getTypeColor(char.type) }}
             onClick={() => handleOpenCard(char)}
           >
             <div className="rarity-badge">{char.rarity}</div>
@@ -240,6 +252,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
                     onError={(e) => {
                       if (char.fallbackImage && e.target.src !== char.fallbackImage) {
                         e.target.src = char.fallbackImage;
+                        e.target.style.objectFit = 'cover';
                       }
                     }}
                   />
@@ -251,10 +264,12 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
               <p className="char-card-title">{char.title}</p>
               
               <div className="char-card-badges">
-                <span className="badge-role">
-                  <Users size={10} className="mr-1" />
-                  {char.group}
-                </span>
+                {charGroupLabels(char).map((g) => (
+                  <span key={g} className="badge-role">
+                    <Users size={10} className="mr-1" />
+                    {g}
+                  </span>
+                ))}
                 <span className="badge-elem">
                   {getTypeIcon(char.type)}
                   {typeDisplayMap[char.type] || char.type}
@@ -267,7 +282,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
 
       {/* Detail Modal Overlay */}
       {activeCharacter && (
-        <div className="modal-overlay" onClick={() => setActiveCharacter(null)}>
+        <div className="modal-overlay card-modal-overlay" onClick={() => setActiveCharacter(null)}>
           <div className="card-detail-modal glass animate-scale-up" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setActiveCharacter(null)}>
               <X size={20} />
@@ -276,7 +291,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
             <div className="modal-two-col-layout">
               {/* Left Column: Card Artwork & Metadata */}
               <div className="modal-card-col">
-                <div className="modal-card-frame" style={{ borderColor: activeCharacter.accentColor, boxShadow: `0 0 25px ${activeCharacter.accentColor}35` }}>
+                <div className="modal-card-frame" style={{ borderColor: getTypeColor(activeCharacter.type), boxShadow: `0 0 25px ${getTypeColor(activeCharacter.type)}35` }}>
                   <div className="card-rarity-pill">{activeCharacter.rarity}</div>
                   {activeCharacter.image ? (
                     <img
@@ -286,6 +301,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
                       onError={(e) => {
                         if (activeCharacter.fallbackImage && e.target.src !== activeCharacter.fallbackImage) {
                           e.target.src = activeCharacter.fallbackImage;
+                          e.target.style.objectFit = 'cover';
                         }
                       }}
                     />
@@ -305,8 +321,8 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
                     <strong style={{ color: getTypeColor(activeCharacter.type) }}>{activeCharacter.type}</strong>
                   </div>
                   <div className="stat-box-row">
-                    <span>Generation</span>
-                    <strong>{activeCharacter.group}</strong>
+                    <span>Generation(s)</span>
+                    <strong>{charGroupLabels(activeCharacter).join(', ')}</strong>
                   </div>
                 </div>
               </div>
@@ -318,10 +334,12 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
                   <h2 className="modal-card-title">{activeCharacter.title}</h2>
                   
                   <div className="modal-badge-group">
-                    <span className="modal-badge group-badge">
-                      <Users size={12} className="mr-1" />
-                      {activeCharacter.group}
-                    </span>
+                    {charGroupLabels(activeCharacter).map((g) => (
+                      <span key={g} className="modal-badge group-badge">
+                        <Users size={12} className="mr-1" />
+                        {g}
+                      </span>
+                    ))}
                     <span className="modal-badge type-badge" style={{ color: getTypeColor(activeCharacter.type), borderColor: `${getTypeColor(activeCharacter.type)}50` }}>
                       {getTypeIcon(activeCharacter.type)}
                       <span className="ml-1">{typeDisplayMap[activeCharacter.type] || activeCharacter.type}</span>

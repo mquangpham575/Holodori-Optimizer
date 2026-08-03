@@ -62496,14 +62496,28 @@
         "id": "preset_4",
         "name": "Preset 4",
         "team": [
-          null,
-          null,
-          null,
-          null,
-          null
+          "card-00006-5-uniq-0007-00",
+          "card-00032-5-uniq-0026-00",
+          "card-00021-5-uniq-0017-00",
+          "card-00022-5-uniq-0063-00",
+          "card-00007-5-uniq-0008-00"
         ],
-        "leader": null,
-        "isActive": false
+        "leader": "card-00022-5-uniq-0063-00",
+        "isActive": false,
+        "bloomLevels": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cardLevels": [
+          70,
+          70,
+          70,
+          70,
+          70
+        ]
       },
       {
         "id": "preset_5",
@@ -62801,6 +62815,341 @@
         "isActive": true,
         "id": "preset_1"
       }
+    ],
+    "dev_0j9j0uegddweg59t6zq032r": [
+      {
+        "id": "preset_1",
+        "name": "Preset 1",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": true
+      },
+      {
+        "id": "preset_2",
+        "name": "Preset 2",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_3",
+        "name": "Preset 3",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_4",
+        "name": "Preset 4",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_5",
+        "name": "Preset 5",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      }
+    ],
+    "dev_aw7cxk3dkmoy409slkny2": [
+      {
+        "id": "preset_1",
+        "name": "Preset 1",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": true
+      },
+      {
+        "id": "preset_2",
+        "name": "Preset 2",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_3",
+        "name": "Preset 3",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_4",
+        "name": "Preset 4",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_5",
+        "name": "Preset 5",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      }
+    ],
+    "dev_e7742bqupnvce7xu7ofvx7": [
+      {
+        "id": "preset_1",
+        "name": "Preset 1",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": true
+      },
+      {
+        "id": "preset_2",
+        "name": "Preset 2",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_3",
+        "name": "Preset 3",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_4",
+        "name": "Preset 4",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_5",
+        "name": "Preset 5",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      }
+    ],
+    "dev_z6z099l4t0naa32zumw6z": [
+      {
+        "id": "preset_1",
+        "name": "Preset 1",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": true
+      },
+      {
+        "id": "preset_2",
+        "name": "Preset 2",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_3",
+        "name": "Preset 3",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_4",
+        "name": "Preset 4",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_5",
+        "name": "Preset 5",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      }
+    ],
+    "dev_3x3gywtdiomd6a9iwi4bga": [
+      {
+        "id": "preset_1",
+        "name": "Preset 1",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": true
+      },
+      {
+        "id": "preset_2",
+        "name": "Preset 2",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_3",
+        "name": "Preset 3",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_4",
+        "name": "Preset 4",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      },
+      {
+        "id": "preset_5",
+        "name": "Preset 5",
+        "team": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "leader": null,
+        "isActive": false
+      }
     ]
   },
   "roster": {
@@ -62832,36 +63181,16 @@
       },
       {
         "id": "card-00018-5-uniq-0004-00",
-        "bloom": 1,
-        "level": 70
-      },
-      {
-        "id": "card-00010-5-uniq-0010-00",
         "bloom": 0,
         "level": 70
       },
       {
-        "id": "card-00022-5-uniq-0018-00",
-        "bloom": 1,
-        "level": 70
-      },
-      {
-        "id": "card-00032-5-uniq-0026-00",
+        "id": "card-00002-5-uniq-0001-00",
         "bloom": 0,
         "level": 70
       },
       {
-        "id": "card-06005-5-uniq-0061-00",
-        "bloom": 0,
-        "level": 70
-      },
-      {
-        "id": "card-00016-5-uniq-0014-00",
-        "bloom": 1,
-        "level": 70
-      },
-      {
-        "id": "card-04015-5-uniq-0054-00",
+        "id": "card-00015-5-uniq-0003-00",
         "bloom": 0,
         "level": 70
       },
@@ -62871,12 +63200,127 @@
         "level": 70
       },
       {
-        "id": "card-00036-5-uniq-0029-00",
-        "bloom": 1,
+        "id": "card-00005-5-uniq-0006-00",
+        "bloom": 0,
         "level": 70
       },
       {
-        "id": "card-04013-5-uniq-0052-00",
+        "id": "card-00004-5-uniq-0005-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00007-5-uniq-0008-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00010-5-uniq-0010-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00012-5-uniq-0062-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00012-5-uniq-0012-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00011-5-uniq-0011-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00017-5-uniq-0015-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00016-5-uniq-0014-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00014-5-uniq-0013-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00006-5-uniq-0007-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00023-5-uniq-0019-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00021-5-uniq-0064-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00021-5-uniq-0017-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00022-5-uniq-0063-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00022-5-uniq-0018-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00019-5-uniq-0016-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00028-5-uniq-0023-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00027-5-uniq-0022-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00026-5-uniq-0065-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00026-5-uniq-0021-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00031-5-uniq-0025-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00034-5-uniq-0027-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00032-5-uniq-0026-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00030-5-uniq-0024-00",
         "bloom": 0,
         "level": 70
       },
@@ -62886,12 +63330,62 @@
         "level": 70
       },
       {
-        "id": "card-00004-5-uniq-0005-00",
-        "bloom": 1,
+        "id": "card-00039-5-uniq-0032-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00035-5-uniq-0028-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-00036-5-uniq-0029-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-03003-5-uniq-0035-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-03001-5-uniq-0033-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-03002-5-uniq-0034-00",
+        "bloom": 0,
         "level": 70
       },
       {
         "id": "card-03005-5-uniq-0037-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-03004-5-uniq-0036-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-03006-5-uniq-0038-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-03008-5-uniq-0040-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-03009-5-uniq-0041-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-03007-5-uniq-0039-00",
         "bloom": 0,
         "level": 70
       },
@@ -62901,7 +63395,37 @@
         "level": 70
       },
       {
+        "id": "card-04003-5-uniq-0044-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-04002-5-uniq-0043-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-04012-5-uniq-0051-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-04007-5-uniq-0047-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
         "id": "card-04010-5-uniq-0049-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-04016-5-uniq-0055-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-04014-5-uniq-0053-00",
         "bloom": 0,
         "level": 70
       },
@@ -62911,7 +63435,37 @@
         "level": 70
       },
       {
+        "id": "card-04015-5-uniq-0054-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-04013-5-uniq-0052-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
         "id": "card-06003-5-uniq-0059-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-06004-5-uniq-0060-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-06002-5-uniq-0066-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-06002-5-uniq-0058-00",
+        "bloom": 0,
+        "level": 70
+      },
+      {
+        "id": "card-06005-5-uniq-0061-00",
         "bloom": 0,
         "level": 70
       }
@@ -63634,6 +64188,286 @@
       }
     ],
     "dev_s2wbqitszpl8utdvc1fite": [
+      "azki",
+      "hoshimachisuisei",
+      "robocosan",
+      "sakuramiko",
+      "tokinosora",
+      "akaihaato",
+      "akirosenthal",
+      "natsuiromatsuri",
+      "nakiriayame",
+      "oozorasubaru",
+      "yuzukichoco",
+      "inugamikorone",
+      "nekomataokayu",
+      "ookamimio",
+      "shirakamifubuki",
+      "houshoumarine",
+      "shiranuiflare",
+      "shiroganenoel",
+      "usadapekora",
+      "himemoriluna",
+      "tokoyamitowa",
+      "tsunomakiwatame",
+      "momosuzunene",
+      "omarupolka",
+      "shishirobotan",
+      "yukihanalamy",
+      "hakuikoyori",
+      "kazamairoha",
+      "ladarknesss",
+      "takanelui",
+      "airaniiofifteen",
+      "ayundarisu",
+      "moonahoshinova",
+      "anyamelfissa",
+      "kureijiollie",
+      "pavoliareine",
+      "kaelakovalskia",
+      "kobokanaeru",
+      "vestiazeta",
+      "moricalliope",
+      "ninomaeinanis",
+      "takanashikiara",
+      "hakosbaelz",
+      "irys",
+      "ourokronii",
+      "fuwawaabyssgard",
+      "kosekibijou",
+      "mococoabyssgard",
+      "nerissaravencroft",
+      "shiorinovella",
+      "ichijouririka",
+      "juufuuteiraden",
+      "otonosekanade",
+      "todorokihajime"
+    ],
+    "dev_0j9j0uegddweg59t6zq032r": [
+      "azki",
+      "hoshimachisuisei",
+      "robocosan",
+      "sakuramiko",
+      "tokinosora",
+      "akaihaato",
+      "akirosenthal",
+      "natsuiromatsuri",
+      "nakiriayame",
+      "oozorasubaru",
+      "yuzukichoco",
+      "inugamikorone",
+      "nekomataokayu",
+      "ookamimio",
+      "shirakamifubuki",
+      "houshoumarine",
+      "shiranuiflare",
+      "shiroganenoel",
+      "usadapekora",
+      "himemoriluna",
+      "tokoyamitowa",
+      "tsunomakiwatame",
+      "momosuzunene",
+      "omarupolka",
+      "shishirobotan",
+      "yukihanalamy",
+      "hakuikoyori",
+      "kazamairoha",
+      "ladarknesss",
+      "takanelui",
+      "airaniiofifteen",
+      "ayundarisu",
+      "moonahoshinova",
+      "anyamelfissa",
+      "kureijiollie",
+      "pavoliareine",
+      "kaelakovalskia",
+      "kobokanaeru",
+      "vestiazeta",
+      "moricalliope",
+      "ninomaeinanis",
+      "takanashikiara",
+      "hakosbaelz",
+      "irys",
+      "ourokronii",
+      "fuwawaabyssgard",
+      "kosekibijou",
+      "mococoabyssgard",
+      "nerissaravencroft",
+      "shiorinovella",
+      "ichijouririka",
+      "juufuuteiraden",
+      "otonosekanade",
+      "todorokihajime"
+    ],
+    "dev_aw7cxk3dkmoy409slkny2": [
+      "azki",
+      "hoshimachisuisei",
+      "robocosan",
+      "sakuramiko",
+      "tokinosora",
+      "akaihaato",
+      "akirosenthal",
+      "natsuiromatsuri",
+      "nakiriayame",
+      "oozorasubaru",
+      "yuzukichoco",
+      "inugamikorone",
+      "nekomataokayu",
+      "ookamimio",
+      "shirakamifubuki",
+      "houshoumarine",
+      "shiranuiflare",
+      "shiroganenoel",
+      "usadapekora",
+      "himemoriluna",
+      "tokoyamitowa",
+      "tsunomakiwatame",
+      "momosuzunene",
+      "omarupolka",
+      "shishirobotan",
+      "yukihanalamy",
+      "hakuikoyori",
+      "kazamairoha",
+      "ladarknesss",
+      "takanelui",
+      "airaniiofifteen",
+      "ayundarisu",
+      "moonahoshinova",
+      "anyamelfissa",
+      "kureijiollie",
+      "pavoliareine",
+      "kaelakovalskia",
+      "kobokanaeru",
+      "vestiazeta",
+      "moricalliope",
+      "ninomaeinanis",
+      "takanashikiara",
+      "hakosbaelz",
+      "irys",
+      "ourokronii",
+      "fuwawaabyssgard",
+      "kosekibijou",
+      "mococoabyssgard",
+      "nerissaravencroft",
+      "shiorinovella",
+      "ichijouririka",
+      "juufuuteiraden",
+      "otonosekanade",
+      "todorokihajime"
+    ],
+    "dev_e7742bqupnvce7xu7ofvx7": [
+      "azki",
+      "hoshimachisuisei",
+      "robocosan",
+      "sakuramiko",
+      "tokinosora",
+      "akaihaato",
+      "akirosenthal",
+      "natsuiromatsuri",
+      "nakiriayame",
+      "oozorasubaru",
+      "yuzukichoco",
+      "inugamikorone",
+      "nekomataokayu",
+      "ookamimio",
+      "shirakamifubuki",
+      "houshoumarine",
+      "shiranuiflare",
+      "shiroganenoel",
+      "usadapekora",
+      "himemoriluna",
+      "tokoyamitowa",
+      "tsunomakiwatame",
+      "momosuzunene",
+      "omarupolka",
+      "shishirobotan",
+      "yukihanalamy",
+      "hakuikoyori",
+      "kazamairoha",
+      "ladarknesss",
+      "takanelui",
+      "airaniiofifteen",
+      "ayundarisu",
+      "moonahoshinova",
+      "anyamelfissa",
+      "kureijiollie",
+      "pavoliareine",
+      "kaelakovalskia",
+      "kobokanaeru",
+      "vestiazeta",
+      "moricalliope",
+      "ninomaeinanis",
+      "takanashikiara",
+      "hakosbaelz",
+      "irys",
+      "ourokronii",
+      "fuwawaabyssgard",
+      "kosekibijou",
+      "mococoabyssgard",
+      "nerissaravencroft",
+      "shiorinovella",
+      "ichijouririka",
+      "juufuuteiraden",
+      "otonosekanade",
+      "todorokihajime"
+    ],
+    "dev_z6z099l4t0naa32zumw6z": [
+      "azki",
+      "hoshimachisuisei",
+      "robocosan",
+      "sakuramiko",
+      "tokinosora",
+      "akaihaato",
+      "akirosenthal",
+      "natsuiromatsuri",
+      "nakiriayame",
+      "oozorasubaru",
+      "yuzukichoco",
+      "inugamikorone",
+      "nekomataokayu",
+      "ookamimio",
+      "shirakamifubuki",
+      "houshoumarine",
+      "shiranuiflare",
+      "shiroganenoel",
+      "usadapekora",
+      "himemoriluna",
+      "tokoyamitowa",
+      "tsunomakiwatame",
+      "momosuzunene",
+      "omarupolka",
+      "shishirobotan",
+      "yukihanalamy",
+      "hakuikoyori",
+      "kazamairoha",
+      "ladarknesss",
+      "takanelui",
+      "airaniiofifteen",
+      "ayundarisu",
+      "moonahoshinova",
+      "anyamelfissa",
+      "kureijiollie",
+      "pavoliareine",
+      "kaelakovalskia",
+      "kobokanaeru",
+      "vestiazeta",
+      "moricalliope",
+      "ninomaeinanis",
+      "takanashikiara",
+      "hakosbaelz",
+      "irys",
+      "ourokronii",
+      "fuwawaabyssgard",
+      "kosekibijou",
+      "mococoabyssgard",
+      "nerissaravencroft",
+      "shiorinovella",
+      "ichijouririka",
+      "juufuuteiraden",
+      "otonosekanade",
+      "todorokihajime"
+    ],
+    "dev_3x3gywtdiomd6a9iwi4bga": [
       "azki",
       "hoshimachisuisei",
       "robocosan",

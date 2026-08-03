@@ -82,7 +82,7 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
                     >
                       {activeLeader === char.id && <span className="home-leader-badge">{t('leader_tag')}</span>}
                       {char.image ? (
-                        <img src={char.image} alt={char.name} className="home-team-char-img" />
+                        <img src={char.fallbackImage || char.image} alt={char.name} className="home-team-char-img" />
                       ) : (
                         <span className="char-emoji">{char.avatar}</span>
                       )}

@@ -241,7 +241,7 @@ const isSkillActive = (text, team, characters) => {
     const activeChar = characters.find((c) => c.id === activeId);
     if (activeChar) {
       if (
-        activeChar.group.toUpperCase() === condTarget ||
+        getCharGroupLabels(activeChar).has(condTarget) ||
         activeChar.type.toUpperCase() === condTarget
       ) {
         count++;
@@ -275,7 +275,7 @@ const isSkillActiveOptimized = (cond, team, characters) => {
     const activeChar = characters.find((c) => c.id === activeId);
     if (activeChar) {
       if (
-        activeChar.group.toUpperCase() === cond.condTarget ||
+        getCharGroupLabels(activeChar).has(cond.condTarget) ||
         activeChar.type.toUpperCase() === cond.condTarget
       ) {
         count++;
@@ -283,6 +283,26 @@ const isSkillActiveOptimized = (cond, team, characters) => {
     }
   });
   return count >= cond.requiredCount;
+};
+
+// Intent: Collect every group label a character belongs to (single `group` field
+// plus cardData groupLabels) so multi-group members like Fubuki (GAMERS + Gen 1)
+// are matched by every group trigger. Returns an upper-cased Set.
+const getCharGroupLabels = (char) => {
+  const labels = new Set();
+  if (!char) return labels;
+  if (char.group) labels.add(String(char.group).toUpperCase());
+  const collect = (labelsList) => {
+    (Array.isArray(labelsList) ? labelsList : []).forEach((l) => {
+      if (l) labels.add(String(l).toUpperCase());
+    });
+  };
+  collect(char.groupLabels);
+  collect(char.cardData?.groupLabels);
+  if (Array.isArray(char.cards)) {
+    char.cards.forEach((cv) => collect(cv?.cardData?.groupLabels));
+  }
+  return labels;
 };
 
 // Intent: Resolve specific card variant from character's available cards list (or return character primary card)
@@ -485,6 +505,11 @@ const materializeCard = (char, bloomStage, cardLevel) => {
     char.groupIds?.[0] ||
     GROUP_MAP[char.group] ||
     `grp-${(char.group || "").toLowerCase().replace(/\s+/g, "_")}`;
+  // A Holomem can belong to multiple groups (e.g. Fubuki = GAMERS + Gen 1);
+  // carry ALL group ids so eligibility masks match every group trigger.
+  const groupIds = Array.from(
+    new Set([...(char.groupIds || []), ...(char.cardData?.groupIds || [])]),
+  );
   const attributeId =
     char.attributeId ||
     (char.type
@@ -498,6 +523,7 @@ const materializeCard = (char, bloomStage, cardLevel) => {
     id: char.id,
     member: memberName,
     groupId,
+    groupIds,
     attributeId,
     perf,
     tech,
@@ -580,7 +606,8 @@ const buildEligibility = (cards) => {
   };
   cards.forEach((c) => {
     code(c.attributeId);
-    code(c.groupId);
+    const cgids = c.groupIds?.length ? c.groupIds : [c.groupId];
+    cgids.forEach((g) => code(g));
     registerEligibility(c.active?.trigger);
     if (c.passive) {
       registerEligibility(c.passive.target);
@@ -598,7 +625,7 @@ const buildEligibility = (cards) => {
       if (ci !== undefined) ew[ci >>> 5] |= 1 << (ci & 31);
     };
     setElig(c.attributeId);
-    setElig(c.groupId);
+    (c.groupIds?.length ? c.groupIds : [c.groupId]).forEach((g) => setElig(g));
     c._ew = ew;
   });
 
@@ -637,7 +664,7 @@ const buildGlobalEligibility = (allCards) => {
   };
   allCards.forEach((c) => {
     code(c.attributeId);
-    code(c.groupId);
+    (c.groupIds?.length ? c.groupIds : [c.groupId]).forEach((g) => code(g));
     reg(c.active?.trigger);
     if (c.passive) {
       reg(c.passive.target);
@@ -656,7 +683,7 @@ const buildGlobalEligibility = (allCards) => {
       if (ci !== undefined) ew[ci >>> 5] |= 1 << (ci & 31);
     };
     se(c.attributeId);
-    se(c.groupId);
+    (c.groupIds?.length ? c.groupIds : [c.groupId]).forEach((g) => se(g));
     c._ew = ew;
   });
 
@@ -821,10 +848,17 @@ const calcCounts = (cards) => {
   }
   return counts;
 };
-
 // Intent: Compute expected active score contribution — raw (no passive) and supported (with passive)
 // Ref: timing() from search_worker.js
-const timingRef = (cards, counts, support, sarMultiplier = 1) => {
+// Optional perCard buffers capture the exact per-card contribution for the detail panel.
+const timingRef = (
+  cards,
+  counts,
+  support,
+  sarMultiplier = 1,
+  perCard = null,
+  perCardSupported = null,
+) => {
   const p = new Float64Array(5);
   const magnitudes = new Float64Array(5);
   const priority = [0, 1, 2, 3, 4];
@@ -835,6 +869,7 @@ const timingRef = (cards, counts, support, sarMultiplier = 1) => {
   priority.sort((a, b) => magnitudes[b] - magnitudes[a] || a - b);
   const rank = new Uint8Array(5);
   for (let r = 0; r < 5; r++) rank[priority[r]] = r;
+
   let raw = 0, supported = 0;
   for (let i = 0; i < 5; i++) {
     let higher = 0;
@@ -850,13 +885,17 @@ const timingRef = (cards, counts, support, sarMultiplier = 1) => {
     const contribution = (magnitudes[i] * p[i] * factor) / SONG;
     raw += contribution;
     supported += contribution * (1 + support[i]);
+    if (perCard) perCard[i] = contribution;
+    if (perCardSupported) perCardSupported[i] = contribution * (1 + support[i]);
   }
   return { raw, supported };
 };
 
 // Intent: Compute SAR (Success Rate Up) uplift from special-skill active windows
 // Ref: sarForOrder() from search_worker.js
-const sarForOrder = (cards, counts, support, sp, baseTiming) => {
+// Optional perCard captures each window's raw/passive/special uplift attributed to its card
+// (by ordered position, position-1) for the detail panel.
+const sarForOrder = (cards, counts, support, sp, baseTiming, perCard = null) => {
   if (!sp.sarWindows.length)
     return { rawUplift: 0, passiveUplift: 0, specialSupportUplift: 0 };
   let rawUplift = 0, passiveUplift = 0, specialSupportUplift = 0;
@@ -868,6 +907,13 @@ const sarForOrder = (cards, counts, support, sp, baseTiming) => {
     rawUplift += rawDelta;
     passiveUplift += passiveDelta;
     specialSupportUplift += rawDelta * window.supportPct;
+    if (perCard) {
+      const idx = window.position - 1;
+      if (!perCard[idx]) perCard[idx] = { raw: 0, passive: 0, special: 0 };
+      perCard[idx].raw += rawDelta;
+      perCard[idx].passive += passiveDelta;
+      perCard[idx].special += rawDelta * window.supportPct;
+    }
   }
   return { rawUplift, passiveUplift, specialSupportUplift };
 };
@@ -952,7 +998,8 @@ const passiveRecipients = (cards, sourceIndex, pa) => {
 
 // Intent: Full scoring of one specific team ordering — the reference kernel.
 // Ref: evaluateOrderGenericBase() from search_worker.js
-const evaluateOrderGenericBase = (cards, specialMode = "combo") => {
+// Optional collect object captures exact per-card contributions for the detail panel.
+const evaluateOrderGenericBase = (cards, specialMode = "combo", collect = null) => {
   const perf = new Float64Array(5), tech = new Float64Array(5),
         sense = new Float64Array(5), all = new Float64Array(5),
         support = new Float64Array(5);
@@ -987,17 +1034,45 @@ const evaluateOrderGenericBase = (cards, specialMode = "combo") => {
   // Step 3: Special exposure + timing + SAR (counts computed once, reused)
   const counts = calcCounts(cards);
   const sp = specialForOrder(cards, specialMode);
-  const tm = timingRef(cards, counts, support);
+  const tm = timingRef(cards, counts, support, 1, collect?.active, collect?.activeSupported);
   // Ref: sp.supportUplift MUST be set after timing (it depends on tm.raw)
   sp.supportUplift = tm.raw * sp.supportExposure;
   for (const v of sp.values) v.bonus = tm.raw * v.supportPct * v.weightedExposure;
-  const sar = sarForOrder(cards, counts, support, sp, tm);
+  if (collect)
+    for (const v of sp.values) collect.specialBonus[v.position - 1] = v.bonus;
+  const sar = sarForOrder(cards, counts, support, sp, tm, collect?.sar);
 
   // Step 4: Try each team card as outfit leader, return the one with best score
   let best = null;
   for (let o = 0; o < 5; o++) {
     const x = outfitOutcome(cards, cards[o], o, baseStat, sumPerf, sumTech, sumSense, tm, sp, sar);
     if (!best || x.score > best.score) best = x;
+  }
+
+  if (collect) {
+    const bon = outfitBonuses(cards, cards[best.outfitLeaderIndex]);
+    collect.outfitBon = bon;
+    collect.supportPct = support;
+    for (let i = 0; i < 5; i++) {
+      const s = collect.sar ? collect.sar[i] : null;
+      const rawDelta = s ? s.raw : 0;
+      // Active contribution includes passive support AND the leader's outfit support
+      collect.activeTotal[i] = collect.activeSupported[i] + bon.support * collect.active[i];
+      // Score bonus per card = active + special support + SAR uplift.
+      // Exact decomposition: sum over cards === best.adjusted (totalBonus).
+      collect.sarCard[i] =
+        (s ? s.passive : 0) +
+        (s ? s.special : 0) +
+        bon.support * rawDelta;
+      collect.cardTotalBonus[i] =
+        collect.activeTotal[i] +
+        collect.specialBonus[i] +
+        collect.sarCard[i];
+    }
+    collect.teamStat = best.stat;
+    collect.teamScore = best.score;
+    collect.totalBonus = best.totalBonus;
+    collect.outfitLeaderIndex = best.outfitLeaderIndex;
   }
   return best;
 };
@@ -1030,6 +1105,39 @@ const evaluateTeamOrder = (cards, specialMode = "combo") => {
     if (result && (!best || result.score > best.score)) best = result;
   }
   return best;
+};
+
+// Intent: Like evaluateTeamOrder, but also returns the winning permutation and the
+// exact per-card score decomposition (active / special / SAR / support) for the detail panel.
+const evaluateTeamOrderDetailed = (cards) => {
+  let best = null, bestPerm = null;
+  for (const perm of PERMS_5) {
+    const ordered = perm.map((i) => cards[i]);
+    const result = evaluateOrderGenericBase(ordered, "combo");
+    if (result && (!best || result.score > best.score)) {
+      best = result;
+      bestPerm = perm;
+    }
+  }
+  if (!best || !bestPerm) return null;
+  const collect = {
+    active: new Float64Array(5),
+    activeSupported: new Float64Array(5),
+    activeTotal: new Float64Array(5),
+    specialBonus: new Float64Array(5),
+    supportPct: null,
+    sar: new Array(5).fill(null),
+    sarCard: new Float64Array(5),
+    cardTotalBonus: new Float64Array(5),
+    outfitBon: null,
+    teamStat: 0,
+    teamScore: 0,
+    totalBonus: 0,
+    outfitLeaderIndex: -1,
+  };
+  const ordered = bestPerm.map((i) => cards[i]);
+  const result = evaluateOrderGenericBase(ordered, "combo", collect);
+  return { result, ordered, perm: bestPerm, collect };
 };
 
 // Intent: Main scoring entry-point — materialize cards, build eligibility, score, return rounded total.
@@ -1237,11 +1345,43 @@ const getTeamCalculationDetails = (
   if (cards.length < 5) return [];
   buildEligibility(cards);
 
-  // Collect passive buffs for per-card breakdown
-  const perf = new Float64Array(5);
-  const tech = new Float64Array(5);
-  const sense = new Float64Array(5);
-  const all = new Float64Array(5);
+  // Score the team with the exact kernel and collect the winning permutation +
+  // per-card active / special / SAR / support decomposition.
+  const detailed = evaluateTeamOrderDetailed(cards);
+  if (!detailed) return [];
+  const { collect, perm } = detailed;
+  // Map winning-order position -> team index (cards are shown in team order)
+  const teamToPos = new Array(5);
+  perm.forEach((teamIdx, p) => (teamToPos[teamIdx] = p));
+
+  // Passive buffs per stat (team index order) + source attribution labels
+  const perfB = new Float64Array(5);
+  const techB = new Float64Array(5);
+  const senseB = new Float64Array(5);
+  const allB = new Float64Array(5);
+  const supportB = new Float64Array(5);
+  const sources = Array.from({ length: 5 }, () => ({
+    perf: [],
+    tech: [],
+    sense: [],
+    all: [],
+    support: [],
+  }));
+
+  const cardNameAt = (i) =>
+    cards[i]?.member || cards[i]?.name || `#${i + 1}`;
+  const targetLabelOf = (pa) => {
+    if (!pa) return "?";
+    if (pa.kind === "self") return "Self";
+    if (pa.kind === "all") return "All";
+    return (
+      pa.target?.label ||
+      pa.target?.name ||
+      pa.target?.id ||
+      pa.target?.kind ||
+      "target"
+    );
+  };
 
   for (let s = 0; s < 5; s++) {
     const pa = cards[s]?.passive;
@@ -1259,63 +1399,154 @@ const getTeamCalculationDetails = (
       );
       recipients = recipients.slice(0, count);
     }
+    const srcLabel = `${cardNameAt(s)} passive +${Math.round(
+      pa.pct * 100,
+    )}% ${String(pa.kind).toUpperCase()} -> ${targetLabelOf(pa)}`;
     for (const i of recipients) {
-      if (pa.kind === "perf") perf[i] += pa.pct;
-      else if (pa.kind === "tech") tech[i] += pa.pct;
-      else if (pa.kind === "sense") sense[i] += pa.pct;
-      else if (pa.kind === "all") all[i] += pa.pct;
+      if (pa.kind === "perf") {
+        perfB[i] += pa.pct;
+        sources[i].perf.push(srcLabel);
+      } else if (pa.kind === "tech") {
+        techB[i] += pa.pct;
+        sources[i].tech.push(srcLabel);
+      } else if (pa.kind === "sense") {
+        senseB[i] += pa.pct;
+        sources[i].sense.push(srcLabel);
+      } else if (pa.kind === "all") {
+        allB[i] += pa.pct;
+        sources[i].all.push(srcLabel);
+      } else if (pa.kind === "support") {
+        supportB[i] += pa.pct;
+        sources[i].support.push(srcLabel);
+      }
     }
   }
 
-  const allTeamChars = team.map((id) => characters.find((c) => c.id === id));
+  const bon =
+    collect.outfitBon || { perf: 0, tech: 0, sense: 0, all: 0, support: 0 };
+  const outfitLeaderIdx =
+    collect.outfitLeaderIndex >= 0 ? collect.outfitLeaderIndex : 0;
+  const outfitLeaderName = cardNameAt(outfitLeaderIdx);
+  const outfitLabels = [];
+  if (bon.perf)
+    outfitLabels.push(
+      `Outfit (${outfitLeaderName}) +${Math.round(bon.perf * 100)}% PERF`,
+    );
+  if (bon.tech)
+    outfitLabels.push(
+      `Outfit (${outfitLeaderName}) +${Math.round(bon.tech * 100)}% TECH`,
+    );
+  if (bon.sense)
+    outfitLabels.push(
+      `Outfit (${outfitLeaderName}) +${Math.round(bon.sense * 100)}% SENSE`,
+    );
+  if (bon.all)
+    outfitLabels.push(
+      `Outfit (${outfitLeaderName}) +${Math.round(bon.all * 100)}% ALL`,
+    );
+  if (bon.support)
+    outfitLabels.push(
+      `Outfit (${outfitLeaderName}) +${Math.round(bon.support * 100)}% Support`,
+    );
 
-  return cards.map((c, idx) => {
-    const char = allTeamChars[idx];
+  const teamChars = team.map((id) =>
+    characters.find(
+      (c) =>
+        c.id === id ||
+        c.assetId === id ||
+        c.cardData?.cardId === id ||
+        c.characterId === id,
+    ),
+  );
+
+  const details = cards.map((c, idx) => {
+    const char = teamChars[idx];
+    const p = teamToPos[idx];
     const baseSense = c.sense;
     const baseTech = c.tech;
     const basePerf = c.perf;
-    const finalSense = baseSense * (1 + sense[idx] + all[idx]);
-    const finalTech = baseTech * (1 + tech[idx] + all[idx]);
-    const finalPerf = basePerf * (1 + perf[idx] + all[idx]);
+    const senseBuff = senseB[idx] + allB[idx] + bon.sense + bon.all;
+    const techBuff = techB[idx] + allB[idx] + bon.tech + bon.all;
+    const perfBuff = perfB[idx] + allB[idx] + bon.perf + bon.all;
+    const finalSense = baseSense * (1 + senseBuff);
+    const finalTech = baseTech * (1 + techBuff);
+    const finalPerf = basePerf * (1 + perfBuff);
     const overallPower = finalSense + finalTech + finalPerf;
     const a = c.active;
+    const conditionMet =
+      a?.conditionalMagnitude != null &&
+      a.conditionalMagnitude !== undefined &&
+      triggerSatisfied(a.trigger, cards);
+    const effectiveActiveMag = conditionMet
+      ? a.conditionalMagnitude
+      : a?.baseMagnitude || 0;
+    const uptimeRatio =
+      a && a.duration > 0 && a.interval > 0
+        ? Math.min(
+            1,
+            (Math.floor(SONG / a.interval) *
+              a.duration *
+              (a.probability || 0.46)) /
+              SONG,
+          )
+        : 0;
+
+    const activeContribution = collect.activeTotal[p] || 0;
+    const specialContribution = collect.specialBonus[p] || 0;
+    const sarContribution = collect.sarCard[p] || 0;
+    const totalBonus = collect.cardTotalBonus[p] || 0;
+
     return {
       id: c.id,
       name: c.member,
+      position: p + 1,
       accentColor: char?.accentColor || "#ffffff",
+      outfitLeader: idx === outfitLeaderIdx,
       stats: {
-        sense: {
-          raw: baseSense,
-          final: finalSense,
-          buff: sense[idx] + all[idx],
-        },
-        technique: {
-          raw: baseTech,
-          final: finalTech,
-          buff: tech[idx] + all[idx],
-        },
-        performance: {
-          raw: basePerf,
-          final: finalPerf,
-          buff: perf[idx] + all[idx],
-        },
+        sense: { raw: baseSense, final: finalSense, buff: senseBuff },
+        technique: { raw: baseTech, final: finalTech, buff: techBuff },
+        performance: { raw: basePerf, final: finalPerf, buff: perfBuff },
+      },
+      statBuffSources: {
+        sense: sources[idx].sense,
+        technique: sources[idx].tech,
+        performance: sources[idx].perf,
+        all: sources[idx].all,
+        support: sources[idx].support,
+        outfit: outfitLabels,
       },
       overallPower,
       activeBuff: a?.baseMagnitude || 0,
+      conditionalBuff: a?.conditionalMagnitude ?? null,
+      conditionMet,
+      effectiveActiveMag,
       uptime: {
         triggers: a ? Math.floor(SONG / a.interval) : 0,
         duration: a?.duration || 0,
         interval: a?.interval || 0,
         baseActivationRate: a?.probability || 0.46,
         triggerRate: a?.probability || 0.46,
-        uptimeRatio: 0,
+        uptimeRatio,
       },
       specialBuff: c.special?.magnitude || 0,
-      totalBonus: 0,
-      unitScore: Math.round(overallPower),
-      appliedBuffLabels: [],
+      specialDuration: c.special?.duration || 0,
+      sarPct: c.special?.sarPct || 0,
+      activeContribution,
+      specialContribution,
+      sarContribution,
+      totalBonus,
+      unitScore: Math.round(overallPower * (1 + totalBonus / 100)),
     };
   });
+
+  // Team-level reconciliation: sum of per-card bonuses === collect.totalBonus
+  details.team = {
+    stat: collect.teamStat,
+    score: collect.teamScore,
+    totalBonus: collect.totalBonus,
+    outfitLeaderName,
+  };
+  return details;
 };
 
 
@@ -1674,13 +1905,8 @@ export default function TeamBuilder({
         // Prevent duplicate if character is already leader
         if (activeLeader === charId) return;
 
-        // Swap leader with team slot unit
-        const oldLeader = activeLeader;
+        // Overwrite leader slot with dragged unit; keep the unit in its team slot
         setActiveLeader(charId);
-
-        const newTeam = [...activeTeam];
-        newTeam[sourceIndex] = oldLeader || null; // Clear team slot if no old leader exists to prevent duplication
-        setActiveTeam(newTeam);
       }
     }
   };
@@ -1982,7 +2208,7 @@ export default function TeamBuilder({
             const activeChar = findChar(activeId, characters);
             if (activeChar) {
               if (
-                activeChar.group.toUpperCase().includes(condTarget) ||
+                getCharGroupLabels(activeChar).has(condTarget) ||
                 activeChar.type.toUpperCase() === condTarget
               ) {
                 count++;
@@ -2036,7 +2262,7 @@ export default function TeamBuilder({
             const activeChar = findChar(activeId, characters);
             if (activeChar) {
               if (
-                activeChar.group.toUpperCase().includes(condTarget) ||
+                getCharGroupLabels(activeChar).has(condTarget) ||
                 activeChar.type.toUpperCase() === condTarget
               ) {
                 count++;
@@ -2110,7 +2336,7 @@ export default function TeamBuilder({
             const activeChar = findChar(activeId, characters);
             if (activeChar) {
               if (
-                activeChar.group.toUpperCase().includes(condTarget) ||
+                getCharGroupLabels(activeChar).has(condTarget) ||
                 activeChar.type.toUpperCase() === condTarget
               ) {
                 count++;
@@ -2160,7 +2386,7 @@ export default function TeamBuilder({
             const activeChar = findChar(activeId, characters);
             if (activeChar) {
               if (
-                activeChar.group.toUpperCase().includes(condTarget) ||
+                getCharGroupLabels(activeChar).has(condTarget) ||
                 activeChar.type.toUpperCase() === condTarget
               ) {
                 count++;
@@ -2205,7 +2431,10 @@ export default function TeamBuilder({
           c.name.toLowerCase().includes(rosterSearchQuery.toLowerCase()) ||
           (c.title &&
             c.title.toLowerCase().includes(rosterSearchQuery.toLowerCase())) ||
-          c.group.toLowerCase().includes(rosterSearchQuery.toLowerCase()),
+          c.group.toLowerCase().includes(rosterSearchQuery.toLowerCase()) ||
+          Array.from(getCharGroupLabels(c)).some((l) =>
+            l.toLowerCase().includes(rosterSearchQuery.toLowerCase()),
+          ),
       )
     : [];
 
@@ -3218,7 +3447,7 @@ export default function TeamBuilder({
                       style={
                         char
                           ? {
-                              "--char-glow": char.accentColor,
+                              "--char-glow": getTypeColor(char.type),
                               cursor: char ? "grab" : "pointer",
                             }
                           : null
@@ -3232,16 +3461,16 @@ export default function TeamBuilder({
                       onDrop={(e) => handleDropOnTeamSlot(e, index)}
                     >
                       {char ? (
-                        <div
-                          className="slot-content"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "1.25rem",
-                            padding: "0.65rem 1.25rem",
-                            width: "100%",
-                          }}
-                        >
+                          <div
+                            className="slot-content"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "1rem",
+                              padding: "0.4rem 1rem",
+                              width: "100%",
+                            }}
+                          >
                           {activeLeader === char.id && (
                             <span className="leader-tag-mini">L</span>
                           )}
@@ -3250,13 +3479,13 @@ export default function TeamBuilder({
                           <div
                             className="slot-img-wrapper"
                             style={{
-                              width: "58px",
-                              height: "76px",
-                              minWidth: "58px",
-                              aspectRatio: "3 / 4",
-                              borderRadius: "10px",
+                              width: "76px",
+                              height: "108px",
+                              minWidth: "76px",
+                              aspectRatio: "192 / 272",
+                              borderRadius: "12px",
                               overflow: "hidden",
-                              border: `2px solid ${char.accentColor}`,
+                              border: `2px solid ${getTypeColor(char.type)}`,
                             }}
                           >
                             {char.image ? (
@@ -3267,8 +3496,7 @@ export default function TeamBuilder({
                                 style={{
                                   width: "100%",
                                   height: "100%",
-                                  objectFit: "cover",
-                                  objectPosition: "top center",
+                                  objectFit: "fill",
                                 }}
                               />
                             ) : (
@@ -4052,7 +4280,7 @@ export default function TeamBuilder({
                                   >
                                     {charObj?.image ? (
                                       <img
-                                        src={charObj.image}
+                                        src={charObj.fallbackImage || charObj.image}
                                         alt={card.member}
                                         style={{
                                           width: "100%",
@@ -4142,7 +4370,7 @@ export default function TeamBuilder({
                               >
                                 {summary.leaderChar.image ? (
                                   <img
-                                    src={summary.leaderChar.image}
+                                    src={summary.leaderChar.fallbackImage || summary.leaderChar.image}
                                     alt={summary.leaderChar.name}
                                     style={{
                                       width: "100%",
@@ -4615,240 +4843,357 @@ export default function TeamBuilder({
                       gap: "1rem",
                     }}
                   >
-                    {getTeamCalculationDetails(
-                      activeTeam,
-                      activeLeader,
-                      characters,
-                      activeBloomLevels,
-                      activeLevels,
-                      activeSelectedCards,
-                    ).map((details) => (
-                      <div
-                        key={details.id}
-                        className="synergy-bonus-item glass"
-                        style={{
-                          padding: "1rem",
-                          borderRadius: "10px",
-                          border: "1px solid var(--border-color)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            marginBottom: "12px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: "8px",
-                              height: "8px",
-                              borderRadius: "50%",
-                              background: details.accentColor,
-                            }}
-                          />
-                          <strong
-                            style={{
-                              fontSize: "0.95rem",
-                              color: "var(--text-primary)",
-                            }}
-                          >
-                            {details.name} - {t("calculation_math")}
-                          </strong>
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "0.78rem",
-                            color: "var(--text-secondary)",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "8px",
-                            lineHeight: "1.5",
-                          }}
-                        >
-                          <div>
-                            <strong style={{ color: "var(--text-primary)" }}>
-                              {t("final_stats_math")}:
-                            </strong>
+                    {(() => {
+                      const details = getTeamCalculationDetails(
+                        activeTeam,
+                        activeLeader,
+                        characters,
+                        activeBloomLevels,
+                        activeLevels,
+                        activeSelectedCards,
+                      );
+                      const teamInfo = details.team;
+                      return (
+                        <>
+                          {details.map((d) => (
                             <div
+                              key={d.id}
+                              className="synergy-bonus-item glass"
                               style={{
-                                paddingLeft: "10px",
-                                marginTop: "2px",
-                                color: "var(--text-muted)",
+                                padding: "1rem",
+                                borderRadius: "10px",
+                                border: "1px solid var(--border-color)",
                               }}
                             >
-                              Sense: {details.stats.sense.raw.toLocaleString()}{" "}
-                              * (1 + {details.stats.sense.buff.toFixed(2)}) ={" "}
-                              {Math.round(
-                                details.stats.sense.final,
-                              ).toLocaleString()}
-                              <br />
-                              Technique:{" "}
-                              {details.stats.technique.raw.toLocaleString()} *
-                              (1 + {details.stats.technique.buff.toFixed(2)}) ={" "}
-                              {Math.round(
-                                details.stats.technique.final,
-                              ).toLocaleString()}
-                              <br />
-                              Performance:{" "}
-                              {details.stats.performance.raw.toLocaleString()} *
-                              (1 + {details.stats.performance.buff.toFixed(2)})
-                              ={" "}
-                              {Math.round(
-                                details.stats.performance.final,
-                              ).toLocaleString()}
-                            </div>
-                            {details.appliedBuffLabels.length > 0 && (
                               <div
                                 style={{
-                                  paddingLeft: "10px",
-                                  marginTop: "4px",
-                                  fontSize: "0.72rem",
-                                  color: "var(--text-muted)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                  marginBottom: "12px",
                                 }}
                               >
-                                {t("applied_buffs")}:{" "}
-                                {details.appliedBuffLabels.join(", ")}
+                                <span
+                                  style={{
+                                    width: "8px",
+                                    height: "8px",
+                                    borderRadius: "50%",
+                                    background: d.accentColor,
+                                  }}
+                                />
+                                <strong
+                                  style={{
+                                    fontSize: "0.95rem",
+                                    color: "var(--text-primary)",
+                                  }}
+                                >
+                                  {d.name} - {t("calculation_math")}
+                                </strong>
+                                {d.outfitLeader && (
+                                  <span
+                                    style={{
+                                      background: "#10b981",
+                                      color: "#000",
+                                      fontWeight: 800,
+                                      fontSize: "0.68rem",
+                                      padding: "1px 6px",
+                                      borderRadius: "4px",
+                                    }}
+                                  >
+                                    {t("outfit_leader")}
+                                  </span>
+                                )}
+                                <span
+                                  style={{
+                                    marginLeft: "auto",
+                                    fontSize: "0.7rem",
+                                    color: "var(--text-muted)",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  {t("best_position")}: #{d.position}
+                                </span>
                               </div>
-                            )}
-                          </div>
 
-                          <div>
-                            <strong style={{ color: "var(--text-primary)" }}>
-                              {t("overall_power_math")}:
-                            </strong>
+                              <div
+                                style={{
+                                  fontSize: "0.78rem",
+                                  color: "var(--text-secondary)",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "8px",
+                                  lineHeight: "1.5",
+                                }}
+                              >
+                                <div>
+                                  <strong
+                                    style={{ color: "var(--text-primary)" }}
+                                  >
+                                    {t("final_stats_math")}:
+                                  </strong>
+                                  <div
+                                    style={{
+                                      paddingLeft: "10px",
+                                      marginTop: "2px",
+                                      color: "var(--text-muted)",
+                                    }}
+                                  >
+                                    Sense:{" "}
+                                    {d.stats.sense.raw.toLocaleString()} * (1 +{" "}
+                                    {d.stats.sense.buff.toFixed(2)}) ={" "}
+                                    {Math.round(
+                                      d.stats.sense.final,
+                                    ).toLocaleString()}
+                                    <br />
+                                    Technique:{" "}
+                                    {d.stats.technique.raw.toLocaleString()} * (1
+                                    + {d.stats.technique.buff.toFixed(2)}) ={" "}
+                                    {Math.round(
+                                      d.stats.technique.final,
+                                    ).toLocaleString()}
+                                    <br />
+                                    Performance:{" "}
+                                    {d.stats.performance.raw.toLocaleString()} *
+                                    (1 +{" "}
+                                    {d.stats.performance.buff.toFixed(2)}) ={" "}
+                                    {Math.round(
+                                      d.stats.performance.final,
+                                    ).toLocaleString()}
+                                  </div>
+                                  {(() => {
+                                    const src = d.statBuffSources;
+                                    const lines = [];
+                                    if (src.sense.length)
+                                      lines.push(
+                                        `Sense: ${src.sense.join("; ")}`,
+                                      );
+                                    if (src.technique.length)
+                                      lines.push(
+                                        `Technique: ${src.technique.join("; ")}`,
+                                      );
+                                    if (src.performance.length)
+                                      lines.push(
+                                        `Performance: ${src.performance.join("; ")}`,
+                                      );
+                                    if (src.all.length)
+                                      lines.push(`All: ${src.all.join("; ")}`);
+                                    if (src.support.length)
+                                      lines.push(
+                                        `Support: ${src.support.join("; ")}`,
+                                      );
+                                    if (src.outfit.length)
+                                      lines.push(
+                                        `Outfit: ${src.outfit.join("; ")}`,
+                                      );
+                                    return lines.length > 0 ? (
+                                      <div
+                                        style={{
+                                          paddingLeft: "10px",
+                                          marginTop: "4px",
+                                          fontSize: "0.72rem",
+                                          color: "var(--text-muted)",
+                                        }}
+                                      >
+                                        {lines.map((l) => (
+                                          <div key={l}>{l}</div>
+                                        ))}
+                                      </div>
+                                    ) : null;
+                                  })()}
+                                </div>
+
+                                <div>
+                                  <strong
+                                    style={{ color: "var(--text-primary)" }}
+                                  >
+                                    {t("overall_power_math")}:
+                                  </strong>
+                                  <div
+                                    style={{
+                                      paddingLeft: "10px",
+                                      marginTop: "2px",
+                                      color: "var(--text-muted)",
+                                    }}
+                                  >
+                                    {Math.round(
+                                      d.stats.sense.final,
+                                    ).toLocaleString()}{" "}
+                                    (Sense) +{" "}
+                                    {Math.round(
+                                      d.stats.technique.final,
+                                    ).toLocaleString()}{" "}
+                                    (Tech) +{" "}
+                                    {Math.round(
+                                      d.stats.performance.final,
+                                    ).toLocaleString()}{" "}
+                                    (Perf) ={" "}
+                                    {Math.round(
+                                      d.overallPower,
+                                    ).toLocaleString()}{" "}
+                                    {t("power")}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <strong
+                                    style={{ color: "var(--text-primary)" }}
+                                  >
+                                    {t("active_uptime_math")}:
+                                  </strong>
+                                  <div
+                                    style={{
+                                      paddingLeft: "10px",
+                                      marginTop: "2px",
+                                      color: "var(--text-muted)",
+                                    }}
+                                  >
+                                    {t("triggers_in")}: Math.floor({SONG} /{" "}
+                                    {d.uptime.interval}) = {d.uptime.triggers}
+                                    <br />
+                                    {t("trigger_rate")}:{" "}
+                                    {Math.round(
+                                      d.uptime.baseActivationRate * 100,
+                                    )}
+                                    % base +{" "}
+                                    {Math.round(
+                                      (d.uptime.triggerRate -
+                                        d.uptime.baseActivationRate) *
+                                        100,
+                                    )}
+                                    % buff ={" "}
+                                    {Math.round(d.uptime.triggerRate * 100)}%
+                                    {d.conditionalBuff != null && (
+                                      <>
+                                        <br />
+                                        {t("effective_magnitude")}:{" "}
+                                        {Math.round(
+                                          d.effectiveActiveMag * 100,
+                                        )}
+                                        % (
+                                        {d.conditionMet
+                                          ? t("condition_met")
+                                          : t("condition_not_met")}
+                                        )
+                                      </>
+                                    )}
+                                    <br />
+                                    {t("uptime_ratio")}: (
+                                    {d.uptime.triggers} triggers *{" "}
+                                    {d.uptime.duration}s duration *{" "}
+                                    {Math.round(d.uptime.triggerRate * 100)}%
+                                    trigger rate) / {SONG}s ={" "}
+                                    {(d.uptime.uptimeRatio * 100).toFixed(1)}%
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <strong
+                                    style={{ color: "var(--text-primary)" }}
+                                  >
+                                    {t("score_bonus_math")}:
+                                  </strong>
+                                  <div
+                                    style={{
+                                      paddingLeft: "10px",
+                                      marginTop: "2px",
+                                      color: "var(--text-muted)",
+                                    }}
+                                  >
+                                    {t("active_contribution")}:{" "}
+                                    {Math.round(
+                                      d.effectiveActiveMag * 100,
+                                    )}
+                                    % effective buff x{" "}
+                                    {Math.round(
+                                      d.uptime.triggerRate * 100,
+                                    )}
+                                    % rate x overlap/priority = +{d.activeContribution.toFixed(
+                                      2,
+                                    )}
+                                    % of team score
+                                    <br />
+                                    {t("special_contribution")}:{" "}
+                                    {Math.round(d.specialBuff * 100)}% buff x{" "}
+                                    {d.specialDuration}s window x position
+                                    weight = +{d.specialContribution.toFixed(2)}%
+                                    of team score
+                                    {d.sarContribution !== 0 && (
+                                      <>
+                                        <br />
+                                        {t("sar_contribution")}:{" "}
+                                        {Math.round(d.sarPct * 100)}% rate-up
+                                        uplift (incl. support) = +
+                                        {d.sarContribution.toFixed(2)}% of team
+                                        score
+                                      </>
+                                    )}
+                                    <br />
+                                    {t("total_expected_bonus")}: +
+                                    {d.activeContribution.toFixed(2)}% +{" "}
+                                    {d.specialContribution.toFixed(2)}%
+                                    {d.sarContribution !== 0
+                                      ? ` + ${d.sarContribution.toFixed(2)}%`
+                                      : ""}{" "}
+                                    = +{(d.totalBonus * 100).toFixed(2)}%
+                                  </div>
+                                </div>
+
+                                <div
+                                  style={{
+                                    borderTop:
+                                      "1px solid rgba(255,255,255,0.04)",
+                                    paddingTop: "6px",
+                                    marginTop: "4px",
+                                  }}
+                                >
+                                  <strong
+                                    style={{ color: "var(--text-primary)" }}
+                                  >
+                                    {t("final_unit_score_math")}:
+                                  </strong>
+                                  <div
+                                    style={{
+                                      paddingLeft: "10px",
+                                      marginTop: "2px",
+                                      fontWeight: "bold",
+                                      color: "var(--text-secondary)",
+                                    }}
+                                  >
+                                    {Math.round(
+                                      d.overallPower,
+                                    ).toLocaleString()}{" "}
+                                    Power * (1 + {d.totalBonus.toFixed(4)}) ={" "}
+                                    {d.unitScore.toLocaleString()} Unit Score
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {teamInfo && (
                             <div
                               style={{
-                                paddingLeft: "10px",
-                                marginTop: "2px",
+                                borderTop: "1px solid rgba(255,255,255,0.06)",
+                                paddingTop: "0.75rem",
+                                fontSize: "0.78rem",
                                 color: "var(--text-muted)",
+                                lineHeight: "1.6",
                               }}
                             >
-                              {Math.round(
-                                details.stats.sense.final,
-                              ).toLocaleString()}{" "}
-                              (Sense) +{" "}
-                              {Math.round(
-                                details.stats.technique.final,
-                              ).toLocaleString()}{" "}
-                              (Tech) +{" "}
-                              {Math.round(
-                                details.stats.performance.final,
-                              ).toLocaleString()}{" "}
-                              (Perf) ={" "}
-                              {Math.round(
-                                details.overallPower,
-                              ).toLocaleString()}{" "}
-                              {t("power")}
+                              <strong
+                                style={{ color: "var(--text-primary)" }}
+                              >
+                                {t("team_score_recon")}:
+                              </strong>{" "}
+                              Team Stat (sum of final stats; outfit leader:{" "}
+                              {teamInfo.outfitLeaderName}) ={" "}
+                              {Math.round(teamInfo.stat).toLocaleString()} x (1
+                              + {teamInfo.totalBonus.toFixed(4)}) ={" "}
+                              {teamInfo.score.toLocaleString()}
                             </div>
-                          </div>
-
-                          <div>
-                            <strong style={{ color: "var(--text-primary)" }}>
-                              {t("active_uptime_math")}:
-                            </strong>
-                            <div
-                              style={{
-                                paddingLeft: "10px",
-                                marginTop: "2px",
-                                color: "var(--text-muted)",
-                              }}
-                            >
-                              {t("triggers_in")}: Math.floor(165 /{" "}
-                              {details.uptime.interval}) ={" "}
-                              {details.uptime.triggers}
-                              <br />
-                              {t("trigger_rate")}:{" "}
-                              {Math.round(
-                                details.uptime.baseActivationRate * 100,
-                              )}
-                              % base +{" "}
-                              {Math.round(
-                                (details.uptime.triggerRate -
-                                  details.uptime.baseActivationRate) *
-                                  100,
-                              )}
-                              % buff ={" "}
-                              {Math.round(details.uptime.triggerRate * 100)}%
-                              <br />
-                              {t("uptime_ratio")}: ({details.uptime.triggers}{" "}
-                              triggers * {details.uptime.duration}s duration *{" "}
-                              {Math.round(details.uptime.triggerRate * 100)}%
-                              trigger rate) / 165s ={" "}
-                              {(details.uptime.uptimeRatio * 100).toFixed(1)}%
-                            </div>
-                          </div>
-
-                          <div>
-                            <strong style={{ color: "var(--text-primary)" }}>
-                              {t("score_bonus_math")}:
-                            </strong>
-                            <div
-                              style={{
-                                paddingLeft: "10px",
-                                marginTop: "2px",
-                                color: "var(--text-muted)",
-                              }}
-                            >
-                              {t("active")}:{" "}
-                              {Math.round(details.activeBuff * 100)}% active
-                              buff *{" "}
-                              {(details.uptime.uptimeRatio * 100).toFixed(1)}%
-                              uptime ={" "}
-                              {(
-                                details.activeBuff *
-                                details.uptime.uptimeRatio *
-                                100
-                              ).toFixed(1)}
-                              % score bonus
-                              <br />
-                              {t("special")}:{" "}
-                              {Math.round(details.specialBuff * 100)}% special
-                              buff * 100% trigger rate ={" "}
-                              {Math.round(details.specialBuff * 100)}% score
-                              bonus
-                              <br />
-                              {t("total_expected_bonus")}:{" "}
-                              {(
-                                details.activeBuff *
-                                details.uptime.uptimeRatio *
-                                100
-                              ).toFixed(1)}
-                              % + {Math.round(details.specialBuff * 100)}% = +
-                              {(details.totalBonus * 100).toFixed(1)}%
-                            </div>
-                          </div>
-
-                          <div
-                            style={{
-                              borderTop: "1px solid rgba(255,255,255,0.04)",
-                              paddingTop: "6px",
-                              marginTop: "4px",
-                            }}
-                          >
-                            <strong style={{ color: "var(--text-primary)" }}>
-                              {t("final_unit_score_math")}:
-                            </strong>
-                            <div
-                              style={{
-                                paddingLeft: "10px",
-                                marginTop: "2px",
-                                fontWeight: "bold",
-                                color: "var(--text-secondary)",
-                              }}
-                            >
-                              {Math.round(
-                                details.overallPower,
-                              ).toLocaleString()}{" "}
-                              Power * (1 + {details.totalBonus.toFixed(4)}) ={" "}
-                              {details.unitScore.toLocaleString()} Unit Score
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ) : (
@@ -4953,7 +5298,7 @@ export default function TeamBuilder({
                         cursor: "pointer",
                         position: "relative",
                         border: isSelected
-                          ? `2px solid ${char.accentColor}`
+                          ? `2px solid ${getTypeColor(char.type)}`
                           : "1px solid rgba(255,255,255,0.08)",
                         background: isSelected
                           ? `${char.accentColor}10`
@@ -4987,7 +5332,7 @@ export default function TeamBuilder({
                         >
                           {char.image ? (
                             <img
-                              src={char.image}
+                              src={char.fallbackImage || char.image}
                               alt={char.name}
                               style={{
                                 width: "100%",
