@@ -718,8 +718,8 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
 // 1. Characters CRUD
 
 app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
-  const { skills, stats, bio, charIds } = req.body;
-  if (!skills && !stats && !bio) {
+  const { skills, stats, bio, full, charIds } = req.body;
+  if (!skills && !stats && !bio && !full) {
     return res.status(400).json({ error: 'At least one sync option must be selected' });
   }
 
@@ -791,6 +791,24 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
             if (skills) {
               fieldsToUpdate.push(`skills = $${valIdx++}::jsonb`);
               values.push(JSON.stringify(char.skills));
+            }
+            if (full) {
+              fieldsToUpdate.push(`image = $${valIdx++}`);
+              values.push(char.image);
+              fieldsToUpdate.push(`avatar = $${valIdx++}`);
+              values.push(char.avatar);
+              fieldsToUpdate.push(`"cardData" = $${valIdx++}::jsonb`);
+              values.push(JSON.stringify(char.cardData || {}));
+              fieldsToUpdate.push(`"cards" = $${valIdx++}::jsonb`);
+              values.push(JSON.stringify(char.cards || []));
+              fieldsToUpdate.push(`"characterId" = $${valIdx++}`);
+              values.push(char.characterId || null);
+              fieldsToUpdate.push(`"attributeId" = $${valIdx++}`);
+              values.push(char.attributeId || null);
+              fieldsToUpdate.push(`"groupIds" = $${valIdx++}::jsonb`);
+              values.push(JSON.stringify(char.groupIds || []));
+              fieldsToUpdate.push(`"assetId" = $${valIdx++}`);
+              values.push(char.assetId || null);
             }
 
             if (fieldsToUpdate.length > 0) {

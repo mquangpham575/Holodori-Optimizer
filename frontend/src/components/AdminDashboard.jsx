@@ -23,7 +23,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
   // Guide Form Modal State
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [editingGuide, setEditingGuide] = useState(null);
-  const [syncOptions, setSyncOptions] = useState({ skills: true, stats: false, bio: false });
+  const [syncOptions, setSyncOptions] = useState({ skills: true, stats: false, bio: false, full: false });
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [syncSuccess, setSyncSuccess] = useState('');
@@ -684,6 +684,19 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Name, Title, Rarity, Group, Type, Accent Color, Image path, and Avatar text</div>
                   </div>
                 </label>
+
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={syncOptions.full} 
+                    onChange={(e) => setSyncOptions(prev => ({ ...prev, full: e.target.checked }))}
+                    style={{ width: '17px', height: '17px', accentColor: 'var(--accent-color)', marginTop: '2px' }}
+                  />
+                  <div>
+                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Full Sync (Images + Cards)</strong>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Image path, Avatar text, per-rarity Cards, Card Data, and internal IDs</div>
+                  </div>
+                </label>
               </div>
 
               {/* Character selection grid for targeted sync */}
@@ -776,7 +789,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
 
             <button 
               onClick={handlePerformSync} 
-              disabled={isSyncing || (!syncOptions.skills && !syncOptions.stats && !syncOptions.bio)}
+              disabled={isSyncing || (!syncOptions.skills && !syncOptions.stats && !syncOptions.bio && !syncOptions.full)}
               style={{
                 width: '100%',
                 padding: '0.85rem',
@@ -791,7 +804,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                opacity: (isSyncing || (!syncOptions.skills && !syncOptions.stats && !syncOptions.bio)) ? 0.5 : 1,
+                opacity: (isSyncing || (!syncOptions.skills && !syncOptions.stats && !syncOptions.bio && !syncOptions.full)) ? 0.5 : 1,
                 transition: 'all 0.2s ease-in-out'
               }}
             >
