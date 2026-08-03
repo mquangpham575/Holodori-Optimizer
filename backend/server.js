@@ -117,6 +117,14 @@ const initPostgresSchema = async () => {
       )
     `);
 
+    // Add columns to characters table if it was created by an older schema
+    await client.query(`ALTER TABLE characters ADD COLUMN IF NOT EXISTS "cardData" JSONB NOT NULL DEFAULT '{}'::jsonb`);
+    await client.query(`ALTER TABLE characters ADD COLUMN IF NOT EXISTS "cards" JSONB NOT NULL DEFAULT '[]'::jsonb`);
+    await client.query(`ALTER TABLE characters ADD COLUMN IF NOT EXISTS "characterId" TEXT`);
+    await client.query(`ALTER TABLE characters ADD COLUMN IF NOT EXISTS "attributeId" TEXT`);
+    await client.query(`ALTER TABLE characters ADD COLUMN IF NOT EXISTS "groupIds" JSONB`);
+    await client.query(`ALTER TABLE characters ADD COLUMN IF NOT EXISTS "assetId" TEXT`);
+
     // Create presets table (partitioned by device_id)
     await client.query(`
       CREATE TABLE IF NOT EXISTS presets (
@@ -718,18 +726,9 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
 // 1. Characters CRUD
 
 app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
-  const { skills, stats, bio, full, charIds } = req.body;
-  if (!skills && !stats && !bio && !full) {
-    return res.status(400).json({ error: 'At least one sync option must be selected' });
-  }
-
   try {
     const module = await import('../frontend/src/data.js');
-    const sourceCharacters = module.CHARACTERS;
-    let charactersToSync = sourceCharacters;
-    if (Array.isArray(charIds) && charIds.length > 0) {
-      charactersToSync = sourceCharacters.filter(c => charIds.includes(c.id));
-    }
+    const charactersToSync = module.CHARACTERS;
 
     if (isProd) {
       const client = await pgPool.connect();
@@ -766,50 +765,38 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
             const values = [];
             let valIdx = 1;
 
-            if (bio) {
-              fieldsToUpdate.push(`name = $${valIdx++}`);
-              values.push(char.name);
-              fieldsToUpdate.push(`title = $${valIdx++}`);
-              values.push(char.title);
-              fieldsToUpdate.push(`rarity = $${valIdx++}`);
-              values.push(char.rarity);
-              fieldsToUpdate.push(`"group" = $${valIdx++}`);
-              values.push(char.group);
-              fieldsToUpdate.push(`type = $${valIdx++}`);
-              values.push(char.type);
-              fieldsToUpdate.push(`accentColor = $${valIdx++}`);
-              values.push(char.accentColor);
-              fieldsToUpdate.push(`image = $${valIdx++}`);
-              values.push(char.image);
-              fieldsToUpdate.push(`avatar = $${valIdx++}`);
-              values.push(char.avatar);
-            }
-            if (stats) {
-              fieldsToUpdate.push(`stats = $${valIdx++}::jsonb`);
-              values.push(JSON.stringify(char.stats));
-            }
-            if (skills) {
-              fieldsToUpdate.push(`skills = $${valIdx++}::jsonb`);
-              values.push(JSON.stringify(char.skills));
-            }
-            if (full) {
-              fieldsToUpdate.push(`image = $${valIdx++}`);
-              values.push(char.image);
-              fieldsToUpdate.push(`avatar = $${valIdx++}`);
-              values.push(char.avatar);
-              fieldsToUpdate.push(`"cardData" = $${valIdx++}::jsonb`);
-              values.push(JSON.stringify(char.cardData || {}));
-              fieldsToUpdate.push(`"cards" = $${valIdx++}::jsonb`);
-              values.push(JSON.stringify(char.cards || []));
-              fieldsToUpdate.push(`"characterId" = $${valIdx++}`);
-              values.push(char.characterId || null);
-              fieldsToUpdate.push(`"attributeId" = $${valIdx++}`);
-              values.push(char.attributeId || null);
-              fieldsToUpdate.push(`"groupIds" = $${valIdx++}::jsonb`);
-              values.push(JSON.stringify(char.groupIds || []));
-              fieldsToUpdate.push(`"assetId" = $${valIdx++}`);
-              values.push(char.assetId || null);
-            }
+            fieldsToUpdate.push(`name = $${valIdx++}`);
+            values.push(char.name);
+            fieldsToUpdate.push(`title = $${valIdx++}`);
+            values.push(char.title);
+            fieldsToUpdate.push(`rarity = $${valIdx++}`);
+            values.push(char.rarity);
+            fieldsToUpdate.push(`"group" = $${valIdx++}`);
+            values.push(char.group);
+            fieldsToUpdate.push(`type = $${valIdx++}`);
+            values.push(char.type);
+            fieldsToUpdate.push(`accentColor = $${valIdx++}`);
+            values.push(char.accentColor);
+            fieldsToUpdate.push(`image = $${valIdx++}`);
+            values.push(char.image);
+            fieldsToUpdate.push(`avatar = $${valIdx++}`);
+            values.push(char.avatar);
+            fieldsToUpdate.push(`stats = $${valIdx++}::jsonb`);
+            values.push(JSON.stringify(char.stats));
+            fieldsToUpdate.push(`skills = $${valIdx++}::jsonb`);
+            values.push(JSON.stringify(char.skills));
+            fieldsToUpdate.push(`"cardData" = $${valIdx++}::jsonb`);
+            values.push(JSON.stringify(char.cardData || {}));
+            fieldsToUpdate.push(`"cards" = $${valIdx++}::jsonb`);
+            values.push(JSON.stringify(char.cards || []));
+            fieldsToUpdate.push(`"characterId" = $${valIdx++}`);
+            values.push(char.characterId || null);
+            fieldsToUpdate.push(`"attributeId" = $${valIdx++}`);
+            values.push(char.attributeId || null);
+            fieldsToUpdate.push(`"groupIds" = $${valIdx++}::jsonb`);
+            values.push(JSON.stringify(char.groupIds || []));
+            fieldsToUpdate.push(`"assetId" = $${valIdx++}`);
+            values.push(char.assetId || null);
 
             if (fieldsToUpdate.length > 0) {
               values.push(char.id);

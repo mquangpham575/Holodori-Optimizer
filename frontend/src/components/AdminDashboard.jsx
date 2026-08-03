@@ -23,11 +23,9 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
   // Guide Form Modal State
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [editingGuide, setEditingGuide] = useState(null);
-  const [syncOptions, setSyncOptions] = useState({ skills: true, stats: false, bio: false, full: false });
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [syncSuccess, setSyncSuccess] = useState('');
-  const [selectedCharIds, setSelectedCharIds] = useState([]);
   const [guideForm, setGuideForm] = useState({
     id: '', title: '', summary: '', category: 'General', readTime: '5 min read',
     author: 'Admin', date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
@@ -325,7 +323,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
           'Content-Type': 'application/json',
           'x-admin-password': password
         },
-        body: JSON.stringify({ ...syncOptions, charIds: selectedCharIds })
+        body: JSON.stringify({})
       });
       const data = await res.json();
       if (!res.ok) {
@@ -636,144 +634,17 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
           <div className="db-sync-container" style={{ maxWidth: '600px', margin: '0 auto' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Key className="text-gold" size={24} />
-              Selective Database Sync
+              Full Database Sync
             </h2>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
-              Synchronize character definitions from the static <code>data.js</code> codebase file directly into your cloud/local database. Select which specific properties you want to overwrite. All other unselected parameters will remain completely untouched.
+              Synchronize character definitions from the static <code>data.js</code> codebase file directly into your cloud/local database. This overwrites every character field (name, title, rarity, group, type, accent color, image, avatar, stats, skills, cards, and internal IDs) — <code>data.js</code> is the single source of truth.
             </p>
 
             <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '2rem' }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Select Properties to Overwrite</h4>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={syncOptions.skills} 
-                    onChange={(e) => setSyncOptions(prev => ({ ...prev, skills: e.target.checked }))}
-                    style={{ width: '17px', height: '17px', accentColor: 'var(--accent-color)', marginTop: '2px' }}
-                  />
-                  <div>
-                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Skills Only</strong>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Outfit, Special, Active, and Passive skills descriptions</div>
-                  </div>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={syncOptions.stats} 
-                    onChange={(e) => setSyncOptions(prev => ({ ...prev, stats: e.target.checked }))}
-                    style={{ width: '17px', height: '17px', accentColor: 'var(--accent-color)', marginTop: '2px' }}
-                  />
-                  <div>
-                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Stats Only</strong>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Sense, Technique, Performance, and Total stats</div>
-                  </div>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={syncOptions.bio} 
-                    onChange={(e) => setSyncOptions(prev => ({ ...prev, bio: e.target.checked }))}
-                    style={{ width: '17px', height: '17px', accentColor: 'var(--accent-color)', marginTop: '2px' }}
-                  />
-                  <div>
-                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Profile Bio Only</strong>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Name, Title, Rarity, Group, Type, Accent Color, Image path, and Avatar text</div>
-                  </div>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer', userSelect: 'none' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={syncOptions.full} 
-                    onChange={(e) => setSyncOptions(prev => ({ ...prev, full: e.target.checked }))}
-                    style={{ width: '17px', height: '17px', accentColor: 'var(--accent-color)', marginTop: '2px' }}
-                  />
-                  <div>
-                    <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Full Sync (Images + Cards)</strong>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>Image path, Avatar text, per-rarity Cards, Card Data, and internal IDs</div>
-                  </div>
-                </label>
-              </div>
-
-              {/* Character selection grid for targeted sync */}
-              <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.25rem' }}>
-                <label style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', display: 'block', marginBottom: '0.75rem' }}>
-                  Select Characters to Sync (Optional - leave empty to sync all)
-                </label>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
-                  gap: '8px', 
-                  maxHeight: '180px', 
-                  overflowY: 'auto', 
-                  background: 'rgba(0,0,0,0.15)', 
-                  padding: '10px', 
-                  borderRadius: '6px', 
-                  border: '1px solid var(--border-color)' 
-                }}>
-                  {characters.map(char => {
-                    const isSelected = selectedCharIds.includes(char.id);
-                    return (
-                      <div 
-                        key={char.id}
-                        onClick={() => {
-                          if (isSelected) {
-                            setSelectedCharIds(prev => prev.filter(id => id !== char.id));
-                          } else {
-                            setSelectedCharIds(prev => [...prev, char.id]);
-                          }
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '6px 8px',
-                          borderRadius: '4px',
-                          background: isSelected ? 'var(--accent-glow)' : 'transparent',
-                          border: `1px solid ${isSelected ? 'var(--accent-color)' : 'rgba(255,255,255,0.03)'}`,
-                          cursor: 'pointer',
-                          fontSize: '0.8rem',
-                          transition: 'all 0.15s ease',
-                          userSelect: 'none'
-                        }}
-                      >
-                        <div style={{ 
-                          width: '20px', 
-                          height: '20px', 
-                          borderRadius: '50%', 
-                          overflow: 'hidden', 
-                          border: `1px solid ${char.accentColor}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'rgba(0,0,0,0.3)',
-                          flexShrink: 0
-                        }}>
-                          {char.image ? <img src={char.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : char.avatar}
-                        </div>
-                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-                          {char.name}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                {selectedCharIds.length > 0 && (
-                  <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Selected: {selectedCharIds.length} VTubers</span>
-                    <button 
-                      onClick={() => setSelectedCharIds([])}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600, padding: 0 }}
-                    >
-                      Clear Selection
-                    </button>
-                  </div>
-                )}
-              </div>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Full Sync (Images + Cards)</h4>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.6', margin: 0 }}>
+                Name, Title, Rarity, Group, Type, Accent Color, Image path, Avatar text, Stats, Skills, per-rarity Cards, Card Data, and internal IDs will all be reset to match <code>data.js</code>.
+              </p>
             </div>
 
             {syncError && (
@@ -789,7 +660,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
 
             <button 
               onClick={handlePerformSync} 
-              disabled={isSyncing || (!syncOptions.skills && !syncOptions.stats && !syncOptions.bio && !syncOptions.full)}
+              disabled={isSyncing}
               style={{
                 width: '100%',
                 padding: '0.85rem',
@@ -804,7 +675,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                opacity: (isSyncing || (!syncOptions.skills && !syncOptions.stats && !syncOptions.bio && !syncOptions.full)) ? 0.5 : 1,
+                opacity: isSyncing ? 0.5 : 1,
                 transition: 'all 0.2s ease-in-out'
               }}
             >
