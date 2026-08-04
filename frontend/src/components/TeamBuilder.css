@@ -767,12 +767,6 @@
   transition: all 0.25s ease;
 }
 
-.roster-search-input:focus {
-  border-color: var(--accent-color);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 10px var(--accent-glow);
-}
-
 /* Presets Manager */
 .presets-manager {
   display: flex;
@@ -1039,7 +1033,155 @@
   gap: 0.75rem;
   margin-bottom: 1.5rem;
   align-items: center;
+  flex-wrap: wrap;
 }
+
+.recommend-goal-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.recommend-goal-toggle {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.recommend-goal-card {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, #233458);
+  background: #0e172a;
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recommend-goal-card:hover {
+  border-color: #3a86ff;
+  color: var(--text-primary, #f3f6ff);
+}
+
+.recommend-goal-card.active {
+  background: linear-gradient(135deg, #3a86ff, #4361ee);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(58, 134, 255, 0.35);
+}
+
+.recommend-oshi-picker {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  width: auto;
+  max-width: 100%;
+  flex: 1 1 300px;
+  min-width: 220px;
+}
+
+.recommend-oshi-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary, #cbd5e1);
+  white-space: nowrap;
+}
+
+.recommend-oshi-search-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.roster-search-input-wrapper.recommend-oshi-search {
+  padding: 0.2rem 0.7rem;
+}
+
+.roster-search-input-wrapper.recommend-oshi-search .roster-search-input {
+  font-size: 0.85rem;
+}
+
+.roster-search-input-wrapper.recommend-oshi-search:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.recommend-oshi-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  font-size: 0.85rem;
+}
+
+.recommend-oshi-selected strong {
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recommend-oshi-selected-title {
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recommend-oshi-selected .btn-clear-search {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.recommend-oshi-dropdown {
+  left: 0;
+  right: 0;
+}
+
+.recommend-oshi-results-grid {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.recommend-oshi-result {
+  cursor: pointer;
+}
+
+.recommend-oshi-result.is-selected {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.recommend-oshi-check {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-secondary, #cbd5e1);
+  border: 1px solid #233458;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.recommend-oshi-check.on {
+  background: linear-gradient(135deg, #3a86ff, #4361ee);
+  border-color: transparent;
+  color: #fff;
+}
+
 
 .roster-groups-container {
   display: flex;
@@ -1305,15 +1447,14 @@
   align-items: center;
   padding: 0.75rem 1.25rem;
   border-radius: 14px;
+
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   transition: all 0.25s ease;
 }
 
-.roster-search-input-wrapper:focus-within {
-  border-color: #38bdf8;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
-  background: rgba(255, 255, 255, 0.06);
+.roster-search-section .roster-search-input-wrapper:hover {
+  border-color: rgba(56, 189, 248, 0.5);
 }
 
 .roster-search-input {

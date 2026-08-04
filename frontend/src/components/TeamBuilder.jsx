@@ -1578,7 +1578,13 @@ export const recommendBestTeamAsync = (
   characters,
   onProgress,
   onComplete,
+  options = {},
 ) => {
+  const mode =
+    options.mode === "oshi" || options.mode === "upgrade"
+      ? options.mode
+      : "best";
+  const oshiRosterId = options.oshiCardId || null;
   const charBloomMap = {};
   const charLevelMap = {};
   const ownedIds = [];
@@ -1599,8 +1605,8 @@ export const recommendBestTeamAsync = (
 
   // Reference-search bridge: materialize the owned roster into the reference
   // engine's card shape so the vendored Holodori search scores it exactly.
-  const materialized = [];
-  const idByIndex = [];
+  let materialized = [];
+  let idByIndex = [];
   ownedIds.forEach((id) => {
     const char = findChar(id, characters);
     if (!char) return;
@@ -1613,6 +1619,51 @@ export const recommendBestTeamAsync = (
       materialized.push(card);
     }
   });
+  const ownedKeysList = materialized.map((c) => c.key);
+
+  let oshiCard = null;
+  if (oshiRosterId) {
+    const oshiIdx = ownedIds.findIndex((id) => id === oshiRosterId);
+    if (oshiIdx >= 0 && materialized[oshiIdx]) oshiCard = materialized[oshiIdx];
+  }
+  if (mode === "oshi" && !oshiCard) {
+    onComplete({ error: "Choose your oshi card first." });
+    return;
+  }
+
+  // Upgrade mode tests UNOWNED 5★ candidates, so the engine must load the full
+  // card database: owned cards keep their roster level/bloom, unowned cards are
+  // assumed at max Level / Bloom 0 (reference assumption). Ownership is still
+  // expressed via ownedKeys.
+  if (mode === "upgrade") {
+    const ownedKeySet = new Set(ownedKeysList);
+    const full = [];
+    const fullIndex = [];
+    for (const char of characters) {
+      if (!char || !char.cardData) continue;
+      const cd = char.cardData;
+      const isOwned = ownedKeySet.has(cd.key || cd.id);
+      const ownedLevel =
+        charLevelMap[char.id] && charLevelMap[char.id] > 1
+          ? charLevelMap[char.id]
+          : 70;
+      const card = materializeReferenceCard(
+        char,
+        isOwned ? charBloomMap[char.id] ?? 0 : 0,
+        isOwned ? ownedLevel : cd.maxLevel || 70,
+      );
+      if (card) {
+        fullIndex.push(char.id);
+        full.push(card);
+      }
+    }
+    if (full.length < 5) {
+      onComplete(null);
+      return;
+    }
+    materialized = full;
+    idByIndex = fullIndex;
+  }
 
   if (materialized.length < 5) {
     onComplete(null);
@@ -1632,8 +1683,59 @@ export const recommendBestTeamAsync = (
     worker = new Worker(url);
     worker.onmessage = (e) => {
       const msg = e.data || {};
-      if (msg.type === "progress") {
+      if (msg.type === "progress" || msg.type === "upgradeProgress") {
         if (onProgress) onProgress(mapSearchProgress(msg));
+      } else if (msg.type === "upgradeDone") {
+        if (done) return;
+        done = true;
+        if (worker) worker.terminate();
+        URL.revokeObjectURL(url);
+        const recommendations = [];
+        for (const rec of Array.isArray(msg.recommendations)
+          ? msg.recommendations
+          : []) {
+          const r = rec && rec.result;
+          if (!r || !Array.isArray(r.ids)) continue;
+          const team = r.ids.map((i) => idByIndex[i]).filter(Boolean);
+          if (team.length !== 5) continue;
+          const teamCards = r.ids.map((i) => materialized[i]);
+          const leaderIndex = teamCards.findIndex((c) => c.id === r.outfitCard);
+          const leader = idByIndex[r.ids[leaderIndex >= 0 ? leaderIndex : 0]];
+          const bloomLevels = r.ids.map(
+            (i) => (materialized[i] ? materialized[i].bloom : 0),
+          );
+          const cardLevels = r.ids.map(
+            (i) => (materialized[i] ? materialized[i].level : 70),
+          );
+          const cardCharId = findChar(rec.cardId, characters)?.id || null;
+          recommendations.push({
+            cardId: rec.cardId,
+            cardCharId,
+            rank: recommendations.length + 1,
+            score: rec.score || Math.round(r.score),
+            gain: Number(rec.gain) || 0,
+            improves: !!rec.improves,
+            team,
+            leader,
+            bloomLevels,
+            cardLevels,
+            simulatedScore: Math.round(r.score),
+            summary: getTeamCalculationSummary(
+              team,
+              leader,
+              characters,
+              bloomLevels,
+              cardLevels,
+            ),
+          });
+        }
+        onComplete({
+          mode: "upgrade",
+          baselineScore: msg.baselineScore || msg.baseline?.score || 0,
+          recommendations,
+          candidateCount: msg.candidateCount || 0,
+          refinedCount: msg.refinedCount || 0,
+        });
       } else if (msg.type === "done") {
         if (done) return;
         done = true;
@@ -1689,6 +1791,8 @@ export const recommendBestTeamAsync = (
           passiveCount: 0,
           simulatedScore: bestResult.simulatedScore,
           summary: bestResult.summary,
+          mode,
+          oshiMember: oshiCard ? oshiCard.member : null,
         });
       } else if (msg.type === "error") {
         if (done) return;
@@ -1696,7 +1800,7 @@ export const recommendBestTeamAsync = (
         if (worker) worker.terminate();
         URL.revokeObjectURL(url);
         console.error("Team recommendation search failed:", msg.message);
-        onComplete(null);
+        onComplete({ error: msg.message });
       }
     };
     worker.onerror = (e) => {
@@ -1707,22 +1811,45 @@ export const recommendBestTeamAsync = (
       console.error("Team recommendation worker failed:", e.message);
       onComplete(null);
     };
-    worker.postMessage({
-      action: "optimize",
+    const baseParams = {
       scoringMode: "generic",
       specialMode: "combo",
-      outfitMode: "best",
       song: 140,
       other: 0,
       ownedOnly: true,
-      ownedKeys: materialized.map((c) => c.key),
+      ownedKeys: ownedKeysList,
       cardPool: "all",
       searchQuality: "balanced",
       topN: 10,
       boardMode: "off",
       boardFrequencyNodes: 0,
       suppressProgress: false,
-    });
+    };
+    const postParams =
+      mode === "upgrade"
+        ? {
+            ...baseParams,
+            action: "upgrade",
+            searchMode: "owned",
+            outfitMode: "best",
+            upgradeOshiCardId: oshiCard ? oshiCard.id : null,
+          }
+        : mode === "oshi"
+          ? {
+              ...baseParams,
+              action: "optimize",
+              searchMode: "anchor",
+              anchor: oshiCard.key,
+              oshiCharacterId: oshiCard.characterId,
+              outfitMode: "oshi",
+            }
+          : {
+              ...baseParams,
+              action: "optimize",
+              searchMode: "owned",
+              outfitMode: "best",
+            };
+    worker.postMessage(postParams);
   } catch (err) {
     console.error("Team recommendation worker failed to start:", err);
     onComplete(null);
@@ -1753,6 +1880,9 @@ export default function TeamBuilder({
   const [calcProgress, setCalcProgress] = useState(0);
   const [isRecSkillsExpanded, setIsRecSkillsExpanded] = useState(false);
   const [recommendedTeamResult, setRecommendedTeamResult] = useState(null);
+  const [recommendMode, setRecommendMode] = useState("best");
+  const [oshiCardId, setOshiCardId] = useState("");
+  const [oshiSearchQuery, setOshiSearchQuery] = useState("");
   const currentPreset =
     presets.find((p) => p.id === selectedPresetId) || presets[0];
   const activeTeam = currentPreset.team || [null, null, null, null, null];
@@ -2004,6 +2134,10 @@ export default function TeamBuilder({
   };
 
   const handleGenerateRecommendation = () => {
+    if (recommendMode === "oshi" && !oshiCardId) {
+      alert("Choose your oshi card first.");
+      return;
+    }
     const activeCardList =
       ALL_CARDS && ALL_CARDS.length > 0
         ? ALL_CARDS
@@ -2020,17 +2154,27 @@ export default function TeamBuilder({
           setCalcProgress(percent);
         },
         (result) => {
-          if (result && result.topTeams && result.topTeams.length > 0) {
+          if (result && result.error) {
+            alert(result.error);
+          } else if (
+            result &&
+            ((result.topTeams && result.topTeams.length > 0) ||
+              (result.recommendations &&
+                result.recommendations.length > 0))
+          ) {
             setRecommendedTeamResult(result);
             setIsRecSkillsExpanded(false);
             setShowRecommendationModal(true);
           } else {
             alert(
-              "Please check at least 5 characters in your owned roster to generate recommendations!",
+              recommendMode === "upgrade"
+                ? "You need at least 5 owned cards and at least one unowned 5★ card to search for your best next card!"
+                : "Please check at least 5 characters in your owned roster to generate recommendations!",
             );
           }
           setIsCalculatingRec(false);
         },
+        { mode: recommendMode, oshiCardId },
       );
     }, 60);
   };
@@ -2078,6 +2222,47 @@ export default function TeamBuilder({
     if (recommendedTeamResult) {
       handleApplyRecommendedTeam(recommendedTeamResult);
     }
+  };
+
+  const handleApplyUpgradeRecommendation = (rec) => {
+    if (!rec || !rec.team || rec.team.length !== 5) return;
+    const char = rec.cardCharId ? findChar(rec.cardCharId, characters) : null;
+    let nextRoster = Array.isArray(ownedRoster) ? ownedRoster.slice() : [];
+    if (char) {
+      const alreadyOwned = nextRoster.some((item) =>
+        typeof item === "string" ? item === char.id : item?.id === char.id,
+      );
+      if (!alreadyOwned) {
+        nextRoster.push({
+          id: char.id,
+          bloom: 0,
+          level: char.cardData?.maxLevel || 70,
+        });
+      }
+    }
+    onUpdateOwnedRoster(nextRoster);
+    const nextPresets = presets.map((p) => {
+      if (p.id === selectedPresetId) {
+        return {
+          ...p,
+          team: rec.team,
+          leader: rec.leader,
+          bloomLevels: rec.bloomLevels,
+          cardLevels: rec.cardLevels,
+        };
+      }
+      return p;
+    });
+    onUpdatePreset(selectedPresetId, {
+      team: rec.team,
+      leader: rec.leader,
+      bloomLevels: rec.bloomLevels,
+      cardLevels: rec.cardLevels,
+    });
+    if (onSavePresets) {
+      onSavePresets(nextPresets);
+    }
+    setShowRecommendationModal(false);
   };
   const typeDisplayMap = {
     PURE: "Pure Type",
@@ -2445,6 +2630,22 @@ export default function TeamBuilder({
     })
     .filter(Boolean);
 
+  const selectedOshiChar = oshiCardId
+    ? ownedRosterCards.find((c) => c.id === oshiCardId) || null
+    : null;
+
+  const matchingOshiCards = oshiSearchQuery.trim()
+    ? ownedRosterCards.filter(
+        (c) =>
+          c.name.toLowerCase().includes(oshiSearchQuery.toLowerCase()) ||
+          (c.title &&
+            c.title.toLowerCase().includes(oshiSearchQuery.toLowerCase())) ||
+          String(c.rarityNum ?? c.cardData?.rarity ?? "").includes(
+            oshiSearchQuery.replace(/★/g, "").toLowerCase(),
+          ),
+      )
+    : [];
+
   const leaderChar = findChar(activeLeader, characters);
   const isLeaderInTeam = activeTeam.some((id) => {
     if (!id || !activeLeader) return false;
@@ -2613,7 +2814,7 @@ export default function TeamBuilder({
                 <Search size={16} className="text-secondary mr-2" />
                 <input
                   type="text"
-                  placeholder="Search character name or card title to add to roster..."
+                  placeholder="Search card name or card title to add to roster..."
                   value={rosterSearchQuery}
                   onChange={(e) => setRosterSearchQuery(e.target.value)}
                   className="roster-search-input"
@@ -2699,6 +2900,157 @@ export default function TeamBuilder({
 
             {/* Roster Controls & Quick Actions */}
             <div className="roster-controls">
+              <div className="recommend-goal-bar">
+                <div className="recommend-goal-toggle" role="group">
+                  {[
+                    { key: "best", label: "Best team", title: "Strongest combination from my roster" },
+                    { key: "oshi", label: "Around my oshi", title: "Lock one owned card into every team" },
+                    { key: "upgrade", label: "Next card", title: "Which unowned card would improve my roster most" },
+                  ].map((goal) => (
+                    <button
+                      key={goal.key}
+                      type="button"
+                      className={`recommend-goal-card${recommendMode === goal.key ? " active" : ""}`}
+                      title={goal.title}
+                      onClick={() => {
+                        setRecommendMode(goal.key);
+                        if (goal.key === "best") {
+                          setOshiCardId("");
+                          setOshiSearchQuery("");
+                        }
+                      }}
+                    >
+                      {goal.label}
+                    </button>
+                  ))}
+                </div>
+                {recommendMode !== "best" && (
+                  <div className="recommend-oshi-picker">
+                    <span className="recommend-oshi-label">Oshi card</span>
+                    {selectedOshiChar ? (
+                      <div className="recommend-oshi-selected">
+                        <span className="badge-role-mini">
+                          {selectedOshiChar.rarityNum ??
+                            selectedOshiChar.cardData?.rarity}
+                          ★
+                        </span>
+                        <strong>{selectedOshiChar.name}</strong>
+                        <span className="recommend-oshi-selected-title">
+                          {selectedOshiChar.title}
+                        </span>
+                        <button
+                          className="btn-clear-search"
+                          title="Clear oshi card"
+                          onClick={() => setOshiCardId("")}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="recommend-oshi-search-wrap">
+                        <div className="roster-search-input-wrapper glass recommend-oshi-search">
+                          <Search size={15} className="text-secondary mr-2" />
+                          <input
+                            type="text"
+                            className="roster-search-input"
+                            value={oshiSearchQuery}
+                            onChange={(e) =>
+                              setOshiSearchQuery(e.target.value)
+                            }
+                            placeholder="Search oshi card name or card title to keep in team"
+                          />
+                          {oshiSearchQuery && (
+                            <button
+                              className="btn-clear-search"
+                              title="Clear search"
+                              onClick={() => setOshiSearchQuery("")}
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+                        {oshiSearchQuery.trim().length > 0 && (
+                          <div className="roster-search-results-dropdown glass animate-fade-in recommend-oshi-dropdown">
+                            <div className="search-results-header">
+                              <span>
+                                Owned cards ({matchingOshiCards.length} match)
+                              </span>
+                            </div>
+                            {matchingOshiCards.length === 0 ? (
+                              <p className="no-search-results">
+                                No owned cards match "{oshiSearchQuery.trim()}".
+                              </p>
+                            ) : (
+                              <div className="search-results-grid recommend-oshi-results-grid">
+                                {matchingOshiCards.map((c) => {
+                                  const isSelected = oshiCardId === c.id;
+                                  const rarityNum =
+                                    c.rarityNum ?? c.cardData?.rarity;
+                                  return (
+                                    <div
+                                      key={c.id}
+                                      className={`search-card-result-item recommend-oshi-result${
+                                        isSelected ? " is-selected" : ""
+                                      }`}
+                                      onClick={() => {
+                                        setOshiCardId(c.id);
+                                        setOshiSearchQuery("");
+                                      }}
+                                    >
+                                      <div className="search-card-thumb">
+                                        {c.image ? (
+                                          <img
+                                            src={c.image}
+                                            alt={c.name}
+                                            className="search-thumb-img"
+                                          />
+                                        ) : (
+                                          <span className="avatar-fallback">
+                                            {c.avatar}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="search-card-info">
+                                        <span className="search-card-name">
+                                          {c.name}
+                                        </span>
+                                        <span className="search-card-title">
+                                          {c.title}
+                                        </span>
+                                        <div className="search-card-badges">
+                                          <span className="badge-role-mini">
+                                            {rarityNum}
+                                            ★
+                                          </span>
+                                          <span
+                                            className="badge-type-mini"
+                                            style={{
+                                              color: getTypeColor(c.type),
+                                            }}
+                                          >
+                                            {c.type}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <span
+                                        className={`recommend-oshi-check${
+                                          isSelected ? " on" : ""
+                                        }`}
+                                      >
+                                        {isSelected ? "Selected" : "Select"}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <button
                 className="btn-icon-rename"
                 onClick={handleSelect5StarRoster}
@@ -2728,7 +3080,12 @@ export default function TeamBuilder({
                   gap: "0.25rem",
                 }}
               >
-                <Sparkles size={12} /> {t("smart_suggest")}
+                <Sparkles size={12} />{" "}
+                {recommendMode === "upgrade"
+                  ? "Find my best next card"
+                  : recommendMode === "oshi"
+                    ? "Best team around my oshi"
+                    : t("smart_suggest")}
               </button>
             </div>
 
@@ -2945,7 +3302,11 @@ export default function TeamBuilder({
               >
                 <Sparkles size={20} className="text-gold animate-pulse" />
                 <h2 style={{ fontSize: "1.25rem", fontWeight: 800, margin: 0 }}>
-                  Top 10 Recommended Teams
+                  {recommendedTeamResult.mode === "upgrade"
+                    ? "Best Next Cards"
+                    : recommendedTeamResult.mode === "oshi"
+                      ? `Best Team Around ${recommendedTeamResult.oshiMember || "Your Oshi"}`
+                      : "Top 10 Recommended Teams"}
                 </h2>
               </div>
               <button
@@ -2956,15 +3317,33 @@ export default function TeamBuilder({
               </button>
             </div>
             <div className="modal-body" style={{ marginTop: "1rem" }}>
-              <p
-                className="recommendation-desc"
-                style={{ marginBottom: "1.25rem" }}
-              >
-                We evaluated all team combinations from your roster using
-                Holodori Optimizer scoring engine. These results are already
-                ordered for their best modeled positions. Here are the{" "}
-                <strong>Top 10 highest-scoring team configurations</strong>:
-              </p>
+              {recommendedTeamResult.mode === "upgrade" ? (
+                <p
+                  className="recommendation-desc"
+                  style={{ marginBottom: "1.25rem" }}
+                >
+                  Every unowned 5★ card was tested against your roster using the
+                  Holodori Optimizer scoring engine. Only cards that keep a
+                  valid 5-card team are shown. New cards are assumed at max
+                  Level and Bloom 0 — the resulting team still follows your
+                  roster.
+                </p>
+              ) : (
+                <p
+                  className="recommendation-desc"
+                  style={{ marginBottom: "1.25rem" }}
+                >
+                  We evaluated all team combinations from your roster using
+                  Holodori Optimizer scoring engine. These results are already
+                  ordered for their best modeled positions. Here are the{" "}
+                  <strong>
+                    {recommendedTeamResult.mode === "oshi"
+                      ? "Top 10 highest-scoring teams built around your oshi"
+                      : "Top 10 highest-scoring team configurations"}
+                  </strong>
+                  :
+                </p>
+              )}
 
               <div
                 className="top-10-teams-list"
@@ -2974,9 +3353,296 @@ export default function TeamBuilder({
                   gap: "1rem",
                 }}
               >
-                {(
-                  recommendedTeamResult.topTeams || [recommendedTeamResult]
-                ).map((teamItem, teamIdx) => {
+                {recommendedTeamResult.mode === "upgrade" ? (
+                  <div className="upgrade-recs-list">
+                    {recommendedTeamResult.recommendations.map((rec, recIdx) => {
+                      const char = rec.cardCharId
+                        ? findChar(rec.cardCharId, characters)
+                        : null;
+                      const isTop = recIdx === 0;
+                      const improves = rec.improves && rec.gain > 1e-8;
+                      const gainPct = (rec.gain * 100).toFixed(1);
+                      const displayImg =
+                        char?.image ||
+                        char?.fallbackImage ||
+                        char?.cardData?.image;
+                      const recName =
+                        char?.member ||
+                        char?.cardData?.member ||
+                        char?.name ||
+                        "Unknown card";
+                      const cardTitle = char?.title || char?.cardData?.name || "";
+                      return (
+                        <div
+                          key={recIdx}
+                          className="top-team-card glass"
+                          style={{
+                            padding: "1rem 1.25rem",
+                            borderRadius: "14px",
+                            border: isTop
+                              ? "1px solid #ffd700"
+                              : "1px solid #233458",
+                            background: isTop
+                              ? "linear-gradient(135deg, rgba(255,215,0,0.08), rgba(15,23,42,0.9))"
+                              : "rgba(15,23,42,0.7)",
+                            boxShadow: isTop
+                              ? "0 8px 30px rgba(255,215,0,0.15)"
+                              : "none",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "0.85rem",
+                              flexWrap: "wrap",
+                              gap: "0.75rem",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.85rem",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  padding: "4px 12px",
+                                  borderRadius: "999px",
+                                  fontSize: "0.85rem",
+                                  fontWeight: 800,
+                                  background: isTop
+                                    ? "linear-gradient(135deg, #ffd700, #ff9f1c)"
+                                    : "#233458",
+                                  color: isTop ? "#071226" : "#f3f6ff",
+                                  boxShadow: isTop
+                                    ? "0 0 12px rgba(255,215,0,0.4)"
+                                    : "none",
+                                }}
+                              >
+                                {isTop ? "#1 BEST VALUE" : `#${rec.rank}`}
+                              </span>
+                              <div
+                                style={{
+                                  width: "48px",
+                                  height: "48px",
+                                  borderRadius: "50%",
+                                  border: `2px solid ${char?.accentColor || "#3b82f6"}`,
+                                  overflow: "hidden",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  background: "#1e293b",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {displayImg ? (
+                                  <img
+                                    src={displayImg}
+                                    alt={recName}
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                      objectPosition: "50% 25%",
+                                    }}
+                                  />
+                                ) : (
+                                  <span
+                                    style={{
+                                      fontSize: "1rem",
+                                      fontWeight: 800,
+                                      color: char?.accentColor || "#3b82f6",
+                                    }}
+                                  >
+                                    {char?.avatar || recName.substring(0, 2)}
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                <div
+                                  style={{
+                                    fontSize: "1.05rem",
+                                    fontWeight: 800,
+                                    color: isTop
+                                      ? "#ffd700"
+                                      : "var(--text-primary)",
+                                  }}
+                                >
+                                  {recName}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "var(--text-muted)",
+                                  }}
+                                >
+                                  {cardTitle || char?.name || ""}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: "right" }}>
+                              <div
+                                style={{
+                                  fontSize: "1.2rem",
+                                  fontWeight: 800,
+                                  color: improves ? "#3ddc97" : "#f87171",
+                                }}
+                              >
+                                {improves
+                                  ? `+${gainPct}%`
+                                  : "No improvement"}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.7rem",
+                                  color: "var(--text-muted)",
+                                }}
+                              >
+                                vs current best{" "}
+                                {Number(
+                                  recommendedTeamResult.baselineScore || 0,
+                                ).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(5, 1fr)",
+                              gap: "0.5rem",
+                            }}
+                          >
+                            {rec.team.map((charId, cIdx) => {
+                              const tc = findChar(charId, characters);
+                              const isNew =
+                                tc?.id === rec.cardCharId ||
+                                tc?.cardData?.id === rec.cardId;
+                              const name =
+                                tc?.member ||
+                                tc?.cardData?.member ||
+                                tc?.name ||
+                                `Unit ${cIdx + 1}`;
+                              const img =
+                                tc?.image ||
+                                tc?.fallbackImage ||
+                                tc?.cardData?.image;
+                              return (
+                                <div
+                                  key={cIdx}
+                                  style={{
+                                    background: "#0e172a",
+                                    border: isNew
+                                      ? "1px solid #ffd700"
+                                      : "1px solid #233458",
+                                    borderRadius: "10px",
+                                    padding: "0.5rem 0.25rem",
+                                    textAlign: "center",
+                                    position: "relative",
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: "36px",
+                                      height: "36px",
+                                      borderRadius: "50%",
+                                      overflow: "hidden",
+                                      margin: "0 auto 4px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      background: "#1e293b",
+                                      border: isNew
+                                        ? "2px solid #ffd700"
+                                        : "2px solid transparent",
+                                    }}
+                                  >
+                                    {img ? (
+                                      <img
+                                        src={img}
+                                        alt={name}
+                                        style={{
+                                          width: "100%",
+                                          height: "100%",
+                                          objectFit: "cover",
+                                          objectPosition: "50% 25%",
+                                        }}
+                                      />
+                                    ) : (
+                                      <span
+                                        style={{
+                                          fontSize: "0.9rem",
+                                          fontWeight: 800,
+                                          color:
+                                            tc?.accentColor || "#3b82f6",
+                                        }}
+                                      >
+                                        {name.substring(0, 2)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <strong
+                                    style={{
+                                      fontSize: "0.68rem",
+                                      color: "var(--text-primary)",
+                                      display: "block",
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                    }}
+                                  >
+                                    {name}
+                                  </strong>
+                                  {isNew && (
+                                    <span
+                                      style={{
+                                        fontSize: "0.6rem",
+                                        color: "#ffd700",
+                                        fontWeight: 900,
+                                      }}
+                                    >
+                                      NEW
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div
+                            style={{
+                              marginTop: "0.85rem",
+                              display: "flex",
+                              justifyContent: "flex-end",
+                            }}
+                          >
+                            <button
+                              className="btn-primary"
+                              onClick={() => handleApplyUpgradeRecommendation(rec)}
+                              style={{
+                                padding: "8px 18px",
+                                fontSize: "0.85rem",
+                                fontWeight: 700,
+                                background: isTop
+                                  ? "linear-gradient(135deg, #3a86ff, #4361ee)"
+                                  : "#233458",
+                                border: isTop
+                                  ? "none"
+                                  : "1px solid #425174",
+                              }}
+                            >
+                              Add card to roster & apply team
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  (recommendedTeamResult.topTeams || [
+                    recommendedTeamResult,
+                  ]).map((teamItem, teamIdx) => {
                   const rankNum = teamItem.rank || teamIdx + 1;
                   const isTop1 = rankNum === 1;
                   const ldrChar = findChar(teamItem.leader, characters);
@@ -3234,7 +3900,8 @@ export default function TeamBuilder({
                       )}
                     </div>
                   );
-                })}
+                })
+                )}
               </div>
             </div>
             <div
