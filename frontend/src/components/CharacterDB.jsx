@@ -15,6 +15,21 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
 
   const displayList = (ALL_CARDS && ALL_CARDS.length > 0) ? ALL_CARDS : characters;
 
+  const getInitials = (name) => {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+    return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+  };
+
+  const CardArt = ({ name, src, alt, className, small }) => {
+    const [failed, setFailed] = useState(false);
+    if (!src || failed) {
+      return (
+        <div className={`card-art-initials${small ? ' small' : ''}`}>{getInitials(name)}</div>
+      );
+    }
+    return <img src={src} alt={alt || name} className={className} onError={() => setFailed(true)} />;
+  };
+
   const GROUP_ORDER = [
     'Gen 0', 'Gen 1', 'Gen 2', 'GAMERS', 'Gen 3', 'Gen 4', 'Gen 5', 'holoX',
     'ID Gen 1', 'ID Gen 2', 'ID Gen 3', 'Myth', 'Promise', 'Advent', 'ReGLOSS'
@@ -244,21 +259,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
             <div className="rarity-badge">{char.rarity}</div>
             <div className="char-card-body">
               <div className="char-card-media-wrapper">
-                {char.image ? (
-                  <img
-                    src={char.image}
-                    alt={char.name}
-                    className="char-card-img"
-                    onError={(e) => {
-                      if (char.fallbackImage && e.target.src !== char.fallbackImage) {
-                        e.target.src = char.fallbackImage;
-                        e.target.style.objectFit = 'cover';
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="char-card-avatar-fallback">{char.avatar}</div>
-                )}
+                <CardArt name={char.name} src={char.image} className="char-card-img" small />
               </div>
               <h3 className="char-card-name">{char.name}</h3>
               <p className="char-card-title">{char.title}</p>
@@ -293,21 +294,7 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
               <div className="modal-card-col">
                 <div className="modal-card-frame" style={{ borderColor: getTypeColor(activeCharacter.type), boxShadow: `0 0 25px ${getTypeColor(activeCharacter.type)}35` }}>
                   <div className="card-rarity-pill">{activeCharacter.rarity}</div>
-                  {activeCharacter.image ? (
-                    <img
-                      src={activeCharacter.image}
-                      alt={activeCharacter.name}
-                      className="modal-card-portrait"
-                      onError={(e) => {
-                        if (activeCharacter.fallbackImage && e.target.src !== activeCharacter.fallbackImage) {
-                          e.target.src = activeCharacter.fallbackImage;
-                          e.target.style.objectFit = 'cover';
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className="modal-avatar-fallback">{activeCharacter.avatar}</div>
-                  )}
+                  <CardArt name={activeCharacter.name} src={activeCharacter.image} className="modal-card-portrait" />
                 </div>
 
                 <div className="modal-stat-box glass">
