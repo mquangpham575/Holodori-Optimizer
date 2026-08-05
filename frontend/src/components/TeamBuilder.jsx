@@ -2792,10 +2792,7 @@ export default function TeamBuilder({
           <div className="roster-header-title-block">
             <h3 className="section-title-small">{t("my_character_roster")}</h3>
             <span className="presets-info-text">
-              {t("roster_desc", {
-                owned: ownedRoster.length,
-                total: characters.length,
-              })}
+              {t("roster_desc", { owned: ownedRoster.length })}
             </span>
           </div>
           <button className="btn-toggle-roster">
@@ -3151,7 +3148,7 @@ export default function TeamBuilder({
 
                           {/* Level and Bloom Progression Selectors */}
                           <div className="owned-card-progression">
-                            <div className="progression-field">
+                            <div className="progression-field progression-field-lv">
                               <label>Lv</label>
                               <input
                                 type="number"
