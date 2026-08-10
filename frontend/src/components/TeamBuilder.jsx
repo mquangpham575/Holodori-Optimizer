@@ -60,9 +60,12 @@ export const findChar = (idOrObj, characters = []) => {
     );
     if (match) return match;
 
-    const variantMatch = characters
-      .flatMap((c) => (Array.isArray(c.cards) ? c.cards : []))
-      .find(
+    // 1b. Match a card id/asset id to the CHARACTER that owns it, so callers
+    //     always receive a character-like object (name, avatar, image).
+    //     Non-primary variants must resolve to their parent character too.
+    for (const c of characters) {
+      if (!Array.isArray(c.cards)) continue;
+      const hit = c.cards.find(
         (card) =>
           card.id === idStr ||
           card.assetId === idStr ||
@@ -70,7 +73,8 @@ export const findChar = (idOrObj, characters = []) => {
           card.cardData?.cardId === idStr ||
           (card.assetId && idStr.includes(card.assetId)),
       );
-    if (variantMatch) return variantMatch;
+      if (hit) return c;
+    }
   }
 
   // 2. Search in ALL_CARDS
