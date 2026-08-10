@@ -290,6 +290,22 @@ const seedPostgres = async () => {
         ]
       );
     }
+    // 1b. Prune legacy rows (old ids) that duplicate a current characterId.
+    //     Only rows whose characterId is covered by the active source are removed,
+    //     so admin-created characters with a unique characterId are preserved.
+    const activeCharacterIds = characters.map((c) => c.id);
+    const activeMemberIds = characters.map((c) => c.characterId).filter(Boolean);
+    if (activeCharacterIds.length > 0 && activeMemberIds.length > 0) {
+      const pruneRes = await client.query(
+        `DELETE FROM characters
+         WHERE NOT (id = ANY($1)) AND characterId = ANY($2)`,
+        [activeCharacterIds, activeMemberIds]
+      );
+      if (pruneRes.rowCount > 0) {
+        console.log(`Pruned ${pruneRes.rowCount} duplicate character rows from PostgreSQL.`);
+      }
+    }
+
     console.log("Characters synchronized successfully in PostgreSQL!");
 
     // 2. Sync guides table (delete inactive guides and upsert active ones)
@@ -503,6 +519,21 @@ const syncHolodoriCards = async () => {
               char.assetId || null
             ]
           );
+        }
+
+        // Prune legacy rows (old ids) that duplicate a current snapshot characterId.
+        const canonical = buildSkeletonFromSnapshot(snapshot);
+        const canonicalIds = canonical.map((c) => c.id);
+        const canonicalMemberIds = canonical.map((c) => c.characterId).filter(Boolean);
+        if (canonicalIds.length > 0 && canonicalMemberIds.length > 0) {
+          const pruneRes = await client.query(
+            `DELETE FROM characters
+             WHERE NOT (id = ANY($1)) AND characterId = ANY($2)`,
+            [canonicalIds, canonicalMemberIds]
+          );
+          if (pruneRes.rowCount > 0) {
+            console.log(`HolodoriDB sync: pruned ${pruneRes.rowCount} duplicate character rows.`);
+          }
         }
 
         await setHolodoriHash(client, newHash, newVersion);
@@ -1047,6 +1078,21 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
             }
           }
         }
+
+        // Prune legacy rows (old ids) that duplicate a current source characterId.
+        const srcCharacterIds = charactersToSync.map((c) => c.id);
+        const srcMemberIds = charactersToSync.map((c) => c.characterId).filter(Boolean);
+        if (srcCharacterIds.length > 0 && srcMemberIds.length > 0) {
+          const pruneRes = await client.query(
+            `DELETE FROM characters
+             WHERE NOT (id = ANY($1)) AND characterId = ANY($2)`,
+            [srcCharacterIds, srcMemberIds]
+          );
+          if (pruneRes.rowCount > 0) {
+            console.log(`sync-from-file: pruned ${pruneRes.rowCount} duplicate character rows.`);
+          }
+        }
+
         await client.query("COMMIT");
 
         const updatedList = await pgPool.query("SELECT * FROM characters");
