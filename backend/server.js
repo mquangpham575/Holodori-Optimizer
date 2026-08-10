@@ -298,7 +298,7 @@ const seedPostgres = async () => {
     if (activeCharacterIds.length > 0 && activeMemberIds.length > 0) {
       const pruneRes = await client.query(
         `DELETE FROM characters
-         WHERE NOT (id = ANY($1)) AND characterId = ANY($2)`,
+         WHERE NOT (id = ANY($1)) AND "characterId" = ANY($2)`,
         [activeCharacterIds, activeMemberIds]
       );
       if (pruneRes.rowCount > 0) {
@@ -528,7 +528,7 @@ const syncHolodoriCards = async () => {
         if (canonicalIds.length > 0 && canonicalMemberIds.length > 0) {
           const pruneRes = await client.query(
             `DELETE FROM characters
-             WHERE NOT (id = ANY($1)) AND characterId = ANY($2)`,
+             WHERE NOT (id = ANY($1)) AND "characterId" = ANY($2)`,
             [canonicalIds, canonicalMemberIds]
           );
           if (pruneRes.rowCount > 0) {
@@ -1085,7 +1085,7 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
         if (srcCharacterIds.length > 0 && srcMemberIds.length > 0) {
           const pruneRes = await client.query(
             `DELETE FROM characters
-             WHERE NOT (id = ANY($1)) AND characterId = ANY($2)`,
+             WHERE NOT (id = ANY($1)) AND "characterId" = ANY($2)`,
             [srcCharacterIds, srcMemberIds]
           );
           if (pruneRes.rowCount > 0) {
