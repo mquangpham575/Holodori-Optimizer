@@ -521,15 +521,18 @@ const syncHolodoriCards = async () => {
           );
         }
 
-        // Prune legacy rows (old ids) that duplicate a current snapshot characterId.
-        const canonical = buildSkeletonFromSnapshot(snapshot);
-        const canonicalIds = canonical.map((c) => c.id);
-        const canonicalMemberIds = canonical.map((c) => c.characterId).filter(Boolean);
-        if (canonicalIds.length > 0 && canonicalMemberIds.length > 0) {
+        // Prune legacy rows (old ids) that duplicate an active source characterId.
+        // Source ids come from the deployed database.json (same set the boot seed
+        // uses). NOT from buildSkeletonFromSnapshot: its generated ids are hyphenated
+        // (e.g. "hoshimachi-suisei") and would not match the stored ids.
+        const sourceChars = loadDB().characters || [];
+        const srcIds = sourceChars.map((c) => c.id);
+        const srcMemberIds = sourceChars.map((c) => c.characterId).filter(Boolean);
+        if (srcIds.length > 0 && srcMemberIds.length > 0) {
           const pruneRes = await client.query(
             `DELETE FROM characters
              WHERE NOT (id = ANY($1)) AND "characterId" = ANY($2)`,
-            [canonicalIds, canonicalMemberIds]
+            [srcIds, srcMemberIds]
           );
           if (pruneRes.rowCount > 0) {
             console.log(`HolodoriDB sync: pruned ${pruneRes.rowCount} duplicate character rows.`);
