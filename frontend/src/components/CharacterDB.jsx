@@ -4,7 +4,7 @@ import { X, Heart, Leaf, Sun, Paintbrush, Users, Sparkles, Award, Zap, Shield, G
 import { ALL_CARDS } from '../data';
 import './CharacterDB.css';
 
-export default function CharacterDB({ onAccentChange, currentAccent, characters = [] }) {
+export default function CharacterDB({ onAccentChange, currentAccent, characters = [], allCards = [] }) {
   const { t } = useLanguage();
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
@@ -13,7 +13,9 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
   const [activeCharacter, setActiveCharacter] = useState(null);
   const [activeBloom, setActiveBloom] = useState(1);
 
-  const displayList = (ALL_CARDS && ALL_CARDS.length > 0) ? ALL_CARDS : characters;
+  const displayList = allCards.length > 0
+    ? allCards
+    : (ALL_CARDS && ALL_CARDS.length > 0) ? ALL_CARDS : characters;
 
   const getInitials = (name) => {
     const parts = (name || '').trim().split(/\s+/).filter(Boolean);

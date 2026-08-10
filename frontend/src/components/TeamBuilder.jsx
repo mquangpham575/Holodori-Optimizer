@@ -59,6 +59,18 @@ export const findChar = (idOrObj, characters = []) => {
         (c.cardData?.id && idStr.includes(c.cardData.id)),
     );
     if (match) return match;
+
+    const variantMatch = characters
+      .flatMap((c) => (Array.isArray(c.cards) ? c.cards : []))
+      .find(
+        (card) =>
+          card.id === idStr ||
+          card.assetId === idStr ||
+          card.cardData?.id === idStr ||
+          card.cardData?.cardId === idStr ||
+          (card.assetId && idStr.includes(card.assetId)),
+      );
+    if (variantMatch) return variantMatch;
   }
 
   // 2. Search in ALL_CARDS
@@ -1865,8 +1877,17 @@ export default function TeamBuilder({
   ownedRoster = [],
   onUpdateOwnedRoster,
   characters = [],
+  allCards = [],
 }) {
   const { t } = useLanguage();
+  const getActiveCardList = () =>
+    allCards.length > 0
+      ? allCards
+      : ALL_CARDS && ALL_CARDS.length > 0
+        ? ALL_CARDS
+        : characters.length > 0
+          ? characters
+          : [];
   const [isActiveExpanded, setIsActiveExpanded] = useState(false);
   const [isDetailedMathExpanded, setIsDetailedMathExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -2091,12 +2112,7 @@ export default function TeamBuilder({
   };
 
   const handleSelect5StarRoster = () => {
-    const activeCardList =
-      ALL_CARDS && ALL_CARDS.length > 0
-        ? ALL_CARDS
-        : characters.length > 0
-          ? characters
-          : [];
+    const activeCardList = getActiveCardList();
     const fiveStars = activeCardList.filter(
       (c) =>
         c.rarity === 5 ||
@@ -2116,12 +2132,7 @@ export default function TeamBuilder({
   };
 
   const handleSelectAllRoster = () => {
-    const activeCardList =
-      ALL_CARDS && ALL_CARDS.length > 0
-        ? ALL_CARDS
-        : characters.length > 0
-          ? characters
-          : [];
+    const activeCardList = getActiveCardList();
     const nextRoster = activeCardList.map((c) => {
       const existing = getRosterConfig(c.id);
       return {
@@ -2138,12 +2149,7 @@ export default function TeamBuilder({
       alert("Choose your oshi card first.");
       return;
     }
-    const activeCardList =
-      ALL_CARDS && ALL_CARDS.length > 0
-        ? ALL_CARDS
-        : characters.length > 0
-          ? characters
-          : [];
+    const activeCardList = getActiveCardList();
     setIsCalculatingRec(true);
     setCalcProgress(0);
     setTimeout(() => {
@@ -2603,12 +2609,7 @@ export default function TeamBuilder({
     char.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const activeCardList =
-    ALL_CARDS && ALL_CARDS.length > 0
-      ? ALL_CARDS
-      : characters.length > 0
-        ? characters
-        : [];
+  const activeCardList = getActiveCardList();
 
   const matchingSearchCards = rosterSearchQuery.trim()
     ? activeCardList.filter(

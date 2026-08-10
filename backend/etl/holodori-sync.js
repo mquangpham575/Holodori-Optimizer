@@ -12,7 +12,7 @@
 import { createHash } from "crypto";
 
 const APP_JS_URL =
-  "https://raw.githubusercontent.com/int3rrupt3d/holodori-optimizer/main/src/app.js.in";
+  "https://raw.githubusercontent.com/ace-ks-dev/holodori-optimizer/main/index.html";
 
 export function packedContentHash(packed) {
   return createHash("sha256").update(JSON.stringify(packed)).digest("hex");
@@ -25,6 +25,28 @@ export async function fetchPacked() {
   if (!res.ok) throw new Error(`Failed to fetch app.js.in: HTTP ${res.status}`);
   const src = await res.text();
   return extractPacked(src);
+}
+
+const MUSIC_BASE_URL =
+  "https://raw.githubusercontent.com/HolodoriDB/holodori-db-eng-diff/main";
+
+export async function fetchAndBuildSongs() {
+  const musicRes = await fetch(`${MUSIC_BASE_URL}/Music.json`);
+  if (!musicRes.ok) throw new Error(`Failed to fetch Music.json: HTTP ${musicRes.status}`);
+  const musicData = await musicRes.json();
+  return musicData
+    .filter((m) => m.data.playingSeconds > 0)
+    .map((m) => ({
+      id: m.id,
+      titleLangId: m.data.titleLangId,
+      assetId: m.data.assetId,
+      jacketAssetId: m.data.jacketAssetId,
+      playingSeconds: m.data.playingSeconds,
+      characterIds: m.data.characterIds || [],
+      mvUrl: m.data.mvUrl || null,
+      liveScoreCoefficientPermil: m.data.liveScoreCoefficientPermil || 0,
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
 }
 
 export function extractPacked(src) {
@@ -213,6 +235,7 @@ export function enrichCharacters(baseCharacters, snapshot) {
       title: cardMatch.name || char.title,
       assetId: cardMatch.assetId || char.assetId,
       characterId: cardMatch.characterId || char.characterId,
+      image: cardMatch.assetId ? `/images/cards/${cardMatch.assetId}.webp` : char.image,
       type: attrTypeMap[cardMatch.attribute] || attrTypeMap[cardMatch.attributeId] || char.type,
       cardData: primaryVariant.cardData,
       stats: primaryVariant.stats,

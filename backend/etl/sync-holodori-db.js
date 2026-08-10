@@ -10,14 +10,19 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { fetchPacked, packedToLegacySnapshot, enrichCharacters, packedContentHash } from "./holodori-sync.js";
+import { fetchPacked, packedToLegacySnapshot, enrichCharacters, packedContentHash, fetchAndBuildSongs } from "./holodori-sync.js";
+import { fetchIndexHtml, writeCardArt } from "./extract-card-art.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, "..", "database.json");
 const SNAPSHOT_PATH = path.join(__dirname, "..", "holodori_snapshot.json");
 const VERSION_CACHE_PATH = path.join(__dirname, "last_version.txt");
 
-const BASE_URL = "https://raw.githubusercontent.com/HolodoriDB/holodori-db-eng-diff/main";
+function atomicWrite(target, data, options) {
+  const tmp = `${target}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, data, options);
+  fs.renameSync(tmp, target);
+}
 
 async function main() {
   console.log("\n=== HolodoriDB Snapshot ETL Sync ===\n");
@@ -26,19 +31,25 @@ async function main() {
 
   let snapshot;
   let versionChanged = false;
+  let contentHash = null;
   if (force || !fs.existsSync(SNAPSHOT_PATH)) {
     console.log("Fetching latest BUNDLED_PACKED from holodori-optimizer src/app.js.in...");
     const packed = await fetchPacked();
     snapshot = packedToLegacySnapshot(packed);
-    fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot, null, 2), "utf8");
+    atomicWrite(SNAPSHOT_PATH, JSON.stringify(snapshot, null, 2), "utf8");
     console.log(`  Saved snapshot (${snapshot.cards.length} cards, sourceVersion ${snapshot.sourceVersion}).\n`);
 
-    const contentHash = packedContentHash(packed);
+    contentHash = packedContentHash(packed);
     const lastHash = fs.existsSync(VERSION_CACHE_PATH)
       ? fs.readFileSync(VERSION_CACHE_PATH, "utf8").trim()
       : null;
     versionChanged = lastHash !== contentHash;
-    fs.writeFileSync(VERSION_CACHE_PATH, contentHash, "utf8");
+    atomicWrite(VERSION_CACHE_PATH, contentHash, "utf8");
+
+    // Refresh bundled card artworks (kept in frontend/public/images/cards)
+    const html = await fetchIndexHtml();
+    const { written, embeddedCardCount } = await writeCardArt(html);
+    console.log(`  Refreshed card artworks (${written}/${embeddedCardCount}).\n`);
   } else {
     console.log("Loading local normalized snapshot...");
     snapshot = JSON.parse(fs.readFileSync(SNAPSHOT_PATH, "utf8"));
@@ -46,9 +57,7 @@ async function main() {
 
   // Fetch Music.json for songs
   console.log("Fetching Music.json...");
-  const musicRes = await fetch(`${BASE_URL}/Music.json`);
-  if (!musicRes.ok) throw new Error(`Failed to fetch Music.json: HTTP ${musicRes.status}`);
-  const musicData = await musicRes.json();
+  const songs = await fetchAndBuildSongs();
 
   const existingDB = JSON.parse(fs.readFileSync(DB_PATH, "utf8"));
 
@@ -69,26 +78,15 @@ async function main() {
   console.log(`\nEnrichment: ${enriched} characters updated with all card variants, ${skipped} skipped.\n`);
 
   console.log("Building songs list...");
-  const songs = musicData
-    .filter(m => m.data.playingSeconds > 0)
-    .map(m => ({
-      id: m.id,
-      titleLangId: m.data.titleLangId,
-      assetId: m.data.assetId,
-      jacketAssetId: m.data.jacketAssetId,
-      playingSeconds: m.data.playingSeconds,
-      characterIds: m.data.characterIds || [],
-      mvUrl: m.data.mvUrl || null,
-      liveScoreCoefficientPermil: m.data.liveScoreCoefficientPermil || 0,
-    }))
-    .sort((a, b) => a.id.localeCompare(b.id));
 
   existingDB.songs = songs;
   existingDB.allCards = snapshot.cards;
   existingDB.holodoriDbVersion = snapshot.sourceVersion || "v3.3";
   existingDB.holodoriDbSyncedAt = new Date().toISOString();
+  existingDB.holodoriPackedHash = contentHash || (fs.existsSync(VERSION_CACHE_PATH) ? fs.readFileSync(VERSION_CACHE_PATH, "utf8").trim() : undefined) || null;
+  existingDB.holodoriSourceVersion = snapshot.sourceVersion || null;
 
-  fs.writeFileSync(DB_PATH, JSON.stringify(existingDB, null, 2), "utf8");
+  atomicWrite(DB_PATH, JSON.stringify(existingDB, null, 2), "utf8");
 
   console.log(`Done! ${enriched} characters enriched with ${snapshot.cards.length} cards${versionChanged ? " (VERSION CHANGED)" : ""}.`);
   console.log(`Indexed ${songs.length} songs.\n`);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
@@ -7,6 +7,7 @@ import TeamBuilder from './components/TeamBuilder';
 import Guides from './components/Guides';
 import AdminDashboard from './components/AdminDashboard';
 import { CHARACTERS } from './data';
+import { buildAllCards } from './allCards';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import './App.css';
 
@@ -66,6 +67,8 @@ function App() {
   );
 
   const deviceId = getOrCreateDeviceId();
+
+  const allCards = useMemo(() => buildAllCards(characters), [characters]);
 
   // Load theme accent color from localStorage or default (Sora Blue)
   const [themeAccent, setThemeAccent] = useState(() => {
@@ -293,6 +296,7 @@ function App() {
                 onAccentChange={handleAccentChange} 
                 currentAccent={themeAccent} 
                 characters={characters}
+                allCards={allCards}
               />
             } 
           />
@@ -303,6 +307,7 @@ function App() {
                 onAccentChange={handleAccentChange} 
                 currentAccent={themeAccent} 
                 characters={characters}
+                allCards={allCards}
               />
             } 
           />
@@ -318,6 +323,7 @@ function App() {
                 ownedRoster={ownedRoster}
                 onUpdateOwnedRoster={handleUpdateOwnedRoster}
                 characters={characters}
+                allCards={allCards}
               />
             } 
           />
@@ -333,6 +339,7 @@ function App() {
                 ownedRoster={ownedRoster}
                 onUpdateOwnedRoster={handleUpdateOwnedRoster}
                 characters={characters}
+                allCards={allCards}
               />
             } 
           />

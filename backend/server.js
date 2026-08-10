@@ -4,7 +4,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import pkg from 'pg';
-import { fetchPacked, packedToLegacySnapshot, enrichCharacters, packedContentHash } from './etl/holodori-sync.js';
+import { fetchPacked, packedToLegacySnapshot, enrichCharacters, packedContentHash, fetchAndBuildSongs } from './etl/holodori-sync.js';
+import { fetchIndexHtml, getCardArtEntries, writeCardArt } from './etl/extract-card-art.js';
 
 const { Pool } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -14,6 +15,28 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Static image serving (talent fallbacks, uploads, and dev card art from disk)
+app.use('/images', express.static(path.join(__dirname, '../frontend/public/images'), { maxAge: '30d', index: false }));
+
+// Card artwork: served from Postgres in prod (kept in sync by the holodori sync);
+// in dev the file-based static handler above wins when the art is on disk.
+app.get('/images/cards/:file', async (req, res) => {
+  const file = req.params.file;
+  if (!/^[A-Za-z0-9_-]+\.webp$/.test(file)) return res.status(400).end();
+  if (!isProd) return res.status(404).end();
+  const assetId = file.replace(/\.webp$/, '');
+  try {
+    const result = await pgPool.query("SELECT data FROM card_art WHERE asset_id = $1", [assetId]);
+    if (result.rows.length === 0) return res.status(404).end();
+    res.set("Content-Type", "image/webp");
+    res.set("Cache-Control", "public, max-age=31536000, immutable");
+    res.send(result.rows[0].data);
+  } catch (err) {
+    console.error("Error serving card art:", err.message);
+    res.status(500).end();
+  }
+});
 
 const dbPath = path.join(__dirname, 'database.json');
 const isProd = !!process.env.DATABASE_URL;
@@ -67,7 +90,9 @@ const loadDB = () => {
 
 const saveDB = (data) => {
   try {
-    fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
+    const tmp = `${dbPath}.tmp-${process.pid}`;
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tmp, dbPath);
   } catch (err) {
     console.error("Error writing database.json:", err);
   }
@@ -173,6 +198,29 @@ const initPostgresSchema = async () => {
       )
     `);
 
+    // Card artwork (bytea) — pushed by holodori auto-sync, served by /images/cards/*
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS card_art (
+        asset_id TEXT PRIMARY KEY,
+        data BYTEA NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `);
+
+    // Songs — pushed by holodori auto-sync
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS songs (
+        id TEXT PRIMARY KEY,
+        title_lang_id TEXT,
+        asset_id TEXT,
+        jacket_asset_id TEXT,
+        playing_seconds INTEGER,
+        character_ids JSONB,
+        mv_url TEXT,
+        live_score_coefficient_permil INTEGER
+      )
+    `);
+
     await client.query("COMMIT");
     console.log("PostgreSQL schema validated successfully!");
   } catch (err) {
@@ -188,12 +236,19 @@ const initPostgresSchema = async () => {
 const seedPostgres = async () => {
   const client = await pgPool.connect();
   try {
-    console.log("Synchronizing database tables with src/data.js...");
-    const module = await import('../frontend/src/data.js');
+    const backup = loadDB();
 
-    // 1. Sync characters table
-    console.log("Syncing characters in PostgreSQL...");
-    for (const char of module.CHARACTERS) {
+    // 1. Sync characters table (holodori-synced backup; src/data.js only as last resort)
+    let characters = backup.characters || [];
+    let guides = backup.guides || [];
+    if (characters.length === 0 || guides.length === 0) {
+      const module = await import('../frontend/src/data.js');
+      if (characters.length === 0) characters = module.CHARACTERS;
+      if (guides.length === 0) guides = module.GUIDES;
+    }
+
+    console.log(`Syncing ${characters.length} characters in PostgreSQL...`);
+    for (const char of characters) {
       await client.query(
         `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills, "cardData", "cards", "characterId", "attributeId", "groupIds", "assetId")
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, $15, $16::jsonb, $17)
@@ -239,14 +294,14 @@ const seedPostgres = async () => {
 
     // 2. Sync guides table (delete inactive guides and upsert active ones)
     console.log("Syncing guides in PostgreSQL...");
-    const activeGuideIds = module.GUIDES.map(g => g.id);
+    const activeGuideIds = guides.map(g => g.id);
     if (activeGuideIds.length > 0) {
       await client.query("DELETE FROM guides WHERE NOT (id = ANY($1))", [activeGuideIds]);
     } else {
       await client.query("DELETE FROM guides");
     }
 
-    for (const guide of module.GUIDES) {
+    for (const guide of guides) {
       await client.query(
         `INSERT INTO guides (id, title, summary, category, readTime, author, date, content, contentUrl)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
@@ -273,6 +328,11 @@ const seedPostgres = async () => {
       );
     }
     console.log("Guides synchronized successfully in PostgreSQL!");
+
+    // 3. Sync songs table (holodori Music.json data; refreshed by live sync)
+    console.log(`Syncing ${(backup.songs || []).length} songs in PostgreSQL...`);
+    await upsertSongsPG(backup.songs || []);
+    console.log("Songs synchronized successfully in PostgreSQL!");
   } catch (err) {
     console.error("Error synchronizing PostgreSQL:", err);
   } finally {
@@ -280,7 +340,102 @@ const seedPostgres = async () => {
   }
 };
 
-// HolodoriDB live card sync (prod): applies upstream card updates to Postgres
+const upsertSongsPG = async (songs) => {
+  if (!songs || songs.length === 0) return;
+  const client = await pgPool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM songs");
+    for (const s of songs) {
+      await client.query(
+        `INSERT INTO songs (id, title_lang_id, asset_id, jacket_asset_id, playing_seconds, character_ids, mv_url, live_score_coefficient_permil)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)`,
+        [
+          s.id,
+          s.titleLangId,
+          s.assetId,
+          s.jacketAssetId,
+          s.playingSeconds,
+          JSON.stringify(s.characterIds || []),
+          s.mvUrl || null,
+          s.liveScoreCoefficientPermil || 0,
+        ]
+      );
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+const upsertCardArtPG = async (entries) => {
+  if (!entries || entries.length === 0) return;
+  const client = await pgPool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const entry of entries) {
+      await client.query(
+        `INSERT INTO card_art (asset_id, data) VALUES ($1, $2)
+         ON CONFLICT (asset_id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()`,
+        [entry.assetId, entry.data]
+      );
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+const normalizeMemberName = (n) => {
+  if (!n) return "";
+  let s = n.trim().replace(/\u2019/g, "'");
+  if (s === "Mori Calliope") return "Calliope Mori";
+  return s;
+};
+
+const buildSkeletonFromSnapshot = (snapshot) => {
+  const seen = new Set();
+  const skeleton = [];
+  for (const card of snapshot.cards) {
+    const norm = normalizeMemberName(card.member);
+    if (!norm || seen.has(norm)) continue;
+    seen.add(norm);
+    skeleton.push({
+      id: norm.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      name: norm,
+      title: card.name || "",
+      rarity: "5",
+      group: "",
+      type: "HAPPY",
+      accentColor: "#ffffff",
+      image: card.assetId ? `/images/cards/${card.assetId}.webp` : "",
+      avatar: "",
+      stats: { performance: 0, technique: 0, sense: 0, total: 0 },
+      skills: { active: "", passive: "", special: "", outfit: "" },
+      cardData: {},
+      cards: [],
+      characterId: card.characterId || null,
+      attributeId: card.attributeId || null,
+      assetId: card.assetId || null,
+    });
+  }
+  return skeleton;
+};
+
+const bootstrapFromHolodori = async () => {
+  const packed = await fetchPacked();
+  const snapshot = packedToLegacySnapshot(packed);
+  const skeleton = buildSkeletonFromSnapshot(snapshot);
+  return enrichCharacters(skeleton, snapshot);
+};
+
+// HolodoriDB live card sync: applies upstream card updates to the active store (Postgres in prod, database.json locally)
 let holodoriSyncInFlight = false;
 
 const getHolodoriHash = async (client) => {
@@ -302,62 +457,119 @@ const setHolodoriHash = async (client, hash, sourceVersion) => {
 };
 
 const syncHolodoriCards = async () => {
-  if (!isProd || holodoriSyncInFlight) return;
+  if (holodoriSyncInFlight) return;
   holodoriSyncInFlight = true;
   try {
     const packed = await fetchPacked();
     const newHash = packedContentHash(packed);
     const newVersion = packed.sourceVersion;
     if (!newVersion) throw new Error("BUNDLED_PACKED has no sourceVersion");
+    const snapshot = packedToLegacySnapshot(packed);
 
-    const client = await pgPool.connect();
-    try {
-      const currentHash = await getHolodoriHash(client);
-      if (currentHash === newHash) {
+    if (isProd) {
+      const client = await pgPool.connect();
+      try {
+        const currentHash = await getHolodoriHash(client);
+        if (currentHash === newHash) {
+          console.log(`HolodoriDB sync: already up to date (${newVersion}).`);
+          return;
+        }
+
+        console.log(`HolodoriDB sync: applying update (${newVersion}, hash ${newHash.slice(0, 12)})`);
+        await client.query("BEGIN");
+        const skeletonRes = await client.query("SELECT * FROM characters");
+        const { characters, skipped } = enrichCharacters(skeletonRes.rows, snapshot);
+        if (skipped.length > 0) {
+          console.warn(`HolodoriDB sync: no card match for ${skipped.length} characters, left unchanged: ${skipped.join(", ")}`);
+        }
+
+        for (const char of characters) {
+          await client.query(
+            `UPDATE characters SET
+               title = $2, type = $3, stats = $4::jsonb, skills = $5::jsonb,
+               "cardData" = $6::jsonb, "cards" = $7::jsonb,
+               "characterId" = $8, "attributeId" = $9, "assetId" = $10
+             WHERE id = $1`,
+            [
+              char.id,
+              char.title,
+              char.type,
+              JSON.stringify(char.stats),
+              JSON.stringify(char.skills),
+              JSON.stringify(char.cardData || {}),
+              JSON.stringify(char.cards || []),
+              char.characterId || null,
+              char.attributeId || null,
+              char.assetId || null
+            ]
+          );
+        }
+
+        await setHolodoriHash(client, newHash, newVersion);
+        await client.query("COMMIT");
+        console.log(`HolodoriDB sync: applied upstream update for ${characters.length} characters (${newVersion}).`);
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+
+      try {
+        const songs = await fetchAndBuildSongs();
+        await upsertSongsPG(songs);
+        console.log(`HolodoriDB sync: refreshed ${songs.length} songs.`);
+      } catch (err) {
+        console.error("HolodoriDB sync: song refresh failed:", err.message);
+      }
+      try {
+        const html = await fetchIndexHtml();
+        const { entries } = getCardArtEntries(html);
+        await upsertCardArtPG(entries);
+        console.log(`HolodoriDB sync: refreshed ${entries.length} card artworks.`);
+      } catch (err) {
+        console.error("HolodoriDB sync: card art refresh failed:", err.message);
+      }
+    } else {
+      const db = loadDB();
+      if (db.holodoriPackedHash === newHash) {
         console.log(`HolodoriDB sync: already up to date (${newVersion}).`);
         return;
       }
 
       console.log(`HolodoriDB sync: applying update (${newVersion}, hash ${newHash.slice(0, 12)})`);
-      const snapshot = packedToLegacySnapshot(packed);
+      let skeleton = db.characters || [];
+      if (skeleton.length === 0) {
+        console.log("HolodoriDB sync: local store empty, bootstrapping skeleton from snapshot...");
+        skeleton = buildSkeletonFromSnapshot(snapshot);
+      }
 
-      await client.query("BEGIN");
-      const skeletonRes = await client.query("SELECT * FROM characters");
-      const { characters, skipped } = enrichCharacters(skeletonRes.rows, snapshot);
+      const { characters, skipped } = enrichCharacters(skeleton, snapshot);
       if (skipped.length > 0) {
         console.warn(`HolodoriDB sync: no card match for ${skipped.length} characters, left unchanged: ${skipped.join(", ")}`);
       }
 
-      for (const char of characters) {
-        await client.query(
-          `UPDATE characters SET
-             title = $2, type = $3, stats = $4::jsonb, skills = $5::jsonb,
-             "cardData" = $6::jsonb, "cards" = $7::jsonb,
-             "characterId" = $8, "attributeId" = $9, "assetId" = $10
-           WHERE id = $1`,
-          [
-            char.id,
-            char.title,
-            char.type,
-            JSON.stringify(char.stats),
-            JSON.stringify(char.skills),
-            JSON.stringify(char.cardData || {}),
-            JSON.stringify(char.cards || []),
-            char.characterId || null,
-            char.attributeId || null,
-            char.assetId || null
-          ]
-        );
-      }
+      const enrichedById = new Map(characters.map((c) => [c.id, c]));
+      const merged = skeleton.map((c) => enrichedById.get(c.id) || c);
 
-      await setHolodoriHash(client, newHash, newVersion);
-      await client.query("COMMIT");
-      console.log(`HolodoriDB sync: applied upstream update for ${characters.length} characters (${newVersion}).`);
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
+      db.characters = merged;
+      db.holodoriPackedHash = newHash;
+      db.holodoriSourceVersion = newVersion;
+      db.holodoriSyncedAt = new Date().toISOString();
+      try {
+        db.songs = await fetchAndBuildSongs();
+      } catch (err) {
+        console.error("HolodoriDB sync: song refresh failed:", err.message);
+      }
+      saveDB(db);
+      console.log(`HolodoriDB sync: applied upstream update for ${merged.length} characters (${newVersion}).`);
+      try {
+        const html = await fetchIndexHtml();
+        const { written, embeddedCardCount } = await writeCardArt(html);
+        console.log(`HolodoriDB sync: refreshed ${written}/${embeddedCardCount} card artworks.`);
+      } catch (err) {
+        console.error("HolodoriDB sync: card art refresh failed:", err.message);
+      }
     }
   } catch (err) {
     console.error("HolodoriDB sync failed:", err.message);
@@ -380,13 +592,25 @@ const seedDatabase = async () => {
     let updated = false;
 
     if (!db.characters || db.characters.length === 0) {
-    console.log("Seeding characters from src/data.js...");
+    console.log("Bootstrapping characters from HolodoriDB...");
     try {
-      const module = await import('../frontend/src/data.js');
-      db.characters = module.CHARACTERS;
-      updated = true;
+      const { characters } = await bootstrapFromHolodori();
+      if (characters.length > 0) {
+        db.characters = characters;
+        updated = true;
+      }
     } catch (err) {
-      console.error("Error importing data.js for seeding:", err);
+      console.error("HolodoriDB bootstrap failed:", err.message);
+    }
+    if (!db.characters || db.characters.length === 0) {
+      console.log("Falling back to src/data.js for character seeding...");
+      try {
+        const module = await import('../frontend/src/data.js');
+        db.characters = module.CHARACTERS;
+        updated = true;
+      } catch (err) {
+        console.error("Error importing data.js for seeding:", err);
+      }
     }
 
     }
@@ -420,10 +644,8 @@ const seedDatabase = async () => {
 
 await seedDatabase();
 
-if (isProd) {
-  syncHolodoriCards();
-  setInterval(syncHolodoriCards, 6 * 60 * 60 * 1000);
-}
+syncHolodoriCards();
+setInterval(syncHolodoriCards, 6 * 60 * 60 * 1000);
 
 // GET /api/health
 app.get('/api/health', async (req, res) => {
@@ -467,7 +689,7 @@ app.get('/api/characters', async (req, res) => {
         group: row.group,
         type: row.type,
         accentColor: row.accentcolor !== undefined ? row.accentcolor : row.accentColor,
-        image: row.image,
+        image: row.assetId ? `/images/cards/${row.assetId}.webp` : row.image,
         avatar: row.avatar,
         stats: row.stats,
         skills: row.skills,
@@ -489,9 +711,27 @@ app.get('/api/characters', async (req, res) => {
 });
 
 // GET /api/songs
-app.get('/api/songs', (req, res) => {
-  const db = loadDB();
-  res.json(db.songs || []);
+app.get('/api/songs', async (req, res) => {
+  if (isProd) {
+    try {
+      const result = await pgPool.query("SELECT * FROM songs ORDER BY id ASC");
+      res.json(result.rows.map(r => ({
+        id: r.id,
+        titleLangId: r.title_lang_id,
+        assetId: r.asset_id,
+        jacketAssetId: r.jacket_asset_id,
+        playingSeconds: r.playing_seconds,
+        characterIds: r.character_ids || [],
+        mvUrl: r.mv_url,
+        liveScoreCoefficientPermil: r.live_score_coefficient_permil || 0,
+      })));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  } else {
+    const db = loadDB();
+    res.json(db.songs || []);
+  }
 });
 
 // GET /api/presets
