@@ -1095,6 +1095,11 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
 
         await client.query("COMMIT");
 
+        // data.js is a static snapshot that can lag behind upstream; force the
+        // HolodoriDB enrichment so a file sync never downgrades live card data.
+        await client.query(`DELETE FROM app_meta WHERE key = 'holodori_packed_hash'`);
+        await syncHolodoriCards();
+
         const updatedList = await pgPool.query("SELECT * FROM characters");
         const mapped = updatedList.rows.map(row => ({
           id: row.id,
@@ -1147,8 +1152,12 @@ app.post('/api/admin/sync-from-file', requireAdmin, async (req, res) => {
           db.characters[existingIdx] = existing;
         }
       }
+      // data.js is a static snapshot that can lag behind upstream; force the
+      // HolodoriDB enrichment so a file sync never downgrades live card data.
+      delete db.holodoriPackedHash;
       saveDB(db);
-      res.json({ success: true, characters: db.characters });
+      await syncHolodoriCards();
+      res.json({ success: true, characters: loadDB().characters });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
