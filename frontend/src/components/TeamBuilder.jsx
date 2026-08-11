@@ -19,6 +19,7 @@ import {
 import "./TeamBuilder.css";
 import "./CharacterDB.css";
 import { ALL_CARDS } from "../data";
+import { cardArtUrl } from "../allCards";
 import searchWorkerSource from "../search_worker.js?raw";
 const GROUPS = [
   "Gen 0",
@@ -1727,6 +1728,7 @@ export const recommendBestTeamAsync = (
           recommendations.push({
             cardId: rec.cardId,
             cardCharId,
+            cardIds: teamCards.map((c) => c.id),
             rank: recommendations.length + 1,
             score: rec.score || Math.round(r.score),
             gain: Number(rec.gain) || 0,
@@ -1785,6 +1787,7 @@ export const recommendBestTeamAsync = (
             rank: topTeams.length + 1,
             team,
             leader,
+            cardIds: r.ids.map((i) => materialized[i]?.id || null),
             bloomLevels,
             cardLevels,
             passiveCount: 0,
@@ -2199,6 +2202,10 @@ export default function TeamBuilder({
       const recCardLevels =
         teamObj.cardLevels ||
         recTeam.map((id) => getRosterConfig(id).level || 70);
+      const nextSelectedCards =
+        Array.isArray(teamObj.cardIds) && teamObj.cardIds.length === recTeam.length
+          ? teamObj.cardIds
+          : undefined;
 
       const nextPresets = presets.map((p) => {
         if (p.id === selectedPresetId) {
@@ -2208,6 +2215,7 @@ export default function TeamBuilder({
             leader: recLeader,
             bloomLevels: recBloomLevels,
             cardLevels: recCardLevels,
+            ...(nextSelectedCards ? { selectedCards: nextSelectedCards } : {}),
           };
         }
         return p;
@@ -2218,6 +2226,7 @@ export default function TeamBuilder({
         leader: recLeader,
         bloomLevels: recBloomLevels,
         cardLevels: recCardLevels,
+        ...(nextSelectedCards ? { selectedCards: nextSelectedCards } : {}),
       });
 
       if (onSavePresets) {
@@ -2237,20 +2246,39 @@ export default function TeamBuilder({
   const handleApplyUpgradeRecommendation = (rec) => {
     if (!rec || !rec.team || rec.team.length !== 5) return;
     const char = rec.cardCharId ? findChar(rec.cardCharId, characters) : null;
+    const recCard = getEffectiveCardVariant(char, rec.cardId);
+    const cardLevel = recCard?.cardData?.maxLevel || char?.cardData?.maxLevel || 70;
     let nextRoster = Array.isArray(ownedRoster) ? ownedRoster.slice() : [];
     if (char) {
-      const alreadyOwned = nextRoster.some((item) =>
-        typeof item === "string" ? item === char.id : item?.id === char.id,
-      );
-      if (!alreadyOwned) {
-        nextRoster.push({
-          id: char.id,
-          bloom: 0,
-          level: char.cardData?.maxLevel || 70,
+      const sameCharacter = nextRoster.some((item) => {
+        const id = typeof item === "string" ? item : item?.id;
+        return (
+          id === char.id ||
+          id === char.characterId ||
+          id === char.cardData?.id
+        );
+      });
+      if (sameCharacter) {
+        nextRoster = nextRoster.map((item) => {
+          const id = typeof item === "string" ? item : item?.id;
+          if (
+            id === char.id ||
+            id === char.characterId ||
+            id === char.cardData?.id
+          ) {
+            return { id: rec.cardId, bloom: 0, level: cardLevel };
+          }
+          return item;
         });
+      } else {
+        nextRoster.push({ id: rec.cardId, bloom: 0, level: cardLevel });
       }
     }
     onUpdateOwnedRoster(nextRoster);
+    const nextSelectedCards =
+      Array.isArray(rec.cardIds) && rec.cardIds.length === rec.team.length
+        ? rec.cardIds
+        : undefined;
     const nextPresets = presets.map((p) => {
       if (p.id === selectedPresetId) {
         return {
@@ -2259,6 +2287,7 @@ export default function TeamBuilder({
           leader: rec.leader,
           bloomLevels: rec.bloomLevels,
           cardLevels: rec.cardLevels,
+          ...(nextSelectedCards ? { selectedCards: nextSelectedCards } : {}),
         };
       }
       return p;
@@ -2268,6 +2297,7 @@ export default function TeamBuilder({
       leader: rec.leader,
       bloomLevels: rec.bloomLevels,
       cardLevels: rec.cardLevels,
+      ...(nextSelectedCards ? { selectedCards: nextSelectedCards } : {}),
     });
     if (onSavePresets) {
       onSavePresets(nextPresets);
@@ -3361,19 +3391,22 @@ export default function TeamBuilder({
                       const char = rec.cardCharId
                         ? findChar(rec.cardCharId, characters)
                         : null;
+                      const recCard = getEffectiveCardVariant(char, rec.cardId);
                       const isTop = recIdx === 0;
                       const improves = rec.improves && rec.gain > 1e-8;
                       const gainPct = (rec.gain * 100).toFixed(1);
-                      const displayImg =
-                        char?.image ||
-                        char?.fallbackImage ||
-                        char?.cardData?.image;
+                      const displayImg = recCard?.assetId
+                        ? cardArtUrl(recCard.assetId)
+                        : char?.image ||
+                          char?.fallbackImage ||
+                          char?.cardData?.image;
                       const recName =
                         char?.member ||
                         char?.cardData?.member ||
                         char?.name ||
                         "Unknown card";
-                      const cardTitle = char?.title || char?.cardData?.name || "";
+                      const cardTitle =
+                        recCard?.title || recCard?.cardData?.name || "";
                       return (
                         <div
                           key={recIdx}
@@ -3519,18 +3552,22 @@ export default function TeamBuilder({
                           >
                             {rec.team.map((charId, cIdx) => {
                               const tc = findChar(charId, characters);
+                              const memberCard = getEffectiveCardVariant(
+                                tc,
+                                rec.cardIds?.[cIdx],
+                              );
                               const isNew =
-                                tc?.id === rec.cardCharId ||
-                                tc?.cardData?.id === rec.cardId;
+                                rec.cardIds?.[cIdx] === rec.cardId;
                               const name =
                                 tc?.member ||
                                 tc?.cardData?.member ||
                                 tc?.name ||
                                 `Unit ${cIdx + 1}`;
-                              const img =
-                                tc?.image ||
-                                tc?.fallbackImage ||
-                                tc?.cardData?.image;
+                              const img = memberCard?.assetId
+                                ? cardArtUrl(memberCard.assetId)
+                                : tc?.image ||
+                                  tc?.fallbackImage ||
+                                  tc?.cardData?.image;
                               return (
                                 <div
                                   key={cIdx}
@@ -3648,6 +3685,20 @@ export default function TeamBuilder({
                   const rankNum = teamItem.rank || teamIdx + 1;
                   const isTop1 = rankNum === 1;
                   const ldrChar = findChar(teamItem.leader, characters);
+                  const ldrIdx = teamItem.team.findIndex((id) => {
+                    const c = findChar(id, characters);
+                    return (
+                      c &&
+                      (id === teamItem.leader ||
+                        c.id === teamItem.leader ||
+                        c.cardData?.id === teamItem.leader ||
+                        c.characterId === teamItem.leader)
+                    );
+                  });
+                  const ldrCard = getEffectiveCardVariant(
+                    ldrChar,
+                    ldrIdx >= 0 ? teamItem.cardIds?.[ldrIdx] : undefined,
+                  );
                   return (
                     <div
                       key={teamIdx}
@@ -3751,6 +3802,10 @@ export default function TeamBuilder({
                       >
                         {teamItem.team.map((charId, cIdx) => {
                           const char = findChar(charId, characters);
+                          const memberCard = getEffectiveCardVariant(
+                            char,
+                            teamItem.cardIds?.[cIdx],
+                          );
                           const isLeader =
                             charId === teamItem.leader ||
                             char?.id === teamItem.leader ||
@@ -3762,12 +3817,19 @@ export default function TeamBuilder({
                             char?.cardData?.name ||
                             `Unit ${cIdx + 1}`;
                           const cardTitle =
-                            char?.title || char?.cardData?.name || "";
-                          const type = char?.type || char?.attribute || "Pure";
-                          const displayImg =
-                            char?.image ||
-                            char?.fallbackImage ||
-                            char?.cardData?.image;
+                            memberCard?.title ||
+                            memberCard?.cardData?.name ||
+                            "";
+                          const type =
+                            memberCard?.type ||
+                            char?.type ||
+                            char?.attribute ||
+                            "Pure";
+                          const displayImg = memberCard?.assetId
+                            ? cardArtUrl(memberCard.assetId)
+                            : char?.image ||
+                              char?.fallbackImage ||
+                              char?.cardData?.image;
                           return (
                             <div
                               key={cIdx}
@@ -3882,7 +3944,7 @@ export default function TeamBuilder({
                       </div>
 
                       {/* Leader Outfit summary */}
-                      {ldrChar && ldrChar.skills && ldrChar.skills.outfit && (
+                      {ldrCard && ldrCard.skills && ldrCard.skills.outfit && (
                         <div
                           style={{
                             marginTop: "0.65rem",
@@ -3895,9 +3957,10 @@ export default function TeamBuilder({
                           }}
                         >
                           <strong style={{ color: "#ffd700" }}>
-                            Leader Outfit ({ldrChar.name}):
+                            Leader Outfit (
+                            {ldrCard.title || ldrChar?.name}):
                           </strong>{" "}
-                          {ldrChar.skills.outfit}
+                          {ldrCard.skills.outfit}
                         </div>
                       )}
                     </div>
