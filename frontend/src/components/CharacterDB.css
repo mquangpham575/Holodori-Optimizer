@@ -209,6 +209,14 @@
   margin-right: 0.1rem;
 }
 
+.elem-icon img,
+.elem-icon:is(img) {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  vertical-align: -3px;
+}
+
 .text-blue { color: #3b82f6; }
 .text-red { color: #ef4444; }
 .text-orange { color: #f59e0b; }

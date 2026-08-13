@@ -246,8 +246,8 @@ export default function Navbar({ API_BASE = '' }) {
                 width: '34px',
                 height: '34px'
               }}
-              onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.05)'}
-              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               {isLightMode ? <Moon size={19} /> : <Sun size={19} />}
             </button>

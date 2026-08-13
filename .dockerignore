@@ -1,0 +1,8 @@
+node_modules
+.git
+.gitignore
+frontend/dist
+dist
+*.log
+playwright-*
+.backup

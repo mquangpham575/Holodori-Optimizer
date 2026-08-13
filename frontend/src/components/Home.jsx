@@ -2,12 +2,28 @@ import { useLanguage } from '../context/LanguageContext';
 import React from 'react';
 import { Gamepad2, Shield, Calendar, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { findChar, sameChar, getTypeIconUrl } from '../charUtils';
 import './Home.css';
+
+const typeColors = {
+  PURE: '#10b981',
+  CUTE: '#ef4444',
+  HAPPY: '#fbbf24',
+};
+
 
 /**
  * Home - Displays landing info, editable personal showcase, and links to guides/characters.
  */
-export default function Home({ activeTeam, activeLeader, characters = [], guides = [] }) {
+export default function Home({
+  activeTeam = [],
+  activeLeader,
+  activeLevels = [],
+  activeBloomLevels = [],
+  activeSelectedCards = [],
+  characters = [],
+  guides = [],
+}) {
   const getLangPath = (path) => {
     if (!currentLang) return path;
     if (path === '/') return '/' + currentLang;
@@ -22,20 +38,47 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
     return val[lang] || val['en'] || val[Object.keys(val)[0]] || '';
   };
 
-  const leaderChar = characters.find(c => c.id === activeLeader);
-  
-  // Build character display list: Leader first, then remaining team units
-  let displayCharacters = [];
-  if (leaderChar) {
-    displayCharacters.push(leaderChar);
-  }
-  
-  activeTeam.forEach(id => {
-    const char = characters.find(c => c.id === id);
-    if (char && char.id !== activeLeader) {
-      displayCharacters.push(char);
-    }
-  });
+  const displayCharacters = activeTeam
+    .map((id, index) => {
+      const char = findChar(id, characters);
+      if (!char) return null;
+
+      const selectedCardId = activeSelectedCards[index];
+      const cardMatchesId = (card, cardId) =>
+        cardId &&
+        [card.id, card.assetId, card.cardData?.id, card.cardData?.cardId].includes(
+          cardId,
+        );
+      const variant = char.cards?.find(
+        (card) => cardMatchesId(card, selectedCardId) || cardMatchesId(card, id),
+      );
+      // The character's top-level card data is the primary/detail-calculation
+      // card. Do not default to cards[0], whose order may start at 3★/4★.
+      const card = variant || char;
+      const type = card.type || char.type || card.attribute;
+      const groups = Array.from(
+        new Set(
+          [
+            char.group,
+            ...(char.groupLabels || []),
+            ...(char.cardData?.groupLabels || []),
+            ...(card.groupLabels || []),
+            ...(card.cardData?.groupLabels || []),
+          ].filter(Boolean),
+        ),
+      );
+
+      return {
+        char,
+        card,
+        index,
+        type,
+        groups,
+        level: activeLevels[index] || 70,
+        bloom: activeBloomLevels[index] || 0,
+      };
+    })
+    .filter(Boolean);
 
   return (
     <div className="home-page animate-fade-in">
@@ -73,21 +116,41 @@ export default function Home({ activeTeam, activeLeader, characters = [], guides
             <div className="team-slots">
               {displayCharacters.length > 0 ? (
                 <>
-                  {displayCharacters.map((char) => (
+                  {displayCharacters.map(({ char, card, index, type, groups, level, bloom }) => (
                     <div 
                       key={char.id} 
-                      className={`team-slot-card glass ${activeLeader === char.id ? 'leader-card border-gold' : ''}`}
-                      style={{ '--char-color': char.accentColor }}
+                      className={`team-slot-card glass ${sameChar(activeLeader, char.id, characters) ? 'leader-card' : ''}`}
+                      style={{ '--char-color': char.accentColor, '--type-color': typeColors[type] || 'var(--accent-color)' }}
                       onClick={() => navigate(getLangPath('/builder'))}
                     >
-                      {activeLeader === char.id && <span className="home-leader-badge">{t('leader_tag')}</span>}
-                      {char.image ? (
-                        <img src={char.fallbackImage || char.image} alt={char.name} className="home-team-char-img" />
-                      ) : (
-                        <span className="char-emoji">{char.avatar}</span>
-                      )}
+                      <span className="home-slot-number">{index + 1}</span>
+                      {sameChar(activeLeader, char.id, characters) && <span className="home-leader-badge">L</span>}
+                      <div className="home-card-art-wrap">
+                        {card.image || card.assetId || char.image ? (
+                          <img
+                            src={card.image || (card.assetId ? `/images/cards/${card.assetId}.webp` : char.fallbackImage || char.image)}
+                            alt={char.name}
+                            className="home-team-char-img"
+                          />
+                        ) : (
+                          <span className="char-emoji">{char.avatar}</span>
+                        )}
+                        <span className="home-group-badges">
+                          {groups.map((group) => (
+                            <span className="home-group-badge" key={group}>{group}</span>
+                          ))}
+                        </span>
+                        <span className="home-type-badge" style={{ color: typeColors[type] || 'var(--accent-color)' }}>
+                          {getTypeIconUrl(type) ? (
+                            <img src={getTypeIconUrl(type)} alt={`${type} type`} />
+                          ) : '•'}
+                        </span>
+                      </div>
                       <span className="char-name">{char.name}</span>
-                      <span className="char-role">{char.group}</span>
+                      <span className="home-card-title">{card.title || card.name || char.title}</span>
+                      <span className="home-card-meta" style={{ color: typeColors[type] || 'var(--text-muted)' }}>
+                        {type || 'TYPE'} · Lv{level} · B{bloom}
+                      </span>
                     </div>
                   ))}
                 </>

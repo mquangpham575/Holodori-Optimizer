@@ -5,22 +5,22 @@
  * src/app.js.in, normalized-card-v2), converts it to the legacy normalized
  * snapshot shape the site was built on, and enriches character rows for
  * PostgreSQL. Shared by:
- *   - backend/server.js  (prod auto-sync on boot + interval)
- *   - backend/etl/sync-holodori-db.js  (manual `--force` refresh of database.json)
+ *   - backend/src/server.ts  (prod auto-sync on boot + interval)
+ *   - backend/src/etl/sync-holodori-db.ts  (manual `--force` refresh of database.json)
  */
 
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 
 const APP_JS_URL =
   "https://raw.githubusercontent.com/ace-ks-dev/holodori-optimizer/main/index.html";
 
-export function packedContentHash(packed) {
+export function packedContentHash(packed: any): string {
   return createHash("sha256").update(JSON.stringify(packed)).digest("hex");
 }
 
 // --- Fetching ------------------------------------------------------------
 
-export async function fetchPacked() {
+export async function fetchPacked(): Promise<any> {
   const res = await fetch(APP_JS_URL);
   if (!res.ok) throw new Error(`Failed to fetch app.js.in: HTTP ${res.status}`);
   const src = await res.text();
@@ -30,10 +30,10 @@ export async function fetchPacked() {
 const MUSIC_BASE_URL =
   "https://raw.githubusercontent.com/HolodoriDB/holodori-db-eng-diff/main";
 
-export async function fetchAndBuildSongs() {
+export async function fetchAndBuildSongs(): Promise<any[]> {
   const musicRes = await fetch(`${MUSIC_BASE_URL}/Music.json`);
   if (!musicRes.ok) throw new Error(`Failed to fetch Music.json: HTTP ${musicRes.status}`);
-  const musicData = await musicRes.json();
+  const musicData: any[] = await musicRes.json();
   return musicData
     .filter((m) => m.data.playingSeconds > 0)
     .map((m) => ({
@@ -49,7 +49,7 @@ export async function fetchAndBuildSongs() {
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function extractPacked(src) {
+export function extractPacked(src: string): any {
   const marker = "const BUNDLED_PACKED = ";
   const startIdx = src.indexOf(marker);
   if (startIdx < 0) throw new Error("BUNDLED_PACKED marker not found in app.js.in");
@@ -70,11 +70,11 @@ export function extractPacked(src) {
 
 // --- v2 (packed) -> legacy normalized snapshot ---------------------------
 
-export function packedToLegacySnapshot(packed) {
+export function packedToLegacySnapshot(packed: any): any {
   const attrLabel = packed.attributeLabels || {};
   const groupLabel = packed.groupLabels || {};
 
-  const convertCard = (card) => {
+  const convertCard = (card: any) => {
     const curve = packed.levelCurves?.[card.levelCurve];
     const profile = packed.bloomProfiles?.[card.bloomProfile] || [];
     return {
@@ -88,12 +88,12 @@ export function packedToLegacySnapshot(packed) {
       attributeId: card.attributeId,
       attribute: attrLabel[card.attributeId] || card.attribute || null,
       groupIds: card.groupIds || [],
-      groupLabels: (card.groupIds || []).map((g) => groupLabel[g]).filter(Boolean),
+      groupLabels: (card.groupIds || []).map((g: string) => groupLabel[g]).filter(Boolean),
       maxLevel: card.maxLevel,
       levelBaseValues: curve,
       statPermil: card.statPermil,
       levelLimitCaps: card.levelLimitCaps,
-      bloomStages: profile.map((b, idx) => ({
+      bloomStages: profile.map((b: any, idx: number) => ({
         stage: b.stage ?? idx,
         statBonus: b.statBonus ?? 0,
         activeLevel: b.activeLevel,
@@ -121,18 +121,18 @@ export function packedToLegacySnapshot(packed) {
 
 // --- Enrichment (legacy snapshot -> character rows) ----------------------
 
-function computeStat(baseValue, permilWeight, bloomBonus) {
+function computeStat(baseValue: number, permilWeight: number, bloomBonus: number): number {
   return Math.ceil(baseValue * (permilWeight / 1000) * (1 + bloomBonus));
 }
 
-const normalizeMember = (n) => {
+const normalizeMember = (n: string): string => {
   if (!n) return "";
   let s = n.trim().replace(/\u2019/g, "'");
   if (s === "Mori Calliope") return "Calliope Mori";
   return s;
 };
 
-const attrTypeMap = {
+const attrTypeMap: Record<string, string> = {
   CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_1: "HAPPY",
   CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_2: "PURE",
   CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_3: "CUTE",
@@ -141,22 +141,22 @@ const attrTypeMap = {
   Cute: "CUTE",
 };
 
-export function enrichCharacters(baseCharacters, snapshot) {
-  const memberToCardsMap = {};
-  snapshot.cards.forEach((card) => {
+export function enrichCharacters(baseCharacters: any[], snapshot: any) {
+  const memberToCardsMap: Record<string, any[]> = {};
+  snapshot.cards.forEach((card: any) => {
     const norm = normalizeMember(card.member);
     if (!memberToCardsMap[norm]) memberToCardsMap[norm] = [];
     memberToCardsMap[norm].push(card);
   });
 
-  const enriched = [];
-  const skipped = [];
+  const enriched: any[] = [];
+  const skipped: string[] = [];
 
   for (const char of baseCharacters) {
     const normName = normalizeMember(char.name);
     const memberCards = memberToCardsMap[normName] || [];
 
-    const cards = memberCards.map((c) => {
+    const cards = memberCards.map((c: any) => {
       const lvl80Base = c.levelBaseValues ? c.levelBaseValues[79] : 23612;
       const node2Bonus = c.rarity === 5 ? 0.1 : 0.0;
       const weights = c.statPermil || [333, 333, 334];
@@ -167,7 +167,7 @@ export function enrichCharacters(baseCharacters, snapshot) {
 
       const type = attrTypeMap[c.attribute] || attrTypeMap[c.attributeId] || char.type;
 
-      const bloomStats = (c.bloomStages || []).map((bs) => {
+      const bloomStats = (c.bloomStages || []).map((bs: any) => {
         const stage = bs.stage;
         const statBonus = bs.statBonus || 0;
         const levelCaps = [60, 65, 70, 75, 80, 80];

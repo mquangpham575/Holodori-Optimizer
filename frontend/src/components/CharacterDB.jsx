@@ -1,10 +1,29 @@
 import { useLanguage } from '../context/LanguageContext';
 import React, { useState } from 'react';
-import { X, Heart, Leaf, Sun, Paintbrush, Users, Sparkles, Award, Zap, Shield, Grid } from 'lucide-react';
+import { X, Users, Sparkles, Award, Zap, Shield } from 'lucide-react';
 import { ALL_CARDS } from '../data';
+import { getTypeIconUrl } from '../charUtils';
 import './CharacterDB.css';
 
-export default function CharacterDB({ onAccentChange, currentAccent, characters = [], allCards = [] }) {
+// Module-level so the component type stays stable across renders (defining it
+// inside the component would remount the <img> and reset the error state each
+// render, causing broken images to retry endlessly).
+const getInitials = (name) => {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase();
+};
+
+const CardArt = ({ name, src, alt, className, small }) => {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return (
+      <div className={`card-art-initials${small ? ' small' : ''}`}>{getInitials(name)}</div>
+    );
+  }
+  return <img src={src} alt={alt || name} className={className} onError={() => setFailed(true)} />;
+};
+
+export default function CharacterDB({ characters = [], allCards = [] }) {
   const { t } = useLanguage();
   const [selectedGroup, setSelectedGroup] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
@@ -16,21 +35,6 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
   const displayList = allCards.length > 0
     ? allCards
     : (ALL_CARDS && ALL_CARDS.length > 0) ? ALL_CARDS : characters;
-
-  const getInitials = (name) => {
-    const parts = (name || '').trim().split(/\s+/).filter(Boolean);
-    return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase();
-  };
-
-  const CardArt = ({ name, src, alt, className, small }) => {
-    const [failed, setFailed] = useState(false);
-    if (!src || failed) {
-      return (
-        <div className={`card-art-initials${small ? ' small' : ''}`}>{getInitials(name)}</div>
-      );
-    }
-    return <img src={src} alt={alt || name} className={className} onError={() => setFailed(true)} />;
-  };
 
   const GROUP_ORDER = [
     'Gen 0', 'Gen 1', 'Gen 2', 'GAMERS', 'Gen 3', 'Gen 4', 'Gen 5', 'holoX',
@@ -61,26 +65,23 @@ export default function CharacterDB({ onAccentChange, currentAccent, characters 
   const rarities = ['All', '5-Star', '4-Star', '3-Star'];
 
   const typeDisplayMap = {
-    'PURE': 'Pure Type',
-    'CUTE': 'Cute Type',
-    'HAPPY': 'Happy Type'
+    'PURE': 'Pure',
+    'CUTE': 'Cute',
+    'HAPPY': 'Happy'
   };
 
   const filteredCharacters = displayList.filter((char) => {
     const matchesGroup = selectedGroup === 'All' || charGroupLabels(char).includes(selectedGroup);
     const matchesType = selectedType === 'All' || char.type === selectedType;
     const matchesRarity = selectedRarity === 'All' || char.rarity === selectedRarity || (char.rarityNum && char.rarityNum === parseInt(selectedRarity));
-    const matchesSearch = char.name.toLowerCase().includes(searchQuery.toLowerCase()) || (char.title && char.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = (char.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (char.title && char.title.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesGroup && matchesType && matchesRarity && matchesSearch;
   });
 
   const getTypeIcon = (type) => {
-    switch (type) {
-      case 'PURE': return <Leaf className="elem-icon text-pure" size={14} />;
-      case 'CUTE': return <Heart className="elem-icon text-cute" size={14} />;
-      case 'HAPPY': return <Sun className="elem-icon text-happy" size={14} />;
-      default: return null;
-    }
+    const url = getTypeIconUrl(type);
+    if (!url) return null;
+    return <img src={url} alt={`${type} type`} className="elem-icon" />;
   };
 
   const getTypeColor = (type) => {

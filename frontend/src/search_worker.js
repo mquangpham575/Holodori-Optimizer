@@ -1,3 +1,7 @@
+// VENDORED: this file is a port of the open-source holodori-optimizer search
+// engine (github.com/int3rrupt3d/holodori-optimizer). It runs inside a Web
+// Worker (CARDS is injected at build time) to power team recommendation.
+// Minimal adaptations only — the scoring math is upstream reference code.
 "use strict";
 const CARDS = __CARDS__;
 const CARD_BY_KEY = new Map(CARDS.map((c,i)=>[c.key,i]));

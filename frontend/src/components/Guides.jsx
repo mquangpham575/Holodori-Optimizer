@@ -10,7 +10,12 @@ export default function Guides({ guides = [] }) {
   const [guideContent, setGuideContent] = useState('');
   const [loadingContent, setLoadingContent] = useState(false);
 
-  const categories = ['All', 'Guides', 'Meta'];
+  // Derive categories from the actual guide data so they always match the
+  // categories the admin form saves (General/Builds/Meta).
+  const categories = [
+    'All',
+    ...Array.from(new Set(guides.map((g) => g.category).filter(Boolean))),
+  ];
 
   const getLocalizedValue = (val, lang) => {
     if (!val) return '';
@@ -23,7 +28,9 @@ export default function Guides({ guides = [] }) {
     return selectedCategory === 'All' || guide.category === selectedCategory;
   });
 
-  // Load guide content dynamically when selected if it has a contentUrl
+  // Load guide content dynamically when selected if it has a contentUrl.
+  // The AbortController cancels the previous fetch when a different guide (or
+  // language) is opened, preventing a stale response from overwriting content.
   useEffect(() => {
     if (!activeGuide) {
       setGuideContent('');
@@ -32,10 +39,11 @@ export default function Guides({ guides = [] }) {
 
     const localizedContentUrl = getLocalizedValue(activeGuide.contentUrl, currentLang);
     const localizedContent = getLocalizedValue(activeGuide.content, currentLang);
+    const controller = new AbortController();
 
     if (localizedContentUrl) {
       setLoadingContent(true);
-      fetch(localizedContentUrl)
+      fetch(localizedContentUrl, { signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error("Failed to load guide markdown");
           return res.text();
@@ -45,6 +53,7 @@ export default function Guides({ guides = [] }) {
           setLoadingContent(false);
         })
         .catch((err) => {
+          if (err.name === 'AbortError') return;
           console.error("Error loading guide:", err);
           setGuideContent("Failed to load content.");
           setLoadingContent(false);
@@ -52,6 +61,8 @@ export default function Guides({ guides = [] }) {
     } else {
       setGuideContent(localizedContent || '');
     }
+
+    return () => controller.abort();
   }, [activeGuide, currentLang]);
 
   // Custom sub-parser to format inline markdown elements (bold and links)

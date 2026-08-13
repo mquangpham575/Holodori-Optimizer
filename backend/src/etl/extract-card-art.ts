@@ -5,9 +5,9 @@
  * art locally instead of relying on the dead remote assetbundles URLs.
  */
 
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const APP_JS_URL =
   "https://raw.githubusercontent.com/ace-ks-dev/holodori-optimizer/main/index.html";
@@ -17,23 +17,23 @@ const ART_DIR = join(
   "../../frontend/public/images/cards",
 );
 
-export function extractLocalArtwork(src) {
+export function extractLocalArtwork(src: string): any {
   const m = src.match(/LOCAL_ARTWORK = (\{[\s\S]*?\});\s*(?:var|let|const|function|\w)/);
   if (!m) throw new Error("LOCAL_ARTWORK manifest not found in index.html");
   return JSON.parse(m[1]);
 }
 
-export function decodeDataUri(src) {
+export function decodeDataUri(src: string): { ext: string; data: Buffer } | null {
   const m = String(src || "").match(/^data:image\/([a-z]+);base64,(.+)$/);
   if (!m) return null;
   return { ext: m[1] === "jpeg" ? "jpg" : m[1], data: Buffer.from(m[2], "base64") };
 }
 
-export function getCardArtEntries(src) {
+export function getCardArtEntries(src: string): { entries: any[]; embeddedCardCount: number } {
   const manifest = extractLocalArtwork(src);
   const cards = manifest.cards || {};
-  const entries = [];
-  for (const card of Object.values(cards)) {
+  const entries: any[] = [];
+  for (const card of Object.values(cards) as any[]) {
     const decoded = decodeDataUri(card.src);
     if (!decoded || !card.assetId) continue;
     entries.push({ assetId: card.assetId, ext: decoded.ext, data: decoded.data });
@@ -41,7 +41,10 @@ export function getCardArtEntries(src) {
   return { entries, embeddedCardCount: manifest.embeddedCardCount };
 }
 
-export async function writeCardArt(src, { dryRun = false } = {}) {
+export async function writeCardArt(
+  src: string,
+  { dryRun = false }: { dryRun?: boolean } = {}
+): Promise<{ written: number; bytes: number; embeddedCardCount: number }> {
   const { entries, embeddedCardCount } = getCardArtEntries(src);
   if (!existsSync(ART_DIR) && !dryRun) mkdirSync(ART_DIR, { recursive: true });
 
@@ -56,7 +59,7 @@ export async function writeCardArt(src, { dryRun = false } = {}) {
   return { written, bytes, embeddedCardCount };
 }
 
-export async function fetchIndexHtml() {
+export async function fetchIndexHtml(): Promise<string> {
   const res = await fetch(APP_JS_URL);
   if (!res.ok) throw new Error(`Failed to fetch index.html: HTTP ${res.status}`);
   return res.text();

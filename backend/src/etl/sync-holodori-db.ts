@@ -4,21 +4,21 @@
  * converts normalized-card-v2 -> legacy snapshot, and enriches database.json
  * with exact card stats, skill level 1 vs level 2 texts, bloom stages, and songs.
  *
- * Usage: node backend/etl/sync-holodori-db.js [--force]
+ * Usage: npx tsx backend/src/etl/sync-holodori-db.ts [--force]
  */
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { fetchPacked, packedToLegacySnapshot, enrichCharacters, packedContentHash, fetchAndBuildSongs } from "./holodori-sync.js";
 import { fetchIndexHtml, writeCardArt } from "./extract-card-art.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, "..", "database.json");
 const SNAPSHOT_PATH = path.join(__dirname, "..", "holodori_snapshot.json");
-const VERSION_CACHE_PATH = path.join(__dirname, "last_version.txt");
+const VERSION_CACHE_PATH = path.join(__dirname, "..", "last_version.txt");
 
-function atomicWrite(target, data, options) {
+function atomicWrite(target: string, data: string, options: any) {
   const tmp = `${target}.tmp-${process.pid}`;
   fs.writeFileSync(tmp, data, options);
   fs.renameSync(tmp, target);
@@ -29,9 +29,9 @@ async function main() {
 
   const force = process.argv.includes("--force");
 
-  let snapshot;
+  let snapshot: any;
   let versionChanged = false;
-  let contentHash = null;
+  let contentHash: string | null = null;
   if (force || !fs.existsSync(SNAPSHOT_PATH)) {
     console.log("Fetching latest BUNDLED_PACKED from holodori-optimizer src/app.js.in...");
     const packed = await fetchPacked();
@@ -63,13 +63,13 @@ async function main() {
 
   const { characters: enrichedChars, skipped: skippedList } = enrichCharacters(existingDB.characters, snapshot);
 
-  const enrichedById = new Map(enrichedChars.map(c => [c.id, c]));
+  const enrichedById = new Map(enrichedChars.map((c: any) => [c.id, c]));
   for (let i = 0; i < existingDB.characters.length; i++) {
     const enriched = enrichedById.get(existingDB.characters[i].id);
     if (enriched) existingDB.characters[i] = enriched;
   }
 
-  skippedList.forEach(name => console.warn(`  WARNING: No snapshot card match for "${name}" — skipped`));
+  skippedList.forEach((name: string) => console.warn(`  WARNING: No snapshot card match for "${name}" ? skipped`));
 
   const enriched = enrichedChars.length;
   const skipped = skippedList.length;
@@ -92,7 +92,7 @@ async function main() {
   console.log(`Indexed ${songs.length} songs.\n`);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error("\nETL failed:", err.message);
   process.exit(1);
 });

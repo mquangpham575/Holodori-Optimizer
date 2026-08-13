@@ -71,7 +71,7 @@ function App() {
   const allCards = useMemo(() => buildAllCards(characters), [characters]);
 
   // Load theme accent color from localStorage or default (Sora Blue)
-  const [themeAccent, setThemeAccent] = useState(() => {
+  const [themeAccent] = useState(() => {
     return localStorage.getItem('holodreams_theme_accent') || '#3a86ff';
   });
 
@@ -173,11 +173,6 @@ function App() {
     fetchData();
   }, [API_BASE, deviceId]);
 
-  const handleAccentChange = (hexColor) => {
-    setThemeAccent(hexColor);
-    showNotification('Theme Accent Synced!', 'success');
-  };
-
   const handleUpdatePreset = (presetId, updatedFields) => {
     setPresets(prev => prev.map(p => {
       if (p.id === presetId) {
@@ -273,6 +268,9 @@ function App() {
               <Home 
                 activeTeam={activePreset.team} 
                 activeLeader={activePreset.leader}
+                activeLevels={activePreset.cardLevels}
+                activeBloomLevels={activePreset.bloomLevels}
+                activeSelectedCards={activePreset.selectedCards}
                 characters={characters}
                 guides={guides}
               />
@@ -284,6 +282,9 @@ function App() {
               <Home 
                 activeTeam={activePreset.team} 
                 activeLeader={activePreset.leader}
+                activeLevels={activePreset.cardLevels}
+                activeBloomLevels={activePreset.bloomLevels}
+                activeSelectedCards={activePreset.selectedCards}
                 characters={characters}
                 guides={guides}
               />
@@ -293,8 +294,6 @@ function App() {
             path="/characters" 
             element={
               <CharacterDB 
-                onAccentChange={handleAccentChange} 
-                currentAccent={themeAccent} 
                 characters={characters}
                 allCards={allCards}
               />
@@ -304,8 +303,6 @@ function App() {
             path="/characters/:lang" 
             element={
               <CharacterDB 
-                onAccentChange={handleAccentChange} 
-                currentAccent={themeAccent} 
                 characters={characters}
                 allCards={allCards}
               />

@@ -104,6 +104,13 @@
   white-space: nowrap;
 }
 
+.tb-type-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  vertical-align: -2px;
+}
+
 .btn-remove-slot {
   position: absolute;
   top: 8px;
@@ -503,6 +510,12 @@
   color: #2ec4b6;
 }
 
+.error-badge {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
 .warning-badge {
   background: rgba(247, 127, 0, 0.08);
   border-color: rgba(247, 127, 0, 0.2);
@@ -545,9 +558,11 @@
   position: relative;
   transition: all 0.3s ease;
   overflow: visible;
-  cursor: pointer;
+  cursor: grab;
   border: 1px solid var(--border-color);
   padding: 0.55rem 1rem;
+  /* Allow HTML5 drag-and-drop to initiate from touch input */
+  touch-action: none;
 }
 
 .builder-slot.active-focused-slot {
@@ -568,8 +583,9 @@
   position: relative;
   transition: all 0.3s ease;
   overflow: visible;
-  cursor: pointer;
+  cursor: grab;
   border: 1px solid var(--border-color);
+  touch-action: none;
 }
 
 .leader-slot.active-focused-slot {

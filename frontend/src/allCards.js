@@ -27,6 +27,7 @@ export const buildAllCards = (characters = []) => {
       cards.push({
         id: v.id,
         characterId: c.characterId || c.id,
+        charId: c.id,
         name: c.name,
         title: v.title,
         rarity: rarityToLabel(v.rarity),

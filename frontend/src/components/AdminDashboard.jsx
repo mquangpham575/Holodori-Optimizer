@@ -5,7 +5,15 @@ import { CHARACTERS } from '../data';
 
 export default function AdminDashboard({ characters = [], setCharacters, guides = [], setGuides, API_BASE }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminToken, setAdminToken] = useState(() => sessionStorage.getItem('holodreams_admin_token') || '');
   const [password, setPassword] = useState('');
+
+  // Central auth headers for all admin API calls (signed token from login).
+  const adminHeaders = (extra = {}) => ({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${adminToken}`,
+    ...extra,
+  });
   const [activeTab, setActiveTab] = useState('characters');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -16,7 +24,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
   const [charForm, setCharForm] = useState({
     id: '', name: '', title: '', rarity: '5-Star', group: 'Gen 0', type: 'PURE',
     accentColor: '#3a86ff', image: '', avatar: '',
-    stats: { sense: 80, technique: 80, performance: 80, support: 80 },
+    stats: { sense: 80, technique: 80, performance: 80 },
     skills: { outfit: '', special: '', active: '', passive: '' }
   });
 
@@ -44,8 +52,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
         const res = await fetch(`${API_BASE}/api/admin/upload`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'x-admin-password': password
+            ...adminHeaders()
           },
           body: JSON.stringify({
             fileName: file.name,
@@ -94,8 +101,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
           const res = await fetch(`${API_BASE}/api/admin/upload`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'x-admin-password': password
+              ...adminHeaders()
             },
             body: JSON.stringify({
               fileName: file.name || 'clipboard.png',
@@ -132,16 +138,29 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
     }
   };
 
-  // Password Unlock Check
-  const handleLogin = (e) => {
+  // Login: exchange the password for a signed admin token (rate-limited).
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Use the password locally, we will verify it on endpoint requests
     if (password.trim() === '') {
       setError('Password cannot be empty');
       return;
     }
-    setIsAdmin(true);
-    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+      setAdminToken(data.token);
+      sessionStorage.setItem('holodreams_admin_token', data.token);
+      setIsAdmin(true);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Invalid password');
+      setIsAdmin(false);
+    }
   };
 
   const showNotification = (msg, type = 'success') => {
@@ -164,7 +183,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       setCharForm({
         id: '', name: '', title: '', rarity: '5-Star', group: 'Gen 0', type: 'PURE',
         accentColor: '#3a86ff', image: '', avatar: '',
-        stats: { sense: 80, technique: 80, performance: 80, support: 80 },
+        stats: { sense: 80, technique: 80, performance: 80 },
         skills: { outfit: '', special: '', active: '', passive: '' }
       });
     }
@@ -213,8 +232,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
         const res = await fetch(`${API_BASE}/api/admin/characters/bulk`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'x-admin-password': password
+            ...adminHeaders()
           },
           body: JSON.stringify(importedData)
         });
@@ -263,8 +281,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': password
+          ...adminHeaders()
         },
         body: JSON.stringify(finalForm)
       });
@@ -295,7 +312,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       const res = await fetch(`${API_BASE}/api/admin/characters/${charId}`, {
         method: 'DELETE',
         headers: {
-          'x-admin-password': password
+          ...adminHeaders()
         }
       });
 
@@ -320,8 +337,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       const res = await fetch(`${API_BASE}/api/admin/sync-from-file`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': password
+          ...adminHeaders()
         },
         body: JSON.stringify({})
       });
@@ -379,8 +395,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': password
+          ...adminHeaders()
         },
         body: JSON.stringify(guideForm)
       });
@@ -411,7 +426,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
       const res = await fetch(`${API_BASE}/api/admin/guides/${guideId}`, {
         method: 'DELETE',
         headers: {
-          'x-admin-password': password
+          ...adminHeaders()
         }
       });
 
@@ -556,7 +571,7 @@ export default function AdminDashboard({ characters = [], setCharacters, guides 
                     </td>
                     <td>
                       <code className="td-stats-list">
-                        P: {char.stats.performance} / T: {char.stats.technique} / S: {char.stats.sense} (Total: {char.stats.total || ((parseInt(char.stats.sense) || 0) + (parseInt(char.stats.technique) || 0) + (parseInt(char.stats.performance) || 0))})
+                        P: {char.stats?.performance ?? 0} / T: {char.stats?.technique ?? 0} / S: {char.stats?.sense ?? 0} (Total: {char.stats?.total ?? ((parseInt(char.stats?.sense) || 0) + (parseInt(char.stats?.technique) || 0) + (parseInt(char.stats?.performance) || 0))})
                       </code>
                     </td>
                     <td>
