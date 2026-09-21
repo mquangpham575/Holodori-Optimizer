@@ -6,16 +6,17 @@
  */
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const APP_JS_URL =
-  "https://raw.githubusercontent.com/ace-ks-dev/holodori-optimizer/main/index.html";
+import config from "../config.js";
+import { fetchOptimizerHtml } from "./holodori-sync.js";
 
-const ART_DIR = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../frontend/public/images/cards",
-);
+// config.imagesDir = <repo>/frontend/public/images. This used to be a hand-rolled
+// "../../frontend/..." relative to backend/src/etl, which resolves to
+// backend/frontend/... since the backend/src split, so new card art was written
+// somewhere the site never serves from.
+export const ART_DIR = join(config.imagesDir, "cards");
 
 export function extractLocalArtwork(src: string): any {
   const m = src.match(/LOCAL_ARTWORK = (\{[\s\S]*?\});\s*(?:var|let|const|function|\w)/);
@@ -59,11 +60,7 @@ export async function writeCardArt(
   return { written, bytes, embeddedCardCount };
 }
 
-export async function fetchIndexHtml(): Promise<string> {
-  const res = await fetch(APP_JS_URL);
-  if (!res.ok) throw new Error(`Failed to fetch index.html: HTTP ${res.status}`);
-  return res.text();
-}
+export const fetchIndexHtml = fetchOptimizerHtml;
 
 const isMain =
   process.argv[1] && process.argv[1] === fileURLToPath(import.meta.url);

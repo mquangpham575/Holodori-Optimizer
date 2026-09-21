@@ -36,7 +36,11 @@ export const parseGuidesRows = (rows: any[]): Guide[] =>
       }
     } catch {}
 
-    return { ...row, title, summary, contentUrl };
+    // origin/seedhash are seed bookkeeping, not part of the public guide shape.
+    // Postgres folds unquoted column names to lower case, so `readTime` comes back
+    // as `readtime` and the UI (which reads `readTime`) rendered it blank in prod.
+    const { origin: _origin, seedhash: _seedhash, contenturl: _contenturl, readtime, ...rest } = row;
+    return { ...rest, readTime: row.readTime ?? readtime, title, summary, contentUrl };
   });
 
 export const listGuides = async (): Promise<Guide[]> => {
@@ -47,12 +51,24 @@ export const listGuides = async (): Promise<Guide[]> => {
   return loadDB().guides || [];
 };
 
+const asText = (v: any): string => (typeof v === "string" ? v : JSON.stringify(v ?? ""));
+
 export const insertGuide = async (guide: Guide): Promise<void> => {
   if (config.isProd) {
     await getPool().query(
-      `INSERT INTO guides (id, title, summary, category, readTime, author, date, content)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [guide.id, guide.title, guide.summary, guide.category, guide.readTime, guide.author, guide.date, guide.content]
+      `INSERT INTO guides (id, title, summary, category, readTime, author, date, content, contentUrl, origin)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, 'admin')`,
+      [
+        guide.id,
+        asText(guide.title),
+        asText(guide.summary),
+        guide.category ?? "",
+        guide.readTime ?? "",
+        guide.author ?? "",
+        guide.date ?? "",
+        guide.content ?? "",
+        guide.contentUrl ? JSON.stringify(guide.contentUrl) : null,
+      ]
     );
     return;
   }
@@ -68,21 +84,30 @@ export const insertGuide = async (guide: Guide): Promise<void> => {
 
 export const updateGuide = async (guideId: string, guide: Partial<Guide>): Promise<void> => {
   if (config.isProd) {
-    const result = await getPool().query(
-      `UPDATE guides
-       SET title = $1, summary = $2, category = $3, readTime = $4, author = $5, date = $6, content = $7
-       WHERE id = $8`,
-      [
-        guide.title,
-        guide.summary,
-        guide.category,
-        guide.readTime,
-        guide.author,
-        guide.date,
-        guide.content,
-        guideId,
-      ]
-    );
+    // Partial update: only touch the columns actually supplied. Binding
+    // `undefined` here used to write NULL into NOT NULL columns (500) or wipe data.
+    const sets: string[] = [];
+    const values: any[] = [];
+    const add = (col: string, val: any, cast = "") => {
+      values.push(val);
+      sets.push(`${col} = $${values.length}${cast}`);
+    };
+    if (guide.title !== undefined) add("title", asText(guide.title));
+    if (guide.summary !== undefined) add("summary", asText(guide.summary));
+    if (guide.category !== undefined) add("category", guide.category);
+    if (guide.readTime !== undefined) add("readTime", guide.readTime);
+    if (guide.author !== undefined) add("author", guide.author);
+    if (guide.date !== undefined) add("date", guide.date);
+    if (guide.content !== undefined) add("content", guide.content);
+    if (guide.contentUrl !== undefined) {
+      add("contentUrl", guide.contentUrl ? JSON.stringify(guide.contentUrl) : null, "::jsonb");
+    }
+    // Any admin edit takes the guide out of the seed's reach.
+    sets.push("origin = 'admin'");
+    values.push(guideId);
+    const result = sets.length
+      ? await getPool().query(`UPDATE guides SET ${sets.join(", ")} WHERE id = $${values.length}`, values)
+      : await getPool().query("SELECT 1 FROM guides WHERE id = $1", [guideId]);
     if (result.rowCount === 0) {
       const err = new Error("Guide not found") as Error & { status: number };
       err.status = 404;
@@ -109,6 +134,11 @@ export const deleteGuide = async (guideId: string): Promise<void> => {
       err.status = 404;
       throw err;
     }
+    // Remember the deletion so the boot-time seed does not resurrect a bundled guide.
+    await getPool().query(
+      `INSERT INTO app_meta (key, value) VALUES ($1, '1') ON CONFLICT (key) DO NOTHING`,
+      [`guide_deleted:${guideId}`]
+    );
     return;
   }
   const db = loadDB();

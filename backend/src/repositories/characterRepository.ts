@@ -25,11 +25,18 @@ const charParams = (char: CharacterRow): any[] => [
   char.assetId || null,
 ];
 
+const ATTRIBUTE_LABELS: Record<string, string> = { CUTE: "Cute", PURE: "Pure", HAPPY: "Happy" };
+
+// The JSON dev store keeps a few presentation fields that have no Postgres
+// column; derive them here so both stores return the same character shape.
 export const mapCharacterRow = (row: any): CharacterRow => ({
   id: row.id,
   name: row.name,
   title: row.title,
   rarity: row.rarity,
+  rarityNum: Number.parseInt(String(row.rarity), 10) || undefined,
+  attribute: ATTRIBUTE_LABELS[String(row.type)] ?? undefined,
+  fallbackImage: `/images/${row.id}.webp`,
   group: row.group,
   type: row.type,
   accentColor: row.accentcolor !== undefined ? row.accentcolor : row.accentColor,
@@ -73,24 +80,37 @@ export const insertCharacter = async (char: CharacterRow): Promise<void> => {
 
 export const updateCharacter = async (charId: string, char: Partial<CharacterRow>): Promise<void> => {
   if (config.isProd) {
-    const result = await getPool().query(
-      `UPDATE characters
-       SET name = $1, title = $2, rarity = $3, "group" = $4, type = $5, accentColor = $6, image = $7, avatar = $8, stats = $9::jsonb, skills = $10::jsonb
-       WHERE id = $11`,
-      [
-        char.name,
-        char.title,
-        char.rarity,
-        char.group,
-        char.type,
-        char.accentColor,
-        char.image,
-        char.avatar,
-        JSON.stringify(char.stats || {}),
-        JSON.stringify(char.skills || {}),
-        charId,
-      ]
-    );
+    // Partial update: the JSON store merges, so Postgres must too. Binding
+    // `undefined` used to NULL every omitted NOT NULL column (500) or wipe stats.
+    const sets: string[] = [];
+    const values: any[] = [];
+    const add = (col: string, val: any, cast = "") => {
+      values.push(val);
+      sets.push(`${col} = $${values.length}${cast}`);
+    };
+    const plain: [string, keyof CharacterRow][] = [
+      ["name", "name"],
+      ["title", "title"],
+      ["rarity", "rarity"],
+      ['"group"', "group"],
+      ["type", "type"],
+      ["accentColor", "accentColor"],
+      ["image", "image"],
+      ["avatar", "avatar"],
+    ];
+    for (const [col, key] of plain) if (char[key] !== undefined) add(col, char[key]);
+    if (char.stats !== undefined) add("stats", JSON.stringify(char.stats), "::jsonb");
+    if (char.skills !== undefined) add("skills", JSON.stringify(char.skills), "::jsonb");
+    if (char.cardData !== undefined) add('"cardData"', JSON.stringify(char.cardData), "::jsonb");
+    if (char.cards !== undefined) add('"cards"', JSON.stringify(char.cards), "::jsonb");
+    if (char.characterId !== undefined) add('"characterId"', char.characterId);
+    if (char.attributeId !== undefined) add('"attributeId"', char.attributeId);
+    if (char.groupIds !== undefined) add('"groupIds"', JSON.stringify(char.groupIds), "::jsonb");
+    if (char.assetId !== undefined) add('"assetId"', char.assetId);
+    values.push(charId);
+    const result = sets.length
+      ? await getPool().query(`UPDATE characters SET ${sets.join(", ")} WHERE id = $${values.length}`, values)
+      : await getPool().query("SELECT 1 FROM characters WHERE id = $1", [charId]);
     if (result.rowCount === 0) {
       const err = new Error("Character not found") as Error & { status: number };
       err.status = 404;

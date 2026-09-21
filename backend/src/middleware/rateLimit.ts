@@ -12,6 +12,9 @@ export const rateLimit = ({ windowMs = 60000, max = 120 }: RateLimitOptions = {}
   return (req: Request, res: Response, next: NextFunction): void => {
     const key = `${req.ip}|${req.baseUrl || req.path}`;
     const now = Date.now();
+    if (buckets.size > 5000) {
+      for (const [k, b] of buckets) if (b.resetAt < now) buckets.delete(k);
+    }
     const bucket = buckets.get(key);
     if (!bucket || bucket.resetAt < now) {
       buckets.set(key, { count: 1, resetAt: now + windowMs });

@@ -5,7 +5,9 @@ import {
   packedContentHash,
   fetchAndBuildSongs,
 } from "../etl/holodori-sync.js";
-import { fetchIndexHtml, getCardArtEntries, writeCardArt } from "../etl/extract-card-art.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fetchIndexHtml, getCardArtEntries, ART_DIR } from "../etl/extract-card-art.js";
 import config from "../config.js";
 import { loadDB, saveDB } from "../db/jsonStore.js";
 import {
@@ -32,33 +34,74 @@ export const normalizeMemberName = (n: string): string => {
   return s;
 };
 
+const ACCENT_BY_TYPE: Record<string, string> = { CUTE: "#ec4899", PURE: "#38bdf8", HAPPY: "#f59e0b" };
+const ATTRIBUTE_LABEL_BY_TYPE: Record<string, string> = { CUTE: "Cute", PURE: "Pure", HAPPY: "Happy" };
+const TYPE_BY_ATTRIBUTE_ID: Record<string, string> = {
+  CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_1: "CUTE",
+  CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_2: "PURE",
+  CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_3: "HAPPY",
+};
+
+// The group a member is filed under in the UI: their most specific regular
+// group ("ID Gen 1" rather than the umbrella "Indonesia").
+const primaryGroupId = (groupIds: string[]): string | undefined =>
+  groupIds.find((id) => !groupIds.some((other) => other !== id && other.startsWith(`${id}-`))) ?? groupIds[0];
+
+/**
+ * One character row per member found in the snapshot, in the same shape the
+ * catalog uses for hand-curated rows. Everything that depends on the cards
+ * (title, stats, skills, art...) is filled in afterwards by enrichCharacters().
+ */
 export const buildSkeletonFromSnapshot = (snapshot: any): any[] => {
-  const seen = new Set<string>();
-  const skeleton: any[] = [];
+  const byMember = new Map<string, any[]>();
   for (const card of snapshot.cards) {
     const norm = normalizeMemberName(card.member);
-    if (!norm || seen.has(norm)) continue;
-    seen.add(norm);
+    if (!norm) continue;
+    if (!byMember.has(norm)) byMember.set(norm, []);
+    byMember.get(norm)!.push(card);
+  }
+  const skeleton: any[] = [];
+  for (const [name, cards] of byMember) {
+    const card = cards.find((c) => c.rarity === 5) ?? cards[0];
+    const id = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const type = TYPE_BY_ATTRIBUTE_ID[card.attributeId] ?? "HAPPY";
+    const groupIds: string[] = card.groupIds || [];
+    const groupId = primaryGroupId(groupIds);
     skeleton.push({
-      id: norm.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      name: norm,
+      id,
+      characterId: card.characterId || null,
+      name,
       title: card.name || "",
-      rarity: "5",
-      group: "",
-      type: "HAPPY",
-      accentColor: "#ffffff",
+      rarity: "5-Star",
+      rarityNum: 5,
+      group: (groupId && snapshot.groupLabels?.[groupId]) || "",
+      type,
+      attribute: ATTRIBUTE_LABEL_BY_TYPE[type],
+      attributeId: card.attributeId || null,
+      groupIds,
+      accentColor: ACCENT_BY_TYPE[type],
       image: card.assetId ? `/images/cards/${card.assetId}.webp` : "",
-      avatar: "",
+      fallbackImage: `/images/${id}.webp`,
+      avatar: name.charAt(0).toUpperCase(),
+      assetId: card.assetId || null,
       stats: { performance: 0, technique: 0, sense: 0, total: 0 },
       skills: { active: "", passive: "", special: "", outfit: "" },
       cardData: {},
       cards: [],
-      characterId: card.characterId || null,
-      attributeId: card.attributeId || null,
-      assetId: card.assetId || null,
     });
   }
   return skeleton;
+};
+
+/** Members present in the snapshot that have no row in the catalog yet. */
+export const findNewMembers = (existing: any[], snapshot: any): any[] => {
+  const knownIds = new Set(existing.map((c) => c.characterId).filter(Boolean));
+  const knownNames = new Set(existing.map((c) => normalizeMemberName(c.name)));
+  const knownRowIds = new Set(existing.map((c) => c.id));
+  return buildSkeletonFromSnapshot(snapshot).filter(
+    (m) =>
+      !(m.characterId && knownIds.has(m.characterId)) && !knownNames.has(m.name) && !knownRowIds.has(m.id)
+  );
 };
 
 export const bootstrapFromHolodori = async (): Promise<{
@@ -74,6 +117,45 @@ export const bootstrapFromHolodori = async (): Promise<{
 // HolodoriDB live card sync: applies upstream card updates to the active store
 // (Postgres in prod, database.json locally) and publishes catalog.synced.
 let holodoriSyncInFlight = false;
+
+// Fill in card artwork that is not stored yet. This is deliberately independent
+// of the data hash: art comes from a different source than the card data
+// (master data lands first; artwork only when the optimizer bundles it), so a
+// new card can be in the catalog for days before its image exists anywhere we
+// may legitimately read it. Until then /images/cards/<id>.webp falls back to
+// the member's portrait (see images.routes.ts). With ETag revalidation this is
+// a cheap 304 on the regular 6-hourly runs.
+export const ensureCardArt = async (cards: any[]): Promise<void> => {
+  try {
+    const wanted = [...new Set(cards.map((c) => c.assetId).filter(Boolean))] as string[];
+    let missing: string[];
+    if (config.isProd) {
+      const res = await getPool().query("SELECT asset_id FROM card_art");
+      const have = new Set<string>(res.rows.map((r: any) => r.asset_id));
+      missing = wanted.filter((id) => !have.has(id));
+    } else {
+      missing = wanted.filter((id) => !fs.existsSync(path.join(ART_DIR, `${id}.webp`)));
+    }
+    if (missing.length === 0) return;
+
+    const { entries } = getCardArtEntries(await fetchIndexHtml());
+    const wantedSet = new Set(missing);
+    const fill = entries.filter((e) => wantedSet.has(e.assetId) && e.ext === "webp");
+    if (config.isProd) {
+      await upsertCardArtPG(fill);
+    } else {
+      fs.mkdirSync(ART_DIR, { recursive: true });
+      for (const e of fill) fs.writeFileSync(path.join(ART_DIR, `${e.assetId}.webp`), e.data);
+    }
+    const stillMissing = missing.length - fill.length;
+    logger.info(
+      `HolodoriDB sync: stored ${fill.length} card artworks` +
+        (stillMissing > 0 ? `; ${stillMissing} cards have no artwork available yet (portrait fallback in use).` : ".")
+    );
+  } catch (err) {
+    logger.error({ err }, "HolodoriDB sync: card art refresh failed");
+  }
+};
 
 export const syncHolodoriCards = async (): Promise<void> => {
   if (holodoriSyncInFlight) return;
@@ -92,12 +174,53 @@ export const syncHolodoriCards = async (): Promise<void> => {
       try {
         const currentHash = await getHolodoriHash(client);
         if (currentHash === newHash) {
-          logger.info(`HolodoriDB sync: already up to date (${newVersion}).`);
-          return;
+          // The hash only proves we applied this pack at some point. Rows can
+          // since have been reverted (old seed behaviour, admin bulk import,
+          // restore from backup), so also verify the stored card count.
+          const rowsRes = await client.query("SELECT * FROM characters");
+          const expectedById = new Map(
+            enrichCharacters(rowsRes.rows, snapshot).characters.map((c: any) => [c.id, c])
+          );
+          const cardCount = (c: any) => (Array.isArray(c?.cards) ? c.cards.length : 0);
+          // Rows the pack has no match for are left untouched by the sync, so
+          // they count as "expected" as-is.
+          const have = rowsRes.rows.reduce((n: number, r: any) => n + cardCount(r), 0);
+          const want = rowsRes.rows.reduce(
+            (n: number, r: any) => n + cardCount(expectedById.get(r.id) ?? r),
+            0
+          );
+          const newMembers = findNewMembers(rowsRes.rows, snapshot);
+          if (have === want && newMembers.length === 0) {
+            logger.info(`HolodoriDB sync: already up to date (${newVersion}).`);
+            await ensureCardArt(snapshot.cards);
+            return;
+          }
+          logger.warn(
+            `HolodoriDB sync: stored hash matches but DB has ${have}/${want} cards and ${newMembers.length} missing members; re-applying.`
+          );
         }
 
         logger.info(`HolodoriDB sync: applying update (${newVersion}, hash ${newHash.slice(0, 12)})`);
         await client.query("BEGIN");
+        // Members that debuted upstream since the catalog was seeded get a row first
+        // so the enrichment below fills them like any other member.
+        const existingRes = await client.query("SELECT * FROM characters");
+        const newMembers = findNewMembers(existingRes.rows, snapshot);
+        for (const m of newMembers) {
+          await client.query(
+            `INSERT INTO characters (id, name, title, rarity, "group", type, accentColor, image, avatar, stats, skills, "cardData", "cards", "characterId", "attributeId", "groupIds", "assetId")
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, $15, $16::jsonb, $17)
+             ON CONFLICT (id) DO NOTHING`,
+            [
+              m.id, m.name, m.title, m.rarity, m.group, m.type, m.accentColor, m.image, m.avatar,
+              JSON.stringify(m.stats), JSON.stringify(m.skills), JSON.stringify(m.cardData),
+              JSON.stringify(m.cards), m.characterId, m.attributeId, JSON.stringify(m.groupIds), m.assetId,
+            ]
+          );
+        }
+        if (newMembers.length > 0) {
+          logger.info(`HolodoriDB sync: added ${newMembers.length} new members: ${newMembers.map((m) => m.name).join(", ")}`);
+        }
         const skeletonRes = await client.query("SELECT * FROM characters");
         const { characters, skipped } = enrichCharacters(skeletonRes.rows, snapshot);
         if (skipped.length > 0) {
@@ -152,18 +275,12 @@ export const syncHolodoriCards = async (): Promise<void> => {
       } catch (err) {
         logger.error({ err }, "HolodoriDB sync: song refresh failed");
       }
-      try {
-        const html = await fetchIndexHtml();
-        const { entries } = getCardArtEntries(html);
-        await upsertCardArtPG(entries);
-        logger.info(`HolodoriDB sync: refreshed ${entries.length} card artworks.`);
-      } catch (err) {
-        logger.error({ err }, "HolodoriDB sync: card art refresh failed");
-      }
+      await ensureCardArt(snapshot.cards);
     } else {
       const db = loadDB();
       if (db.holodoriPackedHash === newHash) {
         logger.info(`HolodoriDB sync: already up to date (${newVersion}).`);
+        await ensureCardArt(snapshot.cards);
         return;
       }
 
@@ -172,6 +289,12 @@ export const syncHolodoriCards = async (): Promise<void> => {
       if (skeleton.length === 0) {
         logger.info("HolodoriDB sync: local store empty, bootstrapping skeleton from snapshot...");
         skeleton = buildSkeletonFromSnapshot(snapshot);
+      } else {
+        const added = findNewMembers(skeleton, snapshot);
+        if (added.length > 0) {
+          logger.info(`HolodoriDB sync: adding ${added.length} new members: ${added.map((m) => m.name).join(", ")}`);
+          skeleton = [...skeleton, ...added];
+        }
       }
 
       const { characters, skipped } = enrichCharacters(skeleton, snapshot);
@@ -193,13 +316,7 @@ export const syncHolodoriCards = async (): Promise<void> => {
       }
       saveDB(db);
       logger.info(`HolodoriDB sync: applied upstream update for ${merged.length} characters (${newVersion}).`);
-      try {
-        const html = await fetchIndexHtml();
-        const { written, embeddedCardCount } = await writeCardArt(html);
-        logger.info(`HolodoriDB sync: refreshed ${written}/${embeddedCardCount} card artworks.`);
-      } catch (err) {
-        logger.error({ err }, "HolodoriDB sync: card art refresh failed");
-      }
+      await ensureCardArt(snapshot.cards);
       changed = true;
     }
 

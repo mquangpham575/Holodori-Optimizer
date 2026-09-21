@@ -1,6 +1,6 @@
 /**
  * HolodoriDB ETL & Snapshot Synchronization Script
- * Fetches the live BUNDLED_PACKED from int3rrupt3d/holodori-optimizer src/app.js.in,
+ * Fetches the live BUNDLED_PACKED from ace-ks-dev/holodori-optimizer index.html,
  * converts normalized-card-v2 -> legacy snapshot, and enriches database.json
  * with exact card stats, skill level 1 vs level 2 texts, bloom stages, and songs.
  *
@@ -10,13 +10,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import config from "../config.js";
 import { fetchPacked, packedToLegacySnapshot, enrichCharacters, packedContentHash, fetchAndBuildSongs } from "./holodori-sync.js";
 import { fetchIndexHtml, writeCardArt } from "./extract-card-art.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.join(__dirname, "..", "database.json");
-const SNAPSHOT_PATH = path.join(__dirname, "..", "holodori_snapshot.json");
-const VERSION_CACHE_PATH = path.join(__dirname, "..", "last_version.txt");
+// src/etl (or dist/etl) -> backend. The old "..": backend/src (or backend/dist),
+// where database.json does not exist, so `--force` always died with ENOENT.
+const BACKEND_ROOT = path.join(__dirname, "..", "..");
+const DB_PATH = config.dbPath;
+const SNAPSHOT_PATH = path.join(BACKEND_ROOT, "holodori_snapshot.json");
+const VERSION_CACHE_PATH = path.join(BACKEND_ROOT, "last_version.txt");
 
 function atomicWrite(target: string, data: string, options: any) {
   const tmp = `${target}.tmp-${process.pid}`;

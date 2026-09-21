@@ -22,5 +22,7 @@ export const errorHandler = (
   if (status >= 500) {
     logger.error({ err, requestId: req.id }, "Unhandled error");
   }
-  res.status(status).json({ error: err.message || "Internal server error" });
+  res.status(status).json({
+    error: status >= 500 ? "Internal server error" : err.message || "Request failed",
+  });
 };

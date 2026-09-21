@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import pkg from "pg";
 import config from "../config.js";
 import { loadDB } from "./jsonStore.js";
@@ -85,6 +86,9 @@ export const initPostgresSchema = async (): Promise<void> => {
       )
     `);
 
+    // Per-slot builder data (bloomLevels, cardLevels, selectedCards) lives here.
+    await client.query(`ALTER TABLE presets ADD COLUMN IF NOT EXISTS extra JSONB NOT NULL DEFAULT '{}'::jsonb`);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS roster (
         device_id TEXT PRIMARY KEY,
@@ -105,6 +109,11 @@ export const initPostgresSchema = async (): Promise<void> => {
       )
     `);
     await client.query(`ALTER TABLE guides ADD COLUMN IF NOT EXISTS contentUrl JSONB`);
+    // origin: 'seed' = bundled with the repo, 'admin' = created/edited in the admin
+    // panel, NULL = legacy row from before this column existed. seedhash lets the
+    // seed refresh a bundled guide only while nobody has edited it.
+    await client.query(`ALTER TABLE guides ADD COLUMN IF NOT EXISTS origin TEXT`);
+    await client.query(`ALTER TABLE guides ADD COLUMN IF NOT EXISTS seedhash TEXT`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS app_meta (
@@ -180,6 +189,11 @@ export const seedPostgres = async (): Promise<void> => {
       if (guides.length === 0) guides = module.GUIDES;
     }
 
+    // Only insert missing rows and refresh presentation fields. The catalog
+    // columns (title/type/image/stats/skills/cardData/cards/ids) belong to the
+    // HolodoriDB sync: overwriting them with the snapshot committed in
+    // database.json reverted every synced card on each restart, while the stored
+    // packed hash still claimed "up to date" so the sync never re-applied them.
     logger.info(`Syncing ${characters.length} characters in PostgreSQL...`);
     for (const char of characters) {
       await client.query(
@@ -187,21 +201,11 @@ export const seedPostgres = async (): Promise<void> => {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14, $15, $16::jsonb, $17)
          ON CONFLICT (id) DO UPDATE SET
            name = EXCLUDED.name,
-           title = EXCLUDED.title,
            rarity = EXCLUDED.rarity,
            "group" = EXCLUDED."group",
-           type = EXCLUDED.type,
            accentColor = EXCLUDED.accentColor,
-           image = EXCLUDED.image,
            avatar = EXCLUDED.avatar,
-           stats = EXCLUDED.stats,
-           skills = EXCLUDED.skills,
-           "cardData" = EXCLUDED."cardData",
-           "cards" = EXCLUDED."cards",
-           "characterId" = EXCLUDED."characterId",
-           "attributeId" = EXCLUDED."attributeId",
-           "groupIds" = EXCLUDED."groupIds",
-           "assetId" = EXCLUDED."assetId"`,
+           "groupIds" = EXCLUDED."groupIds"`,
         [
           char.id,
           char.name,
@@ -241,17 +245,22 @@ export const seedPostgres = async (): Promise<void> => {
     }
     logger.info("Characters synchronized successfully in PostgreSQL!");
 
+    // Guides: the repo ships a starter set, but admins own the table afterwards.
+    // The seed therefore never deletes and never overwrites a guide an admin has
+    // created or edited (origin = 'admin'); it only inserts missing bundled guides
+    // and refreshes bundled ones that are still untouched and whose source changed.
+    // A bundled guide an admin deleted stays deleted (tombstone in app_meta).
     logger.info("Syncing guides in PostgreSQL...");
-    const activeGuideIds = guides.map((g) => g.id);
-    if (activeGuideIds.length > 0) {
-      await client.query("DELETE FROM guides WHERE NOT (id = ANY($1))", [activeGuideIds]);
-    } else {
-      await client.query("DELETE FROM guides");
-    }
+    const tombstones = new Set(
+      (
+        await client.query("SELECT key FROM app_meta WHERE key LIKE 'guide_deleted:%'")
+      ).rows.map((r) => String(r.key).slice("guide_deleted:".length))
+    );
     for (const guide of guides) {
+      if (tombstones.has(guide.id)) continue;
       await client.query(
-        `INSERT INTO guides (id, title, summary, category, readTime, author, date, content, contentUrl)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
+        `INSERT INTO guides (id, title, summary, category, readTime, author, date, content, contentUrl, origin, seedhash)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, 'seed', $10)
          ON CONFLICT (id) DO UPDATE SET
            title = EXCLUDED.title,
            summary = EXCLUDED.summary,
@@ -260,7 +269,11 @@ export const seedPostgres = async (): Promise<void> => {
            author = EXCLUDED.author,
            date = EXCLUDED.date,
            content = EXCLUDED.content,
-           contentUrl = EXCLUDED.contentUrl`,
+           contentUrl = EXCLUDED.contentUrl,
+           origin = 'seed',
+           seedhash = EXCLUDED.seedhash
+         WHERE guides.origin IS NULL
+            OR (guides.origin = 'seed' AND guides.seedhash IS DISTINCT FROM EXCLUDED.seedhash)`,
         [
           guide.id,
           typeof guide.title === "string" ? guide.title : JSON.stringify(guide.title),
@@ -271,6 +284,7 @@ export const seedPostgres = async (): Promise<void> => {
           guide.date,
           guide.content || "",
           guide.contentUrl ? JSON.stringify(guide.contentUrl) : null,
+          createHash("sha256").update(JSON.stringify(guide)).digest("hex").slice(0, 16),
         ]
       );
     }

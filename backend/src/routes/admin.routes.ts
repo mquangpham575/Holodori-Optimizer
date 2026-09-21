@@ -6,6 +6,7 @@ import { validate } from "../middleware/validate.js";
 import { login } from "../controllers/admin.auth.controller.js";
 import {
   upload,
+  cardArtUpload,
   syncFromFileAdmin,
   charactersBulk,
   charactersCreate,
@@ -20,7 +21,10 @@ import {
   charactersBulkSchema,
   characterCreateSchema,
   guideCreateSchema,
+  characterUpdateSchema,
+  guideUpdateSchema,
   uploadSchema,
+  cardArtSchema,
 } from "../schemas/index.js";
 
 const router = Router();
@@ -37,17 +41,18 @@ router.post(
 router.use(requireAdmin);
 
 router.post("/upload", validate(uploadSchema), upload);
+router.post("/card-art", validate(cardArtSchema), asyncHandler(cardArtUpload));
 router.post("/sync-from-file", asyncHandler(syncFromFileAdmin));
 
 // Characters CRUD
 router.post("/characters/bulk", validate(charactersBulkSchema), asyncHandler(charactersBulk));
 router.post("/characters", validate(characterCreateSchema), asyncHandler(charactersCreate));
-router.put("/characters/:id", asyncHandler(charactersUpdate));
+router.put("/characters/:id", validate(characterUpdateSchema), asyncHandler(charactersUpdate));
 router.delete("/characters/:id", asyncHandler(charactersDelete));
 
 // Guides CRUD
 router.post("/guides", validate(guideCreateSchema), asyncHandler(guidesCreate));
-router.put("/guides/:id", asyncHandler(guidesUpdate));
+router.put("/guides/:id", validate(guideUpdateSchema), asyncHandler(guidesUpdate));
 router.delete("/guides/:id", asyncHandler(guidesDelete));
 
 export default router;

@@ -8,7 +8,18 @@ export interface Preset {
   team: (string | null)[];
   leader: string | null;
   isActive: boolean;
+  bloomLevels?: (number | null)[];
+  cardLevels?: (number | null)[];
+  selectedCards?: (string | null)[];
 }
+
+const EXTRA_KEYS = ["bloomLevels", "cardLevels", "selectedCards"] as const;
+
+const pickExtra = (p: Partial<Preset>): Record<string, unknown> => {
+  const extra: Record<string, unknown> = {};
+  for (const k of EXTRA_KEYS) if (p[k] !== undefined) extra[k] = p[k];
+  return extra;
+};
 
 export const DEFAULT_PRESETS: Preset[] = [
   { id: "preset_1", name: "Preset 1", team: [null, null, null, null, null], leader: null, isActive: true },
@@ -24,6 +35,7 @@ const mapRow = (row: any): Preset => ({
   team: row.team,
   leader: row.leader,
   isActive: row.isactive !== undefined ? row.isactive : row.isActive,
+  ...pickExtra(row.extra ?? {}),
 });
 
 export const getPresetsByDevice = async (deviceId: string): Promise<Preset[]> => {
@@ -68,11 +80,11 @@ export const upsertPresets = async (deviceId: string, presets: Preset[]): Promis
       for (const p of presets) {
         const isActiveVal = p.isActive !== undefined ? p.isActive : false;
         await client.query(
-          `INSERT INTO presets (device_id, id, name, team, leader, isActive)
-           VALUES ($1, $2, $3, $4::jsonb, $5, $6)
+          `INSERT INTO presets (device_id, id, name, team, leader, isActive, extra)
+           VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7::jsonb)
            ON CONFLICT (device_id, id)
-           DO UPDATE SET name = EXCLUDED.name, team = EXCLUDED.team, leader = EXCLUDED.leader, isActive = EXCLUDED.isActive`,
-          [deviceId, p.id, p.name, JSON.stringify(p.team), p.leader, isActiveVal]
+           DO UPDATE SET name = EXCLUDED.name, team = EXCLUDED.team, leader = EXCLUDED.leader, isActive = EXCLUDED.isActive, extra = EXCLUDED.extra`,
+          [deviceId, p.id, p.name, JSON.stringify(p.team), p.leader ?? null, isActiveVal, JSON.stringify(pickExtra(p))]
         );
       }
       await client.query("COMMIT");

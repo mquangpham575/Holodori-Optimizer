@@ -1,0 +1,6 @@
+# Keep line endings stable across Windows/Linux checkouts (avoids whole-file CRLF diffs).
+* text=auto eol=lf
+*.png binary
+*.webp binary
+*.jpg binary
+*.ico binary

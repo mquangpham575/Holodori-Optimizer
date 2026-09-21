@@ -168,3 +168,167 @@ test("unknown routes return 404 JSON", async () => {
   const { status } = await api("/api/does-not-exist");
   assert.equal(status, 404);
 });
+
+// ---------------------------------------------------------------------------
+// Regression tests for the review fixes
+// ---------------------------------------------------------------------------
+
+const adminToken = async (): Promise<string> => {
+  const login = await api("/api/admin/login", { method: "POST", body: { password: "admin123" } });
+  assert.equal(login.status, 200);
+  return login.json.token;
+};
+
+test("presets keep per-slot bloom/level/selected-card data across a save", async () => {
+  const headers = { "x-device-id": "test-device-slots" };
+  const presets = (await api("/api/presets", { headers })).json;
+  const updated = presets.map((p: any) =>
+    p.id === "preset_2"
+      ? {
+          ...p,
+          team: ["azki", "robocosan", null, null, null],
+          bloomLevels: [3, 1, 0, 0, 0],
+          cardLevels: [80, 65, 70, 70, 70],
+          selectedCards: ["azki-5-1", null, null, null, null],
+        }
+      : p
+  );
+  const put = await api("/api/presets", { method: "PUT", headers, body: updated });
+  assert.equal(put.status, 200);
+
+  const again = (await api("/api/presets", { headers })).json.find((p: any) => p.id === "preset_2");
+  assert.deepEqual(again.bloomLevels, [3, 1, 0, 0, 0]);
+  assert.deepEqual(again.cardLevels, [80, 65, 70, 70, 70]);
+  assert.deepEqual(again.selectedCards, ["azki-5-1", null, null, null, null]);
+});
+
+test("roster accepts the {id, bloom, level} entries the team builder writes", async () => {
+  const headers = { "x-device-id": "test-device-roster-objects" };
+  const body = [{ id: "azki", bloom: 2, level: 75 }, "robocosan"];
+  const put = await api("/api/roster", { method: "PUT", headers, body });
+  assert.equal(put.status, 200);
+  assert.deepEqual((await api("/api/roster", { headers })).json, body);
+
+  const bad = await api("/api/roster", { method: "PUT", headers, body: [{ id: "azki", level: 999 }] });
+  assert.equal(bad.status, 400);
+});
+
+test("unauthenticated endpoints reject oversized bodies (1 MB cap)", async () => {
+  const huge = [{ id: "preset_1", name: "x".repeat(2 * 1024 * 1024), team: [null, null, null, null, null] }];
+  const { status } = await api("/api/presets", {
+    method: "PUT",
+    headers: { "x-device-id": "test-device-big" },
+    body: huge,
+  });
+  assert.equal(status, 413);
+});
+
+test("admin upload only accepts real images", async () => {
+  const token = await adminToken();
+  const headers = { authorization: `Bearer ${token}` };
+
+  const html = Buffer.from("<script>alert(1)</script>").toString("base64");
+  const badExt = await api("/api/admin/upload", {
+    method: "POST",
+    headers,
+    body: { fileName: "evil.html", base64Data: html },
+  });
+  assert.equal(badExt.status, 400);
+
+  const disguised = await api("/api/admin/upload", {
+    method: "POST",
+    headers,
+    body: { fileName: "evil.png", base64Data: html },
+  });
+  assert.equal(disguised.status, 400);
+
+  // 1x1 transparent PNG
+  const png =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+  const ok = await api("/api/admin/upload", {
+    method: "POST",
+    headers,
+    body: { fileName: "pixel.PNG", base64Data: `data:image/png;base64,${png}` },
+  });
+  assert.equal(ok.status, 200);
+  assert.match(ok.json.url, /^\/images\/upload_\d+_[0-9a-f]{8}\.png$/);
+
+  // Don't leave the file in the real images directory.
+  const { default: config } = await import("../src/config.ts");
+  const { unlinkSync } = await import("node:fs");
+  unlinkSync(join(config.imagesDir, ok.json.url.replace("/images/", "")));
+});
+
+test("admin character update is partial, validated and 404s on unknown ids", async () => {
+  const token = await adminToken();
+  const headers = { authorization: `Bearer ${token}` };
+  const before = (await api("/api/characters")).json[0];
+
+  const put = await api(`/api/admin/characters/${before.id}`, {
+    method: "PUT",
+    headers,
+    body: { id: "hijacked", title: "Renamed title" },
+  });
+  assert.equal(put.status, 200);
+
+  const after = (await api("/api/characters")).json.find((c: any) => c.id === before.id);
+  assert.equal(after.title, "Renamed title");
+  assert.equal(after.name, before.name, "omitted fields are preserved");
+  assert.ok(!(await api("/api/characters")).json.some((c: any) => c.id === "hijacked"), "id cannot be changed");
+
+  const missing = await api("/api/admin/characters/nope-nope", { method: "PUT", headers, body: { title: "x" } });
+  assert.equal(missing.status, 404);
+});
+
+test("extractPacked ignores braces inside string literals", async () => {
+  const { extractPacked } = await import("../src/etl/holodori-sync.ts");
+  const src = 'const BUNDLED_PACKED = {"a":"skill } text { with \\" braces","b":{"c":1}};\nconst next = 2;';
+  assert.deepEqual(extractPacked(src), { a: 'skill } text { with " braces', b: { c: 1 } });
+});
+
+// ---------------------------------------------------------------------------
+// Card art: portrait fallback + manual upload
+// ---------------------------------------------------------------------------
+
+test("/images/cards/<assetId>.webp never 404s for a catalogued card (image or portrait redirect)", async () => {
+  const chars = (await api("/api/characters")).json;
+  const assetId = chars.find((c: any) => Array.isArray(c.cards) && c.cards[0]?.assetId).cards[0].assetId;
+  const res = await fetch(`${base}/images/cards/${assetId}.webp`, { redirect: "manual" });
+  assert.ok(res.status === 200 || res.status === 302, `got ${res.status}`);
+  if (res.status === 302) assert.match(res.headers.get("location") ?? "", /^\/images\/[A-Za-z0-9_-]+\.(webp|png|jpg)$/);
+
+  const unknown = await fetch(`${base}/images/cards/zz-no-such-card.webp`, { redirect: "manual" });
+  assert.equal(unknown.status, 404);
+  const bad = await fetch(`${base}/images/cards/..%2Fetc.webp`);
+  assert.ok(bad.status === 400 || bad.status === 404);
+});
+
+test("admin can upload WebP card art, and only WebP", async () => {
+  const token = await adminToken();
+  const headers = { authorization: `Bearer ${token}` };
+  const webp = "UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA";
+  const assetId = "zz-test-card-art-0001";
+
+  const notWebp = await api("/api/admin/card-art", {
+    method: "POST",
+    headers,
+    body: { assetId, base64Data: Buffer.from("<html>").toString("base64") },
+  });
+  assert.equal(notWebp.status, 400);
+  const badId = await api("/api/admin/card-art", {
+    method: "POST",
+    headers,
+    body: { assetId: "../../evil", base64Data: webp },
+  });
+  assert.equal(badId.status, 400);
+
+  const ok = await api("/api/admin/card-art", { method: "POST", headers, body: { assetId, base64Data: webp } });
+  assert.equal(ok.status, 200);
+  const served = await fetch(`${base}/images/cards/${assetId}.webp`);
+  assert.equal(served.status, 200);
+  assert.match(served.headers.get("content-type") ?? "", /image\/webp/);
+
+  const { default: config } = await import("../src/config.ts");
+  const { unlinkSync } = await import("node:fs");
+  unlinkSync(join(config.imagesDir, "cards", `${assetId}.webp`));
+});
