@@ -77,7 +77,9 @@ hololive-dream/
 └── package.json           # Root scripts: dev / build / start / lint / test
 ```
 
-The scoring kernel was **ported from the open-source [holodori-optimizer](https://github.com/int3rrupt3d/holodori-optimizer)** and adapted to run both in-app (live team scoring) and inside a Web Worker (team search/recommendation).
+The scoring kernel is derived from **[holodori-optimizer](https://github.com/ace-ks-dev/holodori-optimizer)** and adapted to run both in-app (live team scoring) and inside a Web Worker (team search/recommendation).
+
+> **Licensing note:** upstream currently publishes holodori-optimizer under an *all rights reserved* notice (no open-source licence for its original source code). See [NOTICE.md](NOTICE.md) for all third-party material and `docs/permission-request.md` for a ready-to-send request. Get the upstream author's written permission — or replace the vendored scoring code with your own implementation — before distributing this project publicly. Card data is built directly from the [HolodoriDB](https://github.com/HolodoriDB/holodori-db-eng-diff) master tables (the optimizer's bundled pack is only a fallback, and its artwork the only art source).
 
 ### Event-driven catalog sync (Kafka)
 
@@ -149,17 +151,24 @@ docker compose --profile kafka up --build
 
 This also starts a single-node Kafka broker (KRaft) and the `worker` service that rebuilds the character search index on each catalog sync.
 
-Set a real admin password via the `ADMIN_PASSWORD` environment variable when deploying. Docker is an alternative to the Vercel + hosted-backend deployment — both produce the same app.
+Set `ADMIN_PASSWORD` and `ADMIN_SECRET` (e.g. in a `.env` file next to `docker-compose.yml`) before using the admin area — when `DATABASE_URL` is set the backend keeps `/api/admin` disabled (HTTP 503) until both are provided and differ from the development defaults. Docker is an alternative to the Vercel + hosted-backend deployment — both produce the same app.
 
 ## Deployment
 
 - **Frontend**: `npm run build`, then deploy `frontend/dist` (Vercel config included — API `/api/*` and `/images/*` are rewritten to the hosted backend).
-- **Backend**: set `DATABASE_URL` for PostgreSQL mode; without it the server falls back to the JSON-file store. Requires `ADMIN_PASSWORD` (login password) and `ADMIN_SECRET` (token signing) in prod. Copy `.env.example` for the full list of variables.
+- **Backend**: set `DATABASE_URL` for PostgreSQL mode; without it the server falls back to the JSON-file store. Requires `ADMIN_PASSWORD` (login password) and `ADMIN_SECRET` (token signing) in prod — without them the admin API is disabled. Set `TRUST_PROXY` to the number of reverse-proxy hops in front of the API (default `1` in prod) so the login rate limiter sees real client IPs. Copy `.env.example` for the full list of variables.
 
 ## Notes
 
 - The backend seeds itself with the latest HolodoriDB snapshot on first boot and can re-sync upstream card data (`/api/admin/sync-from-file`).
 - Card artwork is served from disk in dev and from Postgres in prod.
 - **Admin auth**: a rate-limited `POST /api/admin/login` exchanges `ADMIN_PASSWORD` for a signed token (HMAC-SHA256 via `ADMIN_SECRET`); all `/api/admin/*` routes require it as `Authorization: Bearer <token>`. It's a single-admin password model — fine for a showcase, but it is not a multi-user system (no accounts, roles, or refresh tokens).
-- `frontend/src/search_worker.js` is a **ported** copy of the open-source [holodori-optimizer](https://github.com/int3rrupt3d/holodori-optimizer) search engine, adapted to run in a Web Worker.
+- `frontend/src/search_worker.js` is a **ported** copy of the [holodori-optimizer](https://github.com/ace-ks-dev/holodori-optimizer) search engine, adapted to run in a Web Worker (see the licensing note above).
 - **Roadmap:** the backend is fully TypeScript; the remaining item is migrating the React frontend (and the vendored `search_worker.js`) to TypeScript — a larger refactor, deliberately deferred to keep the working app stable.
+
+
+## Data notes
+
+- **Card catalog** — synced from the HolodoriDB master tables on boot and every 6 h (new cards *and* new members are picked up automatically). Cards whose artwork is not published yet show the member's portrait; upload artwork with `POST /api/admin/card-art` (WebP only).
+- **Guides (Postgres)** — the guides in `database.json` seed the table once. Guides created or edited in the admin panel are never overwritten by a restart, and a bundled guide you delete stays deleted.
+- **Dev store** — `backend/database.json` holds only the shared catalog. Per-device presets and rosters live in `backend/database.user.json`, which is git-ignored.
