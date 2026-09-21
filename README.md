@@ -1,6 +1,6 @@
 # HoloDreams Showcase — Hololive Dreams Database, Guides & Team Builder
 
-A full-stack fan-made web app for the rhythm/idol fan-game **Hololive Dreams**: a browsable character & card database, a multi-language blog/guide section, and an interactive **team builder with a real scoring engine** that recommends optimal 5-member teams.
+A full-stack fan-made web app for the game Hololive Dreams: focus on card database and an interactive team builder with real scoring engine team recommendations.
 
 <p align="center">
   <img src="assets/readme-title.png" alt="HoloDreams Showcase" width="100%" />
