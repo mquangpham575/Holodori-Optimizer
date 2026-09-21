@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   X, Users, Sparkles, Award, Zap, Shield, SlidersHorizontal, LayoutGrid, List,
-  ArrowDownWideNarrow, ArrowUpNarrowWide, Link as LinkIcon, Check,
+  ArrowDownWideNarrow, ArrowUpNarrowWide, Link as LinkIcon, Check, Play, Pause,
 } from 'lucide-react';
 import { ALL_CARDS } from '../data';
 import { getTypeIconUrl } from '../charUtils';
@@ -24,21 +24,23 @@ const getInitials = (name) => {
   return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase();
 };
 
-// Tries each source in order (card art, then the member portrait) before falling
-// back to initials, so a card whose artwork is not published yet still shows
-// the member instead of a blank tile.
-const CardArt = ({ name, src, fallbackSrc, alt, className, small }) => {
-  const sources = [src, fallbackSrc].filter((s, i, all) => s && all.indexOf(s) === i);
+// Tries each source in order (full illustration, then the bundled card art, then the
+// member portrait) before falling back to initials, so a card whose artwork is not
+// available yet still shows something sensible instead of a broken image.
+// data-kind lets the CSS give the wide illustrations a 16:9 frame.
+const CardArt = ({ name, sources, alt, className, small }) => {
+  const list = (sources || []).filter((s, i, all) => s && all.indexOf(s) === i);
   const [index, setIndex] = useState(0);
-  if (index >= sources.length) {
+  if (index >= list.length) {
     return <div className={`card-art-initials${small ? ' small' : ''}`}>{getInitials(name)}</div>;
   }
   return (
     <img
-      key={sources[index]}
-      src={sources[index]}
+      key={list[index]}
+      src={list[index]}
       alt={alt || name}
       className={className}
+      data-kind={index === 0 && /\/images\/cards-(full|thumb)\//.test(list[0]) ? 'wide' : 'framed'}
       loading="lazy"
       onError={() => setIndex((i) => i + 1)}
     />
@@ -137,6 +139,8 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
   const [statBloom, setStatBloom] = useState(5);
   const [statLevel, setStatLevel] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
 
   const displayList = useMemo(
     () => (allCards.length > 0 ? allCards : ALL_CARDS && ALL_CARDS.length > 0 ? ALL_CARDS : characters),
@@ -219,6 +223,8 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
     setStatBloom(5);
     setStatLevel(null);
     setLinkCopied(false);
+    setShowVideo(false);
+    setVideoFailed(false);
   }, [activeKey]);
 
   useEffect(() => {
@@ -521,7 +527,7 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
               <div className="rarity-badge">{char.rarity}</div>
               <div className="char-card-body">
                 <div className="char-card-media-wrapper">
-                  <CardArt name={char.name} src={char.image} fallbackSrc={char.fallbackImage} className="char-card-img" small />
+                  <CardArt name={char.name} sources={[char.thumbImage, char.image, char.fallbackImage]} className="char-card-img" small />
                 </div>
                 <h3 className="char-card-name">{char.name}</h3>
                 <p className="char-card-title">{char.title}</p>
@@ -545,7 +551,7 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(char); } }}
               >
                 <div className="char-row-thumb">
-                  <CardArt name={char.name} src={char.image} fallbackSrc={char.fallbackImage} className="char-row-img" small />
+                  <CardArt name={char.name} sources={[char.thumbImage, char.image, char.fallbackImage]} className="char-row-img" small />
                 </div>
                 <div className="char-row-main">
                   <span className="char-row-name">{char.name}</span>
@@ -589,13 +595,36 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
               <div className="modal-card-col">
                 <div className="modal-card-frame" style={{ borderColor: getTypeColor(activeCharacter.type), boxShadow: `0 0 25px ${getTypeColor(activeCharacter.type)}35` }}>
                   <div className="card-rarity-pill">{activeCharacter.rarity}</div>
-                  <CardArt
-                    name={activeCharacter.name}
-                    src={activeCharacter.image}
-                    fallbackSrc={activeCharacter.fallbackImage}
-                    className="modal-card-portrait"
-                  />
+                  {showVideo && activeCharacter.videoUrl ? (
+                    <video
+                      className="modal-card-portrait modal-card-video"
+                      src={activeCharacter.videoUrl}
+                      poster={activeCharacter.fullImage || undefined}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      onError={() => { setShowVideo(false); setVideoFailed(true); }}
+                    />
+                  ) : (
+                    <CardArt
+                      name={activeCharacter.name}
+                      sources={[activeCharacter.fullImage, activeCharacter.image, activeCharacter.fallbackImage]}
+                      className="modal-card-portrait"
+                    />
+                  )}
                 </div>
+                {activeCharacter.videoUrl && !videoFailed && (
+                  <button
+                    type="button"
+                    className={`toolbar-btn animation-toggle${showVideo ? ' active' : ''}`}
+                    aria-pressed={showVideo}
+                    onClick={() => setShowVideo((v) => !v)}
+                  >
+                    {showVideo ? <Pause size={14} /> : <Play size={14} />}
+                    <span>{t('animation')}</span>
+                  </button>
+                )}
 
                 <div className="modal-stat-box glass">
                   <h4 className="stat-box-title">Card Specs</h4>

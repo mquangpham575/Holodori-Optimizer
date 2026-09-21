@@ -18,6 +18,8 @@ export interface AppConfig {
   adminTokenTtlSeconds: number;
   dbPath: string;
   imagesDir: string;
+  /** Base URL of the CDN that hosts full card illustrations; empty disables the mirror. */
+  cardArtCdnBase: string;
   dataJsPath: string;
   kafkaBrokers: string | null;
   logLevel: string;
@@ -67,6 +69,9 @@ const config: AppConfig = {
   // Overridable via DB_PATH so tests can run against an isolated store.
   dbPath: process.env.DB_PATH || path.join(BACKEND_ROOT, "database.json"),
   imagesDir: path.join(BACKEND_ROOT, "../frontend/public/images"),
+  // Full-size card illustrations are mirrored (once per card, revalidated weekly)
+  // from this CDN into our own store. Set CARD_ART_CDN_BASE="" to turn it off.
+  cardArtCdnBase: (process.env.CARD_ART_CDN_BASE ?? "https://cdn.holodori.dev").trim(),
   dataJsPath: path.join(BACKEND_ROOT, "../frontend/src/data.js"),
   kafkaBrokers: process.env.KAFKA_BROKERS || null,
   logLevel: process.env.LOG_LEVEL || "info",

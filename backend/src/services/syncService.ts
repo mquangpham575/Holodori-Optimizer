@@ -8,6 +8,7 @@ import {
 import fs from "node:fs";
 import path from "node:path";
 import { fetchIndexHtml, getCardArtEntries, ART_DIR } from "../etl/extract-card-art.js";
+import { syncFullArt, type FullArtStore } from "../etl/card-art-cdn.js";
 import config from "../config.js";
 import { loadDB, saveDB } from "../db/jsonStore.js";
 import {
@@ -16,6 +17,7 @@ import {
   seedPostgres,
   upsertSongsPG,
   upsertCardArtPG,
+  postgresFullArtStore,
 } from "../db/postgres.js";
 import { pruneDuplicateCharacters } from "../repositories/characterRepository.js";
 import {
@@ -118,6 +120,66 @@ export const bootstrapFromHolodori = async (): Promise<{
 // (Postgres in prod, database.json locally) and publishes catalog.synced.
 let holodoriSyncInFlight = false;
 
+// Dev store for the mirrored illustrations: originals in cards-full/, grid
+// thumbnails in cards-thumb/, revalidation info in cards-full/.meta.json. All of it
+// is git-ignored (frontend/public/images/cards-*), like the bundled card art.
+const devFullArtStore = (): FullArtStore => {
+  const fullDir = path.join(config.imagesDir, "cards-full");
+  const thumbDir = path.join(config.imagesDir, "cards-thumb");
+  const metaFile = path.join(fullDir, ".meta.json");
+  const readMeta = (): Record<string, { etag: string | null; checkedAt: number }> => {
+    try {
+      return JSON.parse(fs.readFileSync(metaFile, "utf8"));
+    } catch {
+      return {};
+    }
+  };
+  const writeMeta = (meta: Record<string, unknown>) => {
+    fs.mkdirSync(fullDir, { recursive: true });
+    fs.writeFileSync(metaFile, JSON.stringify(meta));
+  };
+  return {
+    async known() {
+      const meta = readMeta();
+      // Only trust an entry whose files are still there.
+      return new Map(
+        Object.entries(meta).filter(
+          ([id]) => fs.existsSync(path.join(fullDir, `${id}.webp`)) && fs.existsSync(path.join(thumbDir, `${id}.webp`))
+        )
+      );
+    },
+    async save(assetId, art) {
+      fs.mkdirSync(fullDir, { recursive: true });
+      fs.mkdirSync(thumbDir, { recursive: true });
+      fs.writeFileSync(path.join(fullDir, `${assetId}.webp`), art.full);
+      fs.writeFileSync(path.join(thumbDir, `${assetId}.webp`), art.thumb);
+      writeMeta({ ...readMeta(), [assetId]: { etag: art.etag, checkedAt: Date.now() } });
+    },
+    async touch(assetId) {
+      const meta = readMeta();
+      if (meta[assetId]) writeMeta({ ...meta, [assetId]: { ...meta[assetId], checkedAt: Date.now() } });
+    },
+  };
+};
+
+// Full-size illustrations for every card, mirrored from the art CDN. Independent of
+// the card-data hash on purpose: a card can exist long before its artwork does.
+export const ensureFullArt = async (cards: any[]): Promise<void> => {
+  if (!config.cardArtCdnBase) return;
+  try {
+    const ids = cards.map((c) => c.assetId).filter(Boolean) as string[];
+    const store = config.isProd ? postgresFullArtStore() : devFullArtStore();
+    const r = await syncFullArt(ids, store);
+    if (r.saved || r.failed || r.missing.length) {
+      logger.info(
+        `Card art mirror: ${r.saved} downloaded, ${r.unchanged} up to date, ${r.missing.length} not on the CDN, ${r.failed} failed.`
+      );
+    }
+  } catch (err) {
+    logger.error({ err }, "Card art mirror failed");
+  }
+};
+
 // Fill in card artwork that is not stored yet. This is deliberately independent
 // of the data hash: art comes from a different source than the card data
 // (master data lands first; artwork only when the optimizer bundles it), so a
@@ -193,6 +255,7 @@ export const syncHolodoriCards = async (): Promise<void> => {
           if (have === want && newMembers.length === 0) {
             logger.info(`HolodoriDB sync: already up to date (${newVersion}).`);
             await ensureCardArt(snapshot.cards);
+            await ensureFullArt(snapshot.cards);
             return;
           }
           logger.warn(
@@ -276,11 +339,13 @@ export const syncHolodoriCards = async (): Promise<void> => {
         logger.error({ err }, "HolodoriDB sync: song refresh failed");
       }
       await ensureCardArt(snapshot.cards);
+      await ensureFullArt(snapshot.cards);
     } else {
       const db = loadDB();
       if (db.holodoriPackedHash === newHash) {
         logger.info(`HolodoriDB sync: already up to date (${newVersion}).`);
         await ensureCardArt(snapshot.cards);
+        await ensureFullArt(snapshot.cards);
         return;
       }
 
@@ -317,6 +382,7 @@ export const syncHolodoriCards = async (): Promise<void> => {
       saveDB(db);
       logger.info(`HolodoriDB sync: applied upstream update for ${merged.length} characters (${newVersion}).`);
       await ensureCardArt(snapshot.cards);
+      await ensureFullArt(snapshot.cards);
       changed = true;
     }
 

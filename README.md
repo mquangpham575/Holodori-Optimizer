@@ -169,6 +169,6 @@ Set `ADMIN_PASSWORD` and `ADMIN_SECRET` (e.g. in a `.env` file next to `docker-c
 
 ## Data notes
 
-- **Card catalog** — synced from the HolodoriDB master tables on boot and every 6 h (new cards *and* new members are picked up automatically). Cards whose artwork is not published yet show the member's portrait; upload artwork with `POST /api/admin/card-art` (WebP only).
+- **Card catalog** — synced from the HolodoriDB master tables on boot and every 6 h (new cards *and* new members are picked up automatically). Card artwork: the full illustrations are mirrored once per card from `cdn.holodori.dev` into Postgres (`card_art_full`, ~65 MB, re-checked weekly; disable with `CARD_ART_CDN_BASE=""`), the grid uses 640 px thumbnails generated with `sharp`, and 5-star cards can play their animation streamed on demand. If a card has no art anywhere it falls back to the bundled framed art, then the member's portrait; `POST /api/admin/card-art` (WebP only) overrides the bundled art.
 - **Guides (Postgres)** — the guides in `database.json` seed the table once. Guides created or edited in the admin panel are never overwritten by a restart, and a bundled guide you delete stays deleted.
 - **Dev store** — `backend/database.json` holds only the shared catalog. Per-device presets and rosters live in `backend/database.user.json`, which is git-ignored.

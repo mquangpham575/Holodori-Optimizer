@@ -24,6 +24,46 @@ const portraitFor = async (assetId: string): Promise<string | null> => {
   return candidates.find((p) => fs.existsSync(path.join(config.imagesDir, path.basename(p)))) ?? null;
 };
 
+// Artwork can be replaced (admin upload, upstream update), so it must not be cached
+// as immutable: revalidate daily, and let stale copies serve while refreshing.
+const ART_CACHE = "public, max-age=86400, stale-while-revalidate=604800";
+
+const sendWebp = (res: any, data: Buffer, cache = ART_CACHE) => {
+  res.set("Content-Type", "image/webp");
+  res.set("Cache-Control", cache);
+  res.send(data);
+};
+
+// Full illustrations mirrored from the art CDN (see etl/card-art-cdn.ts):
+// /images/cards-full/<id>.webp is the original, /images/cards-thumb/<id>.webp the
+// grid-size version. In dev these are plain files served by express.static.
+const mirroredArt = (column: "full_img" | "thumb_img") => async (req: any, res: any) => {
+  const file = String(req.params.file);
+  if (!/^[A-Za-z0-9_-]+\.webp$/.test(file)) {
+    res.status(400).end();
+    return;
+  }
+  if (!config.isProd) {
+    res.status(404).end();
+    return;
+  }
+  try {
+    const result = await getPool().query(`SELECT ${column} AS data FROM card_art_full WHERE asset_id = $1`, [
+      file.replace(/\.webp$/, ""),
+    ]);
+    if (result.rows.length === 0) {
+      res.status(404).end();
+      return;
+    }
+    sendWebp(res, result.rows[0].data);
+  } catch (err) {
+    logger.error({ err }, "Error serving mirrored card art");
+    res.status(500).end();
+  }
+};
+router.get("/cards-full/:file", mirroredArt("full_img"));
+router.get("/cards-thumb/:file", mirroredArt("thumb_img"));
+
 // Card artwork is served from Postgres in prod (kept in sync by the holodori
 // sync); in dev the static /images handler wins when art is on disk.
 router.get("/cards/:file", async (req, res) => {
@@ -37,11 +77,19 @@ router.get("/cards/:file", async (req, res) => {
     if (config.isProd) {
       const result = await getPool().query("SELECT data FROM card_art WHERE asset_id = $1", [assetId]);
       if (result.rows.length > 0) {
-        res.set("Content-Type", "image/webp");
-        res.set("Cache-Control", "public, max-age=31536000, immutable");
-        res.send(result.rows[0].data);
+        sendWebp(res, result.rows[0].data);
         return;
       }
+      // No bundled art for this card: use the mirrored illustration if we have it.
+      const mirrored = await getPool().query("SELECT thumb_img FROM card_art_full WHERE asset_id = $1", [assetId]);
+      if (mirrored.rows.length > 0) {
+        sendWebp(res, mirrored.rows[0].thumb_img, "public, max-age=300");
+        return;
+      }
+    } else if (fs.existsSync(path.join(config.imagesDir, "cards-thumb", `${assetId}.webp`))) {
+      res.set("Cache-Control", "public, max-age=300");
+      res.redirect(302, `/images/cards-thumb/${assetId}.webp`);
+      return;
     }
     const portrait = await portraitFor(assetId);
     if (portrait) {

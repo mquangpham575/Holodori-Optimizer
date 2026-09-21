@@ -130,6 +130,19 @@ export const initPostgresSchema = async (): Promise<void> => {
       )
     `);
 
+    // Full-size card illustrations (original + grid thumbnail), mirrored from the
+    // art CDN by etl/card-art-cdn.ts. etag/checked_at drive the weekly revalidation.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS card_art_full (
+        asset_id TEXT PRIMARY KEY,
+        full_img BYTEA NOT NULL,
+        thumb_img BYTEA NOT NULL,
+        etag TEXT,
+        checked_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS songs (
         id TEXT PRIMARY KEY,
@@ -351,3 +364,24 @@ export const upsertCardArtPG = async (entries: any[]): Promise<void> => {
     client.release();
   }
 };
+
+export const postgresFullArtStore = (): import("../etl/card-art-cdn.js").FullArtStore => ({
+  async known() {
+    const res = await getPool().query("SELECT asset_id, etag, checked_at FROM card_art_full");
+    return new Map(
+      res.rows.map((r: any) => [r.asset_id, { etag: r.etag ?? null, checkedAt: new Date(r.checked_at).getTime() }])
+    );
+  },
+  async save(assetId, art) {
+    await getPool().query(
+      `INSERT INTO card_art_full (asset_id, full_img, thumb_img, etag) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (asset_id) DO UPDATE SET
+         full_img = EXCLUDED.full_img, thumb_img = EXCLUDED.thumb_img, etag = EXCLUDED.etag,
+         checked_at = now(), updated_at = now()`,
+      [assetId, art.full, art.thumb, art.etag]
+    );
+  },
+  async touch(assetId) {
+    await getPool().query("UPDATE card_art_full SET checked_at = now() WHERE asset_id = $1", [assetId]);
+  },
+});

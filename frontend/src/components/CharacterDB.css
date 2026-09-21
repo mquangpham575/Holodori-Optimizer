@@ -108,7 +108,7 @@
 /* Character Grid */
 .character-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
 }
 
@@ -1118,4 +1118,38 @@
   z-index: 5;
   background: rgba(13, 17, 26, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Wide (16:9) card illustrations */
+.char-card-media-wrapper:has(img[data-kind='wide']) {
+  aspect-ratio: 16 / 9;
+}
+
+.char-card-img[data-kind='wide'],
+.modal-card-portrait[data-kind='wide'] {
+  object-fit: cover;
+}
+
+.modal-card-frame:has(img[data-kind='wide']),
+.modal-card-frame:has(video) {
+  aspect-ratio: 16 / 9;
+}
+
+.modal-card-video {
+  object-fit: cover;
+  display: block;
+}
+
+.animation-toggle {
+  align-self: stretch;
+}
+
+@media (min-width: 821px) {
+  .modal-two-col-layout {
+    grid-template-columns: minmax(280px, 400px) 1fr;
+  }
+}
+
+.char-row-img[data-kind='wide'] {
+  object-position: center;
 }

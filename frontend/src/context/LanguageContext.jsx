@@ -20,6 +20,7 @@ export const LANGUAGES = [
 
 const TRANSLATIONS = {
   en: {
+    animation: "Animation",
     rarity: "Rarity",
     roster: "Roster",
     close: "Close",
@@ -162,6 +163,7 @@ const TRANSLATIONS = {
     add_members_calc_msg: "Add members to see detailed calculations"
   },
   vi: {
+    animation: "Hoạt ảnh",
     rarity: "Độ hiếm",
     roster: "Danh sách sở hữu",
     close: "Đóng",
@@ -304,6 +306,7 @@ const TRANSLATIONS = {
     add_members_calc_msg: "Thêm thành viên để xem phép tính chi tiết"
   },
   ja: {
+    animation: "アニメーション",
     rarity: "レアリティ",
     roster: "所持リスト",
     close: "閉じる",
