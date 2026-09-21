@@ -21,7 +21,7 @@ const pickExtra = (p: Partial<Preset>): Record<string, unknown> => {
   return extra;
 };
 
-export const DEFAULT_PRESETS: Preset[] = [
+const DEFAULT_PRESETS: Preset[] = [
   { id: "preset_1", name: "Preset 1", team: [null, null, null, null, null], leader: null, isActive: true },
   { id: "preset_2", name: "Preset 2", team: [null, null, null, null, null], leader: null, isActive: false },
   { id: "preset_3", name: "Preset 3", team: [null, null, null, null, null], leader: null, isActive: false },

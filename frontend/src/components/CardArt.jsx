@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 // Module-level so the component type stays stable across renders (defining it
 // inside another component would remount the <img> and reset the error state each

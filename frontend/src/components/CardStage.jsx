@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, Volume2, VolumeX, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';

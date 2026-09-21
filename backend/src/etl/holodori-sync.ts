@@ -1,10 +1,10 @@
 /**
  * HolodoriDB live sync module.
  *
- * Fetches the optimizer's bundled card pack (BUNDLED_PACKED embedded in
- * src/app.js.in, normalized-card-v2), converts it to the legacy normalized
- * snapshot shape the site was built on, and enriches character rows for
- * PostgreSQL. Shared by:
+ * Fetches the card pack (normalized-card-v2) from the HolodoriDB master tables
+ * or, as a fallback, the optimizer's bundled BUNDLED_PACKED, converts it to the
+ * legacy normalized snapshot shape the site was built on, and enriches character
+ * rows for the database. Shared by:
  *   - backend/src/server.ts  (prod auto-sync on boot + interval)
  *   - backend/src/etl/sync-holodori-db.ts  (manual `--force` refresh of database.json)
  */
@@ -15,7 +15,7 @@ import config, { type DataSource } from "../config.js";
 import { fetchMasterTables, buildPackedFromMaster, MASTER_BASE_URL } from "./holodori-master.js";
 
 // Upstream card-data source (also the reference for the optimizer logic).
-const APP_JS_URL =
+const OPTIMIZER_INDEX_URL =
   "https://raw.githubusercontent.com/ace-ks-dev/holodori-optimizer/main/index.html";
 
 export function packedContentHash(packed: any): string {
@@ -37,7 +37,7 @@ let htmlCache: { at: number; text: string; etag: string | null } | null = null;
 // connection would wedge the in-flight guard in syncHolodoriCards forever).
 export async function fetchOptimizerHtml(): Promise<string> {
   if (htmlCache && Date.now() - htmlCache.at < HTML_CACHE_TTL_MS) return htmlCache.text;
-  const res = await fetch(APP_JS_URL, {
+  const res = await fetch(OPTIMIZER_INDEX_URL, {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     headers: htmlCache?.etag ? { "If-None-Match": htmlCache.etag } : {},
   });
@@ -103,7 +103,7 @@ export async function fetchAndBuildSongs(): Promise<any[]> {
 export function extractPacked(src: string): any {
   const marker = "const BUNDLED_PACKED = ";
   const startIdx = src.indexOf(marker);
-  if (startIdx < 0) throw new Error("BUNDLED_PACKED marker not found in app.js.in");
+  if (startIdx < 0) throw new Error("BUNDLED_PACKED marker not found in the optimizer index.html");
   const jsonStart = src.indexOf("{", startIdx + marker.length);
   if (jsonStart < 0) throw new Error("BUNDLED_PACKED opening brace not found");
   // Brace matching must ignore braces inside string literals (skill texts can

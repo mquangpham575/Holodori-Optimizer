@@ -3,7 +3,7 @@ import { ALL_CARDS } from "./data";
 // Attribute (type) icons — hosted locally under frontend/public/images/types/.
 // The upstream Holodori API serves these with Cross-Origin-Resource-Policy:
 // same-origin + a Cloudflare challenge, so they must be self-hosted.
-export const TYPE_ICON_PATHS = {
+const TYPE_ICON_PATHS = {
   PURE: "/images/types/attr-pure.webp",
   CUTE: "/images/types/attr-cute.webp",
   HAPPY: "/images/types/attr-happy.webp",

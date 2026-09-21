@@ -88,7 +88,7 @@ export const cardArtUpload = async (req: Request, res: Response): Promise<void> 
   res.json({ success: true, url: `/images/cards/${assetId}.webp` });
 };
 
-export const syncFromFileAdmin = async (req: Request, res: Response): Promise<void> => {
+export const syncFromFileAdmin = async (_req: Request, res: Response): Promise<void> => {
   const characters = await syncFromFile();
   res.json({ success: true, characters });
 };

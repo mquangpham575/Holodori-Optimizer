@@ -25,7 +25,7 @@ const charParams = (char: CharacterRow): any[] => [
   char.assetId || null,
 ];
 
-const ATTRIBUTE_LABELS: Record<string, string> = { CUTE: "Cute", PURE: "Pure", HAPPY: "Happy" };
+const TYPE_LABELS: Record<string, string> = { CUTE: "Cute", PURE: "Pure", HAPPY: "Happy" };
 
 // The JSON dev store keeps a few presentation fields that have no Postgres
 // column; derive them here so both stores return the same character shape.
@@ -35,7 +35,7 @@ export const mapCharacterRow = (row: any): CharacterRow => ({
   title: row.title,
   rarity: row.rarity,
   rarityNum: Number.parseInt(String(row.rarity), 10) || undefined,
-  attribute: ATTRIBUTE_LABELS[String(row.type)] ?? undefined,
+  attribute: TYPE_LABELS[String(row.type)] ?? undefined,
   fallbackImage: `/images/${row.id}.webp`,
   group: row.group,
   type: row.type,

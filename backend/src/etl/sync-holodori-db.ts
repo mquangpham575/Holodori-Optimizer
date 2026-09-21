@@ -1,7 +1,8 @@
 /**
  * HolodoriDB ETL & Snapshot Synchronization Script
- * Fetches the live BUNDLED_PACKED from ace-ks-dev/holodori-optimizer index.html,
- * converts normalized-card-v2 -> legacy snapshot, and enriches database.json
+ * Fetches the live card pack (HolodoriDB master tables, optimizer bundle as the
+ * fallback; see HOLODORI_DATA_SOURCE), converts normalized-card-v2 -> legacy
+ * snapshot, and enriches database.json
  * with exact card stats, skill level 1 vs level 2 texts, bloom stages, and songs.
  *
  * Usage: npx tsx backend/src/etl/sync-holodori-db.ts [--force]
@@ -37,7 +38,7 @@ async function main() {
   let versionChanged = false;
   let contentHash: string | null = null;
   if (force || !fs.existsSync(SNAPSHOT_PATH)) {
-    console.log("Fetching latest BUNDLED_PACKED from holodori-optimizer src/app.js.in...");
+    console.log("Fetching the latest card pack...");
     const packed = await fetchPacked();
     snapshot = packedToLegacySnapshot(packed);
     atomicWrite(SNAPSHOT_PATH, JSON.stringify(snapshot, null, 2), "utf8");
@@ -85,8 +86,7 @@ async function main() {
 
   existingDB.songs = songs;
   existingDB.allCards = snapshot.cards;
-  existingDB.holodoriDbVersion = snapshot.sourceVersion || "v3.3";
-  existingDB.holodoriDbSyncedAt = new Date().toISOString();
+  existingDB.holodoriSyncedAt = new Date().toISOString();
   existingDB.holodoriPackedHash = contentHash || (fs.existsSync(VERSION_CACHE_PATH) ? fs.readFileSync(VERSION_CACHE_PATH, "utf8").trim() : undefined) || null;
   existingDB.holodoriSourceVersion = snapshot.sourceVersion || null;
 

@@ -5,7 +5,7 @@ const __filename = fileURLToPath(import.meta.url);
 // backend/src -> backend
 const BACKEND_ROOT = path.join(path.dirname(__filename), "..");
 
-export interface AppConfig {
+interface AppConfig {
   isProd: boolean;
   /** False when running against a real DB without explicit admin credentials. */
   adminEnabled: boolean;

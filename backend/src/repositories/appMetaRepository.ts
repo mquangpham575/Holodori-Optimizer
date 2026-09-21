@@ -19,10 +19,6 @@ export const setHolodoriHash = async (client: any, hash: string, sourceVersion: 
   );
 };
 
-export const clearHolodoriHash = async (client: any): Promise<void> => {
-  await client.query(`DELETE FROM app_meta WHERE key = 'holodori_packed_hash'`);
-};
-
 export const recordSyncEvent = async (eventType: string, payload: any): Promise<void> => {
   try {
     await getPool().query(

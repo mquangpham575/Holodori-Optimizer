@@ -4,7 +4,7 @@ import { getPool } from "../db/postgres.js";
 import { getMetrics } from "../metrics.js";
 import { logger } from "../logger.js";
 
-export const getHealth = async (req: Request, res: Response): Promise<void> => {
+export const getHealth = async (_req: Request, res: Response): Promise<void> => {
   let postgresStatus = "operational";
   if (config.isProd) {
     try {
@@ -29,7 +29,7 @@ export const getHealth = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
-export const getMetricsJson = (req: Request, res: Response): void => {
+export const getMetricsJson = (_req: Request, res: Response): void => {
   res.set("Cache-Control", "no-store");
   res.json(getMetrics());
 };

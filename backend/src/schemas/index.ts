@@ -9,7 +9,7 @@ export const loginSchema = z.object({
 // they are silently dropped on every save (and reset on the next page load).
 const slotArray = <T extends z.ZodTypeAny>(item: T) => z.array(item).max(5);
 
-export const presetSchema = z.object({
+const presetSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().max(100),
   team: z.array(z.string().nullable()).length(5),
@@ -24,7 +24,7 @@ export const presetsBodySchema = z.array(presetSchema).max(20);
 
 // A roster entry is either a bare id (legacy) or the {id, bloom, level} object
 // the team builder writes.
-export const rosterEntrySchema = z.union([
+const rosterEntrySchema = z.union([
   z.string().min(1),
   z.object({
     id: z.string().min(1),

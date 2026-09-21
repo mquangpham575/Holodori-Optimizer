@@ -20,7 +20,7 @@ export const MASTER_BASE_URL = config.masterBaseUrl;
 const MASTER_TIMEOUT_MS = Number(process.env.HOLODORI_FETCH_TIMEOUT_MS) || 120_000;
 
 // Tables (and English language tables) the conversion reads.
-export const MASTER_TABLES = [
+const MASTER_TABLES = [
   "Card",
   "Character",
   "CharacterGrouping",
@@ -43,7 +43,7 @@ export const MASTER_TABLES = [
   "LangGeneratedLiveLeaderSkill_Eng",
 ] as const;
 
-export type MasterTables = Record<string, any[]>;
+type MasterTables = Record<string, any[]>;
 
 const fetchOk = async (url: string): Promise<Response> => {
   const res = await fetch(url, { signal: AbortSignal.timeout(MASTER_TIMEOUT_MS) });
@@ -78,7 +78,7 @@ const PASSIVE_KIND: Record<string, string> = {
 const CHANCE_LABEL: Record<string, string> = { High: "H", Medium: "M", Low: "L" };
 
 // Same labels the optimizer pack shipped (and holodori.best displays).
-export const ATTRIBUTE_LABELS: Record<string, string> = {
+const ATTRIBUTE_LABELS: Record<string, string> = {
   CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_1: "Cute",
   CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_2: "Pure",
   CardAttributeType_CARD_ATTRIBUTE_TYPE_ATTRIBUTE_3: "Happy",
@@ -102,7 +102,7 @@ const groupBy = <T>(rows: T[], key: (r: T) => string): Map<string, T[]> => {
   return m;
 };
 
-export interface BuildResult {
+interface BuildResult {
   packed: any;
   /** Cards that could not be converted (unknown effect type etc.), with the reason. */
   skipped: { assetId: string; reason: string }[];

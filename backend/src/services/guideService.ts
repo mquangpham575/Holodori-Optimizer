@@ -18,7 +18,7 @@ export const listGuides = async (): Promise<Guide[]> => {
   return result;
 };
 
-export const invalidateGuidesCache = (): void => {
+const invalidateGuidesCache = (): void => {
   guidesCache.delete("all");
 };
 

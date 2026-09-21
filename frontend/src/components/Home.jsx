@@ -1,5 +1,4 @@
 import { useLanguage } from '../context/LanguageContext';
-import React from 'react';
 import { Gamepad2, Shield, Calendar, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { findChar, sameChar, getTypeIconUrl } from '../charUtils';

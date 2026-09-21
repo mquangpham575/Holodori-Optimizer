@@ -1,5 +1,5 @@
 import config from "./config.js";
-import createApp from "./app.js";
+import { createApp } from "./app.js";
 import { seedDatabase, syncHolodoriCards } from "./services/syncService.js";
 import { disconnectKafka } from "./kafka/producer.js";
 import { closePool } from "./db/postgres.js";

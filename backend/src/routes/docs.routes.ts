@@ -275,7 +275,7 @@ const openApiSpec = {
 };
 
 // Official Swagger UI sandbox for the public API.
-router.get("/", (req, res) => {
+router.get("/", (_req, res) => {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

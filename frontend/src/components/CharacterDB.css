@@ -34,10 +34,6 @@
   border-radius: 12px;
 }
 
-.search-group {
-  width: 100%;
-}
-
 .db-search-input {
   width: 100%;
   background: rgba(255, 255, 255, 0.02);
@@ -216,15 +212,6 @@
   border-radius: 50%;
   vertical-align: -3px;
 }
-
-.text-blue { color: #3b82f6; }
-.text-red { color: #ef4444; }
-.text-orange { color: #f59e0b; }
-.text-purple { color: #a855f7; }
-.text-cyan { color: #06b6d4; }
-.text-pure { color: #4caf50; }
-.text-cute { color: #ff4d6d; }
-.text-happy { color: #ff9f1c; }
 
 
 
@@ -520,11 +507,6 @@
   letter-spacing: 0.2px;
 }
 
-.bloom-stat-tag {
-  color: #38bdf8;
-  font-weight: 800;
-}
-
 /* Skills List Container */
 .modal-skills-list-container {
   display: flex;
@@ -660,23 +642,6 @@
 
 .card-art-initials.small {
   font-size: 1.9rem;
-}
-
-.modal-img-wrapper {
-  width: 180px;
-  height: 180px;
-  border-radius: 22px;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.modal-char-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
 }
 
 .mr-1 {

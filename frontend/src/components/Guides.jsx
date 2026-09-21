@@ -1,5 +1,5 @@
 import { useLanguage } from '../context/LanguageContext';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, BookOpen, User, Clock, Calendar } from 'lucide-react';
 import './Guides.css';
 

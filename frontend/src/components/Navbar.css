@@ -102,57 +102,6 @@
   border-radius: 2px;
 }
 
-.player-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 50px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.player-badge:hover {
-  border-color: var(--accent-color);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 10px var(--accent-glow);
-}
-
-.player-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  font-family: var(--font-body);
-}
-
-.player-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.player-level {
-  font-size: 0.7rem;
-  color: var(--accent-color);
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.player-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-color), #833ab4);
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 8px rgba(0,0,0,0.3);
-}
-
 @keyframes float-icon {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-4px) rotate(15deg); }
@@ -174,7 +123,7 @@
     justify-content: center;
   }
 
-  .brand, .player-badge {
+  .brand {
     display: none;
   }
 

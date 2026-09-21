@@ -3,7 +3,7 @@ import config from "../config.js";
 import { getPool } from "../db/postgres.js";
 import { loadDB } from "../db/jsonStore.js";
 
-export const list = async (req: Request, res: Response): Promise<void> => {
+export const list = async (_req: Request, res: Response): Promise<void> => {
   if (config.isProd) {
     const result = await getPool().query("SELECT * FROM songs ORDER BY id ASC");
     res.json(

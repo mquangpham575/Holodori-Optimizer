@@ -29,7 +29,7 @@ export interface CharacterRow {
   assetId?: string | null;
 }
 
-export interface JsonDB {
+interface JsonDB {
   characters: CharacterRow[];
   presets: Record<string, any[]>;
   roster: Record<string, string[]>;

@@ -29,7 +29,7 @@ import { loadFrontendData } from "./dataLoader.js";
 import { publishCatalogSynced } from "../kafka/producer.js";
 import { logger } from "../logger.js";
 
-export const normalizeMemberName = (n: string): string => {
+const normalizeMemberName = (n: string): string => {
   if (!n) return "";
   let s = n.trim().replace(/\u2019/g, "'");
   if (s === "Mori Calliope") return "Calliope Mori";
@@ -106,7 +106,7 @@ export const findNewMembers = (existing: any[], snapshot: any): any[] => {
   );
 };
 
-export const bootstrapFromHolodori = async (): Promise<{
+const bootstrapFromHolodori = async (): Promise<{
   characters: any[];
   skipped: string[];
 }> => {
@@ -185,7 +185,7 @@ const devFullArtStore = (): FullArtStore => {
 
 // Full-size illustrations for every card, mirrored from the art CDN. Independent of
 // the card-data hash on purpose: a card can exist long before its artwork does.
-export const ensureFullArt = async (cards: any[]): Promise<void> => {
+const ensureFullArt = async (cards: any[]): Promise<void> => {
   if (!config.cardArtCdnBase) return;
   try {
     const ids = cards.map((c) => c.assetId).filter(Boolean) as string[];
@@ -208,7 +208,7 @@ export const ensureFullArt = async (cards: any[]): Promise<void> => {
 // may legitimately read it. Until then /images/cards/<id>.webp falls back to
 // the member's portrait (see images.routes.ts). With ETag revalidation this is
 // a cheap 304 on the regular 6-hourly runs.
-export const ensureCardArt = async (cards: any[]): Promise<void> => {
+const ensureCardArt = async (cards: any[]): Promise<void> => {
   if (!config.bundleArtEnabled) return;
   try {
     const wanted = [...new Set(cards.map((c) => c.assetId).filter(Boolean))] as string[];

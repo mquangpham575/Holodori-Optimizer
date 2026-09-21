@@ -42,7 +42,7 @@ const loadSharp = (): Promise<any | null> =>
       return null;
     }));
 
-export const makeThumbnail = async (input: Buffer): Promise<Buffer> => {
+const makeThumbnail = async (input: Buffer): Promise<Buffer> => {
   const sharp = await loadSharp();
   if (!sharp) return input;
   return sharp(input).resize({ width: THUMB_WIDTH, withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
@@ -58,12 +58,12 @@ export const makeSquare = async (input: Buffer): Promise<Buffer | null> => {
     .toBuffer();
 };
 
-export type FullArtResult =
+type FullArtResult =
   | { status: "unchanged" }
   | { status: "missing" }
   | { status: "ok"; etag: string | null; full: Buffer; thumb: Buffer; square: Buffer | null };
 
-export interface FetchOptions {
+interface FetchOptions {
   base?: string;
   etag?: string | null;
   fetchImpl?: typeof fetch;
@@ -103,7 +103,7 @@ export interface FullArtStore {
   saveSquare?(assetId: string, square: Buffer): Promise<void>;
 }
 
-export interface SyncSummary {
+interface SyncSummary {
   saved: number;
   squared: number;
   unchanged: number;

@@ -6,7 +6,7 @@ import { loadFrontendData } from "../services/dataLoader.js";
 import { logger } from "../logger.js";
 
 const { Pool } = pkg;
-export type Pool = InstanceType<typeof Pool>;
+type Pool = InstanceType<typeof Pool>;
 
 let pool: Pool | null = null;
 

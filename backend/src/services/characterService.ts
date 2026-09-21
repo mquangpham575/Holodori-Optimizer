@@ -27,7 +27,7 @@ export const listCharacters = async (): Promise<CharacterRow[]> => {
   return result;
 };
 
-export const invalidateCharactersCache = (): void => {
+const invalidateCharactersCache = (): void => {
   charactersCache.delete("all");
 };
 

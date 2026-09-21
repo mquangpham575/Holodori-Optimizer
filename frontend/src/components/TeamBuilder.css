@@ -19,7 +19,7 @@
   width: 100%;
 }
 
-.slots-container, .roster-selector, .analytics-card, .synergy-card {
+.slots-container {
   border-radius: 16px;
   padding: 1.75rem;
 }
@@ -136,113 +136,8 @@
 }
 
 /* Roster Selector */
-.roster-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
-  gap: 0.85rem;
-  margin-top: 1.25rem;
-}
-
-.roster-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.85rem;
-  border-radius: 10px;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.25s ease;
-  position: relative;
-}
-
-.roster-item::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  pointer-events: none;
-  transition: border-color 0.2s ease;
-}
-
-.roster-item:hover::after {
-  border-color: var(--border-hover);
-}
-
-.roster-item.selected {
-  background: var(--char-accent)15;
-  border-color: var(--char-accent);
-  box-shadow: 0 0 10px var(--char-accent)30;
-}
-
-.roster-item.selected::after {
-  border-color: var(--char-accent);
-}
-
-.roster-item-avatar {
-  font-size: 1.8rem;
-  margin-bottom: 0.35rem;
-}
-
-.roster-item-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.roster-item-name {
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.roster-item-role {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  margin-top: 0.15rem;
-}
 
 /* Average Stats */
-.avg-stats-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin-top: 1.25rem;
-}
-
-.avg-stat-item {
-  display: grid;
-  grid-template-columns: 50px 30px 1fr;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.avg-stat-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.avg-stat-val {
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.avg-bar-bg {
-  width: 100%;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.avg-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-}
-
-.bg-red { background-color: #ef4444; }
-.bg-yellow { background-color: #f59e0b; }
-.bg-green { background-color: #10b981; }
-.bg-blue { background-color: #3b82f6; }
 
 .empty-analytics {
   display: flex;
@@ -260,19 +155,6 @@
 }
 
 /* Synergies List */
-.synergies-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin-top: 1.25rem;
-}
-
-.synergies-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.25rem;
-  margin-top: 1.25rem;
-}
 
 .synergy-bonus-item {
   padding: 1rem;
@@ -287,54 +169,7 @@
   background: rgba(255, 183, 3, 0.02);
 }
 
-.synergy-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.synergy-badge-title {
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  padding: 0.25rem 0.65rem;
-  border-radius: 4px;
-  letter-spacing: 0.5px;
-}
-
-.synergy-partners {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.synergy-desc {
-  font-size: 0.85rem;
-  color: var(--text-primary);
-  line-height: 1.55;
-  font-weight: 500;
-  margin-top: 0.35rem;
-}
-
-.synergy-success {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: #2ec4b6;
-  font-size: 0.8rem;
-  font-weight: 600;
-  justify-content: center;
-  margin-top: 0.5rem;
-}
-
-.w-full { width: 100%; }
-
 /* Responsiveness */
-@media (max-width: 992px) {
-  .builder-layout {
-    grid-template-columns: 1fr;
-  }
-}
 
 @media (max-width: 768px) {
   .team-builder-page {
@@ -385,31 +220,6 @@
   object-fit: cover;
   object-position: 50% 30%; /* card art is square or wider: crop, never stretch */
 }
-
-.roster-item-media {
-  width: 58px;
-  height: 76px;
-  aspect-ratio: 3 / 4;
-  border-radius: 10px;
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.25);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 0.5rem;
-  border: 1px solid var(--border-color);
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.4);
-}
-
-.roster-item-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-}
-
-.text-purple { color: #a855f7; }
-.bg-purple { background-color: #a855f7; }
 
 /* Responsive tweaks and 5-member slot updates */
 .config-grid {
@@ -466,29 +276,6 @@
   letter-spacing: 0.5px;
 }
 
-.leader-dropdown-container {
-  margin-top: 0.75rem;
-  width: 100%;
-}
-
-.leader-select-dropdown {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  color: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 0.45rem;
-  font-family: var(--font-body);
-  outline: none;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-
-.leader-select-dropdown:focus {
-  border-color: #ffb703;
-}
-
 .recommendation-badge-container {
   margin-top: 0.75rem;
 }
@@ -515,12 +302,6 @@
   background: rgba(239, 68, 68, 0.08);
   border-color: rgba(239, 68, 68, 0.2);
   color: #ef4444;
-}
-
-.warning-badge {
-  background: rgba(247, 127, 0, 0.08);
-  border-color: rgba(247, 127, 0, 0.2);
-  color: #f77f00;
 }
 
 .leader-tag-mini {
@@ -728,16 +509,6 @@
   padding: 0.15rem 0;
   letter-spacing: 0.5px;
   z-index: 3;
-}
-
-.roster-warning-sub {
-  font-size: 0.7rem;
-  margin-top: 0.25rem;
-  font-weight: 500;
-}
-
-.roster-item.disabled-roster {
-  pointer-events: none;
 }
 
 @media (max-width: 992px) {
@@ -1199,131 +970,9 @@
   color: #fff;
 }
 
-
-.roster-groups-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  max-height: 400px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-}
-
 /* Custom Scrollbar for Roster */
-.roster-groups-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.roster-groups-container::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 3px;
-}
-
-.roster-groups-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.roster-groups-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.roster-group-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.roster-group-title {
-  font-family: var(--font-title);
-  font-size: 0.85rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-  border-left: 2px solid var(--accent-color);
-  padding-left: 0.5rem;
-  text-align: left;
-}
-
-.roster-group-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.65rem;
-}
-
-.roster-char-item {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-color);
-  padding: 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.roster-char-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--border-hover);
-}
-
-.roster-char-item.owned {
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.roster-char-item.not-owned {
-  opacity: 0.4;
-  border-style: dashed;
-}
-
-.roster-char-checkbox {
-  cursor: pointer;
-  accent-color: var(--accent-color);
-}
-
-.roster-char-avatar-mini {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 0.85rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary);
-  flex-shrink: 0;
-}
-
-.roster-char-item.owned .roster-char-avatar-mini {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--text-primary);
-}
-
-.roster-char-name {
-  font-size: 0.8rem;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* Recommendation Modal styling */
-.recommendation-modal {
-  position: relative;
-  width: 100%;
-  max-width: 700px;
-  background: rgba(18, 18, 29, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
-  padding: 1.5rem;
-  text-align: left;
-}
 
 .recommendation-desc {
   font-size: 0.85rem;
@@ -1333,107 +982,7 @@
   margin-top: 0.5rem;
 }
 
-.modal-section-title {
-  font-family: var(--font-title);
-  font-size: 0.95rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-bottom: 0.85rem;
-  letter-spacing: 0.5px;
-  text-align: left;
-}
-
-.recommended-team-slots {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.65rem;
-  margin-bottom: 1.75rem;
-}
-
-.recommended-slot-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 0.85rem 0.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  position: relative;
-}
-
-.recommended-slot-card.border-gold {
-  border-color: #ffb703;
-  box-shadow: 0 0 10px rgba(255, 183, 3, 0.15);
-}
-
-.recommended-avatar-circle {
-  width: 44px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.65rem;
-}
-
-.recommended-avatar-text {
-  font-family: var(--font-title);
-  font-size: 1.1rem;
-  font-weight: 900;
-}
-
-.recommended-slot-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  width: 100%;
-}
-
-.recommended-char-name {
-  font-size: 0.78rem;
-  font-weight: 800;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recommended-char-meta {
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.15rem;
-  white-space: nowrap;
-}
-
-.recommended-passives-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  max-height: 220px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-}
-
 /* Custom Scrollbar for passives list */
-.recommended-passives-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.recommended-passives-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 3px;
-}
-
-.recommended-passives-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
 
 
 

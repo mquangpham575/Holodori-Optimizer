@@ -1,6 +1,6 @@
 // Lightweight in-process counters exposed at GET /api/metrics. Kept dependency
 // free on purpose — enough for a showcase without pulling in a Prometheus stack.
-export interface Metrics {
+interface Metrics {
   requests: number;
   byRoute: Record<string, number>;
   byStatus: Record<string, number>;

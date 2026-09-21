@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { logger } from "../logger.js";
 
-export interface HttpError extends Error {
+interface HttpError extends Error {
   status?: number;
 }
 

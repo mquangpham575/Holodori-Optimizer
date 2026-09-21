@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Lock, Plus, Edit2, Trash2, X, FileText, Sparkles, Key, Check, Download, Upload } from 'lucide-react';
 import './AdminDashboard.css';
 import { CHARACTERS } from '../data';

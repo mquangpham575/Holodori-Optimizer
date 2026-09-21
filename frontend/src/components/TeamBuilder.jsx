@@ -1,5 +1,5 @@
 import { useLanguage } from "../context/LanguageContext";
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Trash2,
   Users,
@@ -1379,7 +1379,7 @@ const mapSearchProgress = (msg) => {
   return Math.max(0, Math.min(100, Math.round(scaled)));
 };
 
-export const recommendBestTeamAsync = (
+const recommendBestTeamAsync = (
   ownedRoster,
   characters,
   onProgress,

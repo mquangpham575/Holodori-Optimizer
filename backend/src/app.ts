@@ -55,5 +55,3 @@ export const createApp = (): Express => {
 
   return app;
 };
-
-export default createApp;
