@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Module-level so the component type stays stable across renders (defining it
 // inside another component would remount the <img> and reset the error state each
@@ -12,10 +12,18 @@ const getInitials = (name) => {
 // member portrait) before falling back to initials, so a card whose artwork is not
 // available yet still shows something sensible instead of a broken image.
 // data-kind lets the CSS give the wide illustrations a 16:9 frame.
-const CardArt = ({ name, sources, alt, className, small }) => {
+// onReady fires once something is on screen (an image loaded, or the initials
+// fallback took over); eager skips lazy loading for art that is already in view.
+const CardArt = ({ name, sources, alt, className, small, onReady, eager }) => {
   const list = (sources || []).filter((s, i, all) => s && all.indexOf(s) === i);
   const [index, setIndex] = useState(0);
-  if (index >= list.length) {
+  const exhausted = index >= list.length;
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
+  useEffect(() => {
+    if (exhausted) readyRef.current?.();
+  }, [exhausted]);
+  if (exhausted) {
     return <div className={`card-art-initials${small ? ' small' : ''}`}>{getInitials(name)}</div>;
   }
   return (
@@ -25,7 +33,8 @@ const CardArt = ({ name, sources, alt, className, small }) => {
       alt={alt || name}
       className={className}
       data-kind={index === 0 && /\/images\/cards-(full|thumb)\//.test(list[0]) ? 'wide' : 'framed'}
-      loading="lazy"
+      loading={eager ? 'eager' : 'lazy'}
+      onLoad={onReady}
       onError={() => setIndex((i) => i + 1)}
     />
   );

@@ -37,6 +37,21 @@
   pointer-events: none;
 }
 
+/* The animation sits invisible over the idle art until it is actually running, and
+   the signature stays hidden until it is running in step with what is below it. */
+.card-stage-video {
+  opacity: 0;
+}
+
+.card-stage-video.is-live {
+  opacity: 1;
+}
+
+.card-sign-cutout.is-hidden,
+.card-sign-color.is-hidden {
+  opacity: 0;
+}
+
 /* Signature compositing: see SignatureLayer in CardStage.jsx */
 .card-sign-cutout {
   mix-blend-mode: multiply;

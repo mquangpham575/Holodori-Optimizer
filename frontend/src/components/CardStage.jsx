@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, Volume2, VolumeX, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
@@ -28,13 +28,26 @@ const playMuted = (video) => {
   if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay refused: stays on the first frame */ });
 };
 
-function SignatureLayer({ src, master, onError }) {
+// The signature only ever shows when it can be in step with what is under it:
+//   active  the base (the animation, or the idle art when there is no animation) is
+//           on screen and running. Until then the signature waits, paused, and stays
+//           invisible, so it can neither play alone on a black stage nor run ahead of
+//           an animation that is still loading.
+//   master  the animation <video>. The signature follows its clock: it starts from the
+//           animation's current time, restarts with each loop, is snapped back if the
+//           two drift apart, and pauses whenever the animation stalls.
+function SignatureLayer({ src, master, active, onReady, onError }) {
   const videoRef = useRef(null);
   const colorRef = useRef(null);
   const cutoutRef = useRef(null);
-  // Parents pass a fresh callback every render; keep effects from restarting on it.
+  // Parents pass fresh callbacks every render; keep effects from restarting on them.
   const errorRef = useRef(onError);
   errorRef.current = onError;
+  const readyRef = useRef(onReady);
+  readyRef.current = onReady;
+  const [started, setStarted] = useState(false); // has shown a frame in step with the base
+  const [stalled, setStalled] = useState(false); // buffering: hide rather than show a stale frame
+  const visible = active && started && !stalled;
 
   // Paint the two halves of every video frame into the two canvases.
   useEffect(() => {
@@ -102,28 +115,67 @@ function SignatureLayer({ src, master, onError }) {
     };
   }, [src]);
 
-  // Playback: loop by itself, or (over the animation) restart whenever the
-  // animation loops so the two stay together.
+  // Report when the signature can play through (the stage may hold the animation back
+  // for it), and track whether it is showing a frame.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return undefined;
+    let told = false;
+    const ready = () => {
+      if (told || video.readyState < 3) return;
+      told = true;
+      readyRef.current?.();
+    };
+    const onPlaying = () => { setStarted(true); setStalled(false); ready(); };
+    const onWaiting = () => setStalled(true);
+    const onSeeked = () => setStalled(false);
+    video.addEventListener('canplay', ready);
+    video.addEventListener('playing', onPlaying);
+    video.addEventListener('waiting', onWaiting);
+    video.addEventListener('seeked', onSeeked);
+    ready();
+    return () => {
+      video.removeEventListener('canplay', ready);
+      video.removeEventListener('playing', onPlaying);
+      video.removeEventListener('waiting', onWaiting);
+      video.removeEventListener('seeked', onSeeked);
+    };
+  }, [src]);
+
+  // Playback. Nothing plays until the base is running (active).
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return undefined;
     video.muted = true;
+    if (!active) {
+      video.pause();
+      return undefined;
+    }
     if (!master) {
       video.loop = true;
       playMuted(video);
       return undefined;
     }
     video.loop = false;
+    // Start from wherever the animation is now. (If the signature is shorter than the
+    // animation it simply rests on its last frame until the animation loops.)
     const align = () => {
-      if (Number.isFinite(video.duration) && master.currentTime < video.duration) {
-        video.currentTime = master.currentTime;
+      const now = master.currentTime;
+      if (Number.isFinite(video.duration) && now < video.duration && Math.abs(video.currentTime - now) > 0.1) {
+        video.currentTime = now;
       }
       playMuted(video);
     };
     let last = master.currentTime;
     const onTime = () => {
       const now = master.currentTime;
-      if (now < last - 0.5) { video.currentTime = 0; playMuted(video); }
+      if (now < last - 0.5) {
+        video.currentTime = 0;
+        playMuted(video);
+      } else if (!video.ended && Number.isFinite(video.duration) && now < video.duration
+        && Math.abs(video.currentTime - now) > 0.3) {
+        video.currentTime = now; // drifted apart (one of them stalled): catch up
+      }
       last = now;
     };
     master.addEventListener('timeupdate', onTime);
@@ -132,9 +184,11 @@ function SignatureLayer({ src, master, onError }) {
     return () => {
       master.removeEventListener('timeupdate', onTime);
       video.removeEventListener('loadedmetadata', align);
+      video.pause();
     };
-  }, [master, src]);
+  }, [master, src, active]);
 
+  const hidden = visible ? '' : ' is-hidden';
   return (
     <>
       <video
@@ -148,41 +202,98 @@ function SignatureLayer({ src, master, onError }) {
         tabIndex={-1}
         onError={onError}
       />
-      <canvas ref={cutoutRef} className="card-sign-cutout" aria-hidden="true" />
-      <canvas ref={colorRef} className="card-sign-color" aria-hidden="true" />
+      <canvas ref={cutoutRef} className={`card-sign-cutout${hidden}`} aria-hidden="true" />
+      <canvas ref={colorRef} className={`card-sign-color${hidden}`} aria-hidden="true" />
     </>
   );
 }
 
 // --- The art stage ------------------------------------------------------------
 
-/** Card illustration with the optional looping animation and signature on top. */
-export function CardStage({ card, animation, signature, onAnimationError, onSignatureError, className = '', timeRef, startAt = 0 }) {
+// How long the animation waits for the signature to be ready to start with it
+// (after which it starts anyway and the signature joins in step).
+const SIGNATURE_WAIT_MS = 2500;
+
+/** Card illustration with the optional looping animation and signature on top.
+ *  Everything starts together: the idle art is shown while the animation (and the
+ *  signature) load, the animation starts only once it can play through and the
+ *  signature is ready, and the signature follows the animation's clock. */
+export function CardStage(props) {
+  const { card } = props;
+  // A different card (or art) is a fresh stage: nothing carries over from the last one.
+  const key = `${card.fullImage}|${card.image}|${card.videoUrl}|${card.signUrl}`;
+  return <StageInner key={key} {...props} />;
+}
+
+function StageInner({ card, animation, signature, onAnimationError, onSignatureError, className = '', timeRef, startAt = 0 }) {
   const [animEl, setAnimEl] = useState(null);
+  const [artReady, setArtReady] = useState(false);
+  const [animReady, setAnimReady] = useState(false);     // can play through
+  const [animPlaying, setAnimPlaying] = useState(false); // running right now
+  const [animShown, setAnimShown] = useState(false);     // has shown a frame (latched)
+  const [signReady, setSignReady] = useState(false);
+  const [signWaited, setSignWaited] = useState(false);
   // timeRef: where the animation currently is, written for whoever opens the next stage
   // (the maximised viewer carries on from there instead of restarting). startAt: the
   // position to begin at, used once.
   const resumeAt = useRef(startAt);
   const showAnimation = Boolean(animation && card.videoUrl);
   const showSignature = Boolean(signature && card.signUrl);
+
+  // Toggling a layer off and on mounts a new element: forget what the old one reported.
+  useEffect(() => () => {
+    setAnimReady(false); setAnimPlaying(false); setAnimShown(false); setSignWaited(false);
+  }, [showAnimation]);
+  useEffect(() => () => { setSignReady(false); setSignWaited(false); }, [showSignature]);
+
+  // Once the animation could start, give the signature a moment to catch up.
+  useEffect(() => {
+    if (!animReady || !showSignature || signReady) return undefined;
+    const id = setTimeout(() => setSignWaited(true), SIGNATURE_WAIT_MS);
+    return () => clearTimeout(id);
+  }, [animReady, showSignature, signReady]);
+
+  const go = animReady && (!showSignature || signReady || signWaited);
+  useEffect(() => {
+    if (!animEl) return;
+    if (go) {
+      animEl.muted = true;
+      const p = animEl.play();
+      if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay refused: stays on the idle art */ });
+    } else {
+      animEl.pause();
+    }
+  }, [animEl, go]);
+
+  // Stable, or React would detach and re-attach the element on every render.
+  const attachAnimation = useCallback((node) => {
+    setAnimEl(node);
+    if (node && node.readyState >= 3) setAnimReady(true);
+  }, []);
+
   return (
     <div className={`card-stage ${className}`.trim()}>
       <CardArt
         name={card.name}
         sources={[card.fullImage, card.image, card.fallbackImage]}
         className="card-stage-art"
+        onReady={() => setArtReady(true)}
+        eager
       />
       {showAnimation && (
         <video
-          ref={setAnimEl}
-          className="card-stage-layer card-stage-video"
+          ref={attachAnimation}
+          className={`card-stage-layer card-stage-video${animShown ? ' is-live' : ''}`}
           src={card.videoUrl}
-          autoPlay
           loop
           muted
           playsInline
           preload="auto"
           onError={onAnimationError}
+          onCanPlay={() => setAnimReady(true)}
+          onPlaying={() => { setAnimPlaying(true); setAnimShown(true); }}
+          onWaiting={() => setAnimPlaying(false)}
+          onPause={() => setAnimPlaying(false)}
           onTimeUpdate={timeRef ? (e) => { timeRef.current = e.currentTarget.currentTime; } : undefined}
           onLoadedMetadata={(e) => {
             const video = e.currentTarget;
@@ -196,6 +307,8 @@ export function CardStage({ card, animation, signature, onAnimationError, onSign
           key={card.signUrl}
           src={card.signUrl}
           master={showAnimation ? animEl : null}
+          active={showAnimation ? animPlaying : artReady}
+          onReady={() => setSignReady(true)}
           onError={onSignatureError}
         />
       )}

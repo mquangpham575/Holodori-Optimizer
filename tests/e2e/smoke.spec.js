@@ -106,7 +106,7 @@ test("card art: animation autoplays on a loop with the signature on top, and bot
   const dialog = page.getByRole("dialog");
   const video = dialog.locator("video.card-stage-video");
   await expect(video).toHaveCount(1);
-  expect(await video.evaluate((v) => [v.loop, v.muted, v.autoplay])).toEqual([true, true, true]);
+  expect(await video.evaluate((v) => [v.loop, v.muted])).toEqual([true, true]);
   await expect.poll(() => video.evaluate((v) => !v.paused && v.currentTime > 0)).toBe(true);
   // The signature is painted into two canvases (colour + matte) from one hidden video.
   const color = dialog.locator("canvas.card-sign-color");
@@ -126,6 +126,87 @@ test("card art: animation autoplays on a loop with the signature on top, and bot
   await page.goto(FIVE_STAR);
   await expect(page.getByRole("dialog").getByRole("switch", { name: "Animation" })).toHaveAttribute("aria-checked", "false");
   await expect(page.getByRole("dialog").getByRole("switch", { name: "Signature" })).toHaveAttribute("aria-checked", "false");
+});
+
+// The signature must never play alone (on a black stage, or over the idle art while the
+// animation is still loading), and the animation and signature start together. Each
+// asset is delayed in turn; a page-side sampler records any moment the signature is
+// visible while the layer under it is not running.
+const delayed = (page, match, body, contentType, ms) =>
+  page.route(match, async (route) => {
+    await new Promise((r) => setTimeout(r, ms));
+    await route.fulfill({ body, contentType }).catch(() => {});
+  });
+
+const watchSignature = (page, mode) =>
+  page.evaluate((m) => {
+    window.__signAlone = [];
+    setInterval(() => {
+      const color = document.querySelector(".card-sign-color");
+      if (!color || color.classList.contains("is-hidden")) return;
+      if (m === "animation") {
+        const v = document.querySelector("video.card-stage-video");
+        if (!v || v.paused || !v.classList.contains("is-live")) window.__signAlone.push("no animation under signature");
+      } else {
+        const img = document.querySelector("img.card-stage-art");
+        if (!img || !img.complete || !img.naturalWidth) window.__signAlone.push("no art under signature");
+      }
+    }, 25);
+  }, mode);
+
+const inStep = (dialog) =>
+  dialog.evaluate((root) => {
+    const anim = root.querySelector("video.card-stage-video");
+    const sign = root.querySelector("video.card-sign-source");
+    const color = root.querySelector("canvas.card-sign-color");
+    return {
+      animPlaying: Boolean(anim && !anim.paused && anim.currentTime > 0),
+      signPlaying: Boolean(sign && sign.currentTime > 0),
+      shown: Boolean(color && !color.classList.contains("is-hidden")),
+      drift: anim && sign ? Math.abs(anim.currentTime - sign.currentTime) : 99,
+      animDuration: anim?.duration,
+      signDuration: sign?.duration,
+    };
+  });
+
+for (const [name, slow] of [["animation", "mov_card_full_"], ["signature", "mov_card_sign_"]]) {
+  test(`card art: a slow ${name} does not let the signature play alone or out of step`, async ({ page }) => {
+    await delayed(
+      page,
+      (url) => url.href.includes(slow),
+      fixture(slow === "mov_card_full_" ? "anim.webm" : "sign.webm"),
+      "video/webm",
+      5000 // long enough to still be loading when the checks below run, even on a slow machine
+    );
+    await page.goto(FIVE_STAR);
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.locator("canvas.card-sign-color")).toHaveCount(1);
+    await watchSignature(page, "animation");
+    // While anything is still loading, nothing is playing and the idle art is what shows.
+    const early = await inStep(dialog);
+    expect(early.animPlaying).toBe(false);
+    expect(early.shown).toBe(false);
+    await expect(dialog.locator("img.card-stage-art")).toBeVisible();
+    // Then both come in together.
+    await expect.poll(async () => (await inStep(dialog)).shown, { timeout: 15000 }).toBe(true);
+    const state = await inStep(dialog);
+    expect(state.animPlaying).toBe(true);
+    const tolerance = 0.6;
+    if (state.signDuration > state.animDuration) expect(state.drift).toBeLessThan(tolerance);
+    expect(await page.evaluate(() => window.__signAlone)).toEqual([]);
+  });
+}
+
+test("card art: over the idle art the signature waits for the art, not a black stage", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("holodreams_card_animation", "off"));
+  await delayed(page, "**/images/cards-full/*.webp", fixture("art.png"), "image/webp", 5000);
+  await page.goto(FIVE_STAR);
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator("canvas.card-sign-color")).toHaveCount(1);
+  await watchSignature(page, "art");
+  expect((await inStep(dialog)).shown).toBe(false);
+  await expect.poll(async () => (await inStep(dialog)).shown, { timeout: 15000 }).toBe(true);
+  expect(await page.evaluate(() => window.__signAlone)).toEqual([]);
 });
 
 test("card art: maximise works with idle art or animation, with or without signature, and plays the voice", async ({ page }) => {
