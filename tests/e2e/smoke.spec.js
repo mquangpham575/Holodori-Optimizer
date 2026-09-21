@@ -1,14 +1,18 @@
 import fs from "node:fs";
 import { test, expect } from "playwright/test";
 
-// Tests never touch the real art CDN: its media is answered from small local fixtures
+// Tests never touch the real art CDN or the backend's video mirror: the animation and
+// signature (/images/cards-anim|cards-sign, which the backend answers from its mirror or
+// redirects to the CDN) and the voice line are answered from small local fixtures
 // (VP9 stand-ins for the H.264 originals, which headless Chromium cannot decode).
 const fixture = (name) => fs.readFileSync(new URL(`./fixtures/${name}`, import.meta.url));
+const ANIM = "**/images/cards-anim/*.mp4";
+const SIGN = "**/images/cards-sign/*.mp4";
 test.beforeEach(async ({ page }) => {
+  await page.route(ANIM, (route) => route.fulfill({ body: fixture("anim.webm"), contentType: "video/webm" }));
+  await page.route(SIGN, (route) => route.fulfill({ body: fixture("sign.webm"), contentType: "video/webm" }));
   await page.route("https://cdn.holodori.dev/**", (route) => {
     const url = route.request().url();
-    if (url.includes("mov_card_sign_")) return route.fulfill({ body: fixture("sign.webm"), contentType: "video/webm" });
-    if (url.includes("mov_card_full_")) return route.fulfill({ body: fixture("anim.webm"), contentType: "video/webm" });
     if (url.includes("/vo_card_")) return route.fulfill({ body: fixture("voice.mp3"), contentType: "audio/mpeg" });
     return route.abort();
   });
@@ -169,12 +173,12 @@ const inStep = (dialog) =>
     };
   });
 
-for (const [name, slow] of [["animation", "mov_card_full_"], ["signature", "mov_card_sign_"]]) {
+for (const [name, slow] of [["animation", ANIM], ["signature", SIGN]]) {
   test(`card art: a slow ${name} does not let the signature play alone or out of step`, async ({ page }) => {
     await delayed(
       page,
-      (url) => url.href.includes(slow),
-      fixture(slow === "mov_card_full_" ? "anim.webm" : "sign.webm"),
+      slow,
+      fixture(name === "animation" ? "anim.webm" : "sign.webm"),
       "video/webm",
       5000 // long enough to still be loading when the checks below run, even on a slow machine
     );
@@ -200,7 +204,7 @@ for (const [name, slow] of [["animation", "mov_card_full_"], ["signature", "mov_
 // Once both are showing, neither may pause, hide or restart out of turn: the signature
 // only ever restarts with an animation loop.
 test("card art: once running, the animation never pauses and the signature never flickers", async ({ page }) => {
-  await delayed(page, (url) => url.href.includes("mov_card_sign_"), fixture("sign.webm"), "video/webm", 5000);
+  await delayed(page, SIGN, fixture("sign.webm"), "video/webm", 5000);
   await page.goto(FIVE_STAR);
   const dialog = page.getByRole("dialog");
   await expect(dialog.locator("canvas.card-sign-color")).toHaveCount(1);
@@ -219,6 +223,39 @@ test("card art: once running, the animation never pauses and the signature never
   });
   await page.waitForTimeout(4000);
   expect(await page.evaluate(() => window.__glitches)).toEqual([]);
+});
+
+// The videos are fetched when the pointer rests on a card, so they are (partly) cached by
+// the time it opens; a constrained connection gets no warm-up and no autoplay.
+test("card art: resting on a card warms its videos, once; a data-saver connection skips it", async ({ page }) => {
+  const requested = [];
+  page.on("request", (r) => { if (/\/images\/cards-(anim|sign)\//.test(r.url())) requested.push(r.url().replace(/.*\/images\//, "")); });
+  await page.goto("/characters?type=all");
+  const cards = page.locator(".char-card");
+  await expect(cards.first()).toBeVisible();
+  const fiveStar = cards.filter({ has: page.locator(".rarity-badge", { hasText: "5" }) }).first();
+  await fiveStar.hover();
+  await expect.poll(() => requested.length).toBe(2);
+  expect(requested.sort().map((u) => u.split("/")[0])).toEqual(["cards-anim", "cards-sign"]);
+  await fiveStar.hover({ position: { x: 5, y: 5 } });
+  await page.waitForTimeout(400);
+  expect(requested.length).toBe(2); // not fetched again
+
+  // Data saver: nothing warmed, and the animation starts switched off.
+  const saver = await page.context().newPage();
+  await saver.addInitScript(() => Object.defineProperty(navigator, "connection", { value: { saveData: true, effectiveType: "4g" } }));
+  const asked = [];
+  saver.on("request", (r) => { if (/\/images\/cards-(anim|sign)\//.test(r.url())) asked.push(r.url()); });
+  await saver.route(ANIM, (route) => route.fulfill({ body: fixture("anim.webm"), contentType: "video/webm" }));
+  await saver.route(SIGN, (route) => route.fulfill({ body: fixture("sign.webm"), contentType: "video/webm" }));
+  await saver.goto("/characters");
+  await expect(saver.locator(".char-card").first()).toBeVisible();
+  await saver.locator(".char-card").filter({ has: saver.locator(".rarity-badge", { hasText: "5" }) }).first().hover();
+  await saver.waitForTimeout(600);
+  expect(asked).toEqual([]);
+  await saver.goto(FIVE_STAR);
+  await expect(saver.getByRole("dialog").getByRole("switch", { name: "Animation" })).toHaveAttribute("aria-checked", "false");
+  await saver.close();
 });
 
 test("card art: over the idle art the signature waits for the art, not a black stage", async ({ page }) => {

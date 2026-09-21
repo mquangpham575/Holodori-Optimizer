@@ -8,11 +8,15 @@ export const cardArtUrl = (assetId) =>
 const cardFullArtUrl = (assetId) => (assetId ? `/images/cards-full/${assetId}.webp` : null);
 const cardThumbArtUrl = (assetId) => (assetId ? `/images/cards-thumb/${assetId}.webp` : null);
 
-// 5-star cards also have a looping animation, a signature overlay and a voice line.
-// They are streamed straight from the CDN only when a visitor opens the card (about
-// 2.5 MB + 0.3 MB + 1 MB), never mirrored. Set VITE_CARD_VIDEO_BASE="" at build time
-// to switch all of it off.
-const MEDIA_BASE = (import.meta.env?.VITE_CARD_VIDEO_BASE ?? 'https://cdn.holodori.dev').replace(/\/+$/, '');
+// 5-star cards also have a looping animation, a signature overlay and a voice line,
+// loaded only when a visitor opens the card. The animation and signature are asked
+// from our own backend (/images/cards-anim|cards-sign/<id>.mp4), which serves its
+// mirrored copy (smaller, cached for good) or, until that exists, redirects to the CDN.
+// The voice line always streams from the CDN. VITE_CARD_VIDEO_BASE at build time:
+// unset = as above, "" = no media at all, a URL = everything straight from that host.
+const RAW_MEDIA_BASE = import.meta.env?.VITE_CARD_VIDEO_BASE;
+const MEDIA_BASE = (RAW_MEDIA_BASE ?? 'https://cdn.holodori.dev').replace(/\/+$/, '');
+const MIRRORED = RAW_MEDIA_BASE === undefined;
 const mediaOk = (assetId, rarityNum) =>
   Boolean(MEDIA_BASE && assetId && rarityNum === 5 && /^[A-Za-z0-9_-]+$/.test(assetId));
 // Movies live at <name>.usm/<name>/<name>.<ext>; the audio at <name>.acb/<name>.mp3.
@@ -21,9 +25,15 @@ const movieUrl = (assetId, rarityNum, prefix, ext) => {
   const name = `${prefix}${assetId}`;
   return `${MEDIA_BASE}/assets/resources/${name}.usm/${name}/${name}.${ext}`;
 };
-const cardVideoUrl = (assetId, rarityNum) => movieUrl(assetId, rarityNum, 'mov_card_full_0_', 'mp4');
+const cardVideoUrl = (assetId, rarityNum) =>
+  MIRRORED && mediaOk(assetId, rarityNum)
+    ? `/images/cards-anim/${assetId}.mp4`
+    : movieUrl(assetId, rarityNum, 'mov_card_full_0_', 'mp4');
 // Stacked-alpha H.264: colour in the top half of each frame, the matte in the bottom half.
-const cardSignUrl = (assetId, rarityNum) => movieUrl(assetId, rarityNum, 'mov_card_sign_', 'h264.mp4');
+const cardSignUrl = (assetId, rarityNum) =>
+  MIRRORED && mediaOk(assetId, rarityNum)
+    ? `/images/cards-sign/${assetId}.mp4`
+    : movieUrl(assetId, rarityNum, 'mov_card_sign_', 'h264.mp4');
 // The "situation" voice line, named after the member number (the asset id's first part).
 const cardVoiceUrl = (assetId, rarityNum) => {
   if (!mediaOk(assetId, rarityNum)) return null;

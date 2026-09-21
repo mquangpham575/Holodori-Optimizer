@@ -332,3 +332,33 @@ test("admin can upload WebP card art, and only WebP", async () => {
   const { unlinkSync } = await import("node:fs");
   unlinkSync(join(config.imagesDir, "cards", `${assetId}.webp`));
 });
+
+test("card videos: unmirrored ones redirect to the CDN and queue a mirror job; bad ids are refused", async () => {
+  const { setMediaMirrorForTests } = await import("../src/services/mediaService.ts");
+  const { default: config } = await import("../src/config.ts");
+  const queued: string[] = [];
+  setMediaMirrorForTests({ enqueue: (kind: string, id: string) => { queued.push(`${kind}:${id}`); return true; } } as any);
+  try {
+    // An id no real card (and so no mirrored file on disk) has.
+    const id = "00099-5-test-0001-00";
+    const anim = await fetch(`${base}/images/cards-anim/${id}.mp4`, { redirect: "manual" });
+    assert.equal(anim.status, 302);
+    assert.equal(
+      anim.headers.get("location"),
+      `${config.cardArtCdnBase}/assets/resources/mov_card_full_0_${id}.usm/mov_card_full_0_${id}/mov_card_full_0_${id}.mp4`
+    );
+    const sign = await fetch(`${base}/images/cards-sign/${id}.mp4`, { redirect: "manual" });
+    assert.equal(sign.status, 302);
+    assert.match(sign.headers.get("location") ?? "", /mov_card_sign_00099-5-test-0001-00\.h264\.mp4$/);
+    assert.deepEqual(queued, [`anim:${id}`, `sign:${id}`]);
+
+    assert.equal((await fetch(`${base}/images/cards-anim/${id}.webm`)).status, 400);
+    assert.equal((await fetch(`${base}/images/cards-anim/00001-4-cmmn-0000-00.mp4`)).status, 404);
+    assert.equal((await fetch(`${base}/images/cards-sign/..%2F..%2Fevil.mp4`)).status, 400);
+
+    setMediaMirrorForTests(null); // CARD_MEDIA_MIRROR=false
+    assert.equal((await fetch(`${base}/images/cards-anim/${id}.mp4`, { redirect: "manual" })).status, 404);
+  } finally {
+    setMediaMirrorForTests(undefined);
+  }
+});

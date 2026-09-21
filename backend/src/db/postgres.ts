@@ -145,6 +145,18 @@ export const initPostgresSchema = async (): Promise<void> => {
     // 256x256 icon cut from the illustration, for the small square-ish frames.
     await client.query("ALTER TABLE card_art_full ADD COLUMN IF NOT EXISTS square_img BYTEA");
 
+    // 5-star animation/signature videos, mirrored on demand by etl/card-media.ts.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS card_media (
+        kind TEXT NOT NULL,
+        asset_id TEXT NOT NULL,
+        data BYTEA NOT NULL,
+        bytes INTEGER NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (kind, asset_id)
+      )
+    `);
+
     await client.query(`
       CREATE TABLE IF NOT EXISTS songs (
         id TEXT PRIMARY KEY,
@@ -396,5 +408,29 @@ export const postgresFullArtStore = (): import("../etl/card-art-cdn.js").FullArt
   },
   async touch(assetId) {
     await getPool().query("UPDATE card_art_full SET checked_at = now() WHERE asset_id = $1", [assetId]);
+  },
+});
+
+export const postgresMediaStore = (): import("../etl/card-media.js").MediaStore & {
+  load(kind: string, assetId: string): Promise<Buffer | null>;
+} => ({
+  async has(kind, assetId) {
+    const res = await getPool().query("SELECT 1 FROM card_media WHERE kind = $1 AND asset_id = $2", [kind, assetId]);
+    return res.rows.length > 0;
+  },
+  async load(kind, assetId) {
+    const res = await getPool().query("SELECT data FROM card_media WHERE kind = $1 AND asset_id = $2", [kind, assetId]);
+    return res.rows[0]?.data ?? null;
+  },
+  async save(kind, assetId, data) {
+    await getPool().query(
+      `INSERT INTO card_media (kind, asset_id, data, bytes) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (kind, asset_id) DO UPDATE SET data = EXCLUDED.data, bytes = EXCLUDED.bytes, created_at = now()`,
+      [kind, assetId, data, data.length]
+    );
+  },
+  async totalBytes() {
+    const res = await getPool().query("SELECT COALESCE(SUM(bytes), 0)::bigint AS total FROM card_media");
+    return Number(res.rows[0].total);
   },
 });

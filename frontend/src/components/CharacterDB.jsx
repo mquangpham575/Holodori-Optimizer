@@ -9,7 +9,7 @@ import { ALL_CARDS } from '../data';
 import { getTypeIconUrl } from '../charUtils';
 import CardArt from './CardArt';
 import { CardStage, CardViewer, ExpandButton, StageToggles } from './CardStage';
-import { useStagePrefs } from '../cardMedia';
+import { useStagePrefs, warmOnIntent } from '../cardMedia';
 import './CharacterDB.css';
 
 const storageGet = (key) => {
@@ -503,6 +503,7 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
               style={{ '--hover-color': getTypeColor(char.type) }}
               role="button"
               tabIndex={0}
+              {...warmOnIntent(char, { animation, signature })}
               onClick={() => openCard(char)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(char); } }}
             >
@@ -529,6 +530,7 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
                 tabIndex={0}
                 className="char-row glass"
                 style={{ '--hover-color': getTypeColor(char.type) }}
+                {...warmOnIntent(char, { animation, signature })}
                 onClick={() => openCard(char)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(char); } }}
               >

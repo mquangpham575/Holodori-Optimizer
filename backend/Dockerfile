@@ -1,6 +1,10 @@
 # Build context is the repo root (see docker-compose.yml).
 FROM node:20-alpine
 
+# ffmpeg shrinks the 5-star card animations when they are mirrored (etl/card-media.ts).
+# Optional: without it they are streamed from the CDN instead.
+RUN apk add --no-cache ffmpeg
+
 WORKDIR /app
 
 # Install all deps (devDeps include TypeScript for the build), then prune dev

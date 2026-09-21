@@ -4,6 +4,8 @@ import { Router } from "express";
 import config from "../config.js";
 import { getPool } from "../db/postgres.js";
 import { listCharacters } from "../services/characterService.js";
+import { getMediaMirror, loadMirroredMedia } from "../services/mediaService.js";
+import { cdnMediaUrl, isMediaAssetId, parseByteRange, type MediaKind } from "../etl/card-media.js";
 import { logger } from "../logger.js";
 
 const router = Router();
@@ -63,6 +65,64 @@ const mirroredArt = (column: "full_img" | "thumb_img") => async (req: any, res: 
 };
 router.get("/cards-full/:file", mirroredArt("full_img"));
 router.get("/cards-thumb/:file", mirroredArt("thumb_img"));
+
+// 5-star animation / signature videos (see etl/card-media.ts). A mirrored video is served
+// from our own store (dev: plain files, which express.static answers before this router
+// is reached); anything else is redirected to the CDN as before and queued for mirroring.
+const CDN_REDIRECT_CACHE = "public, max-age=60";
+const VIDEO_CACHE = "public, max-age=2592000, immutable";
+
+const sendVideo = (req: any, res: any, data: Buffer) => {
+  res.set("Content-Type", "video/mp4");
+  res.set("Cache-Control", VIDEO_CACHE);
+  res.set("Accept-Ranges", "bytes");
+  // Browsers ask for byte ranges to start playback early and to seek.
+  const range = parseByteRange(req.headers.range, data.length);
+  if (range === "unsatisfiable") {
+    res.status(416).set("Content-Range", `bytes */${data.length}`).end();
+    return;
+  }
+  if (range) {
+    res.status(206);
+    res.set("Content-Range", `bytes ${range.start}-${range.end}/${data.length}`);
+    res.set("Content-Length", String(range.end - range.start + 1));
+    res.end(data.subarray(range.start, range.end + 1));
+    return;
+  }
+  res.set("Content-Length", String(data.length));
+  res.end(data);
+};
+
+const cardVideo = (kind: MediaKind) => async (req: any, res: any) => {
+  const match = /^([A-Za-z0-9_-]+)\.mp4$/.exec(String(req.params.file));
+  if (!match) {
+    res.status(400).end();
+    return;
+  }
+  const assetId = match[1];
+  const mirror = getMediaMirror();
+  if (!mirror || !isMediaAssetId(assetId)) {
+    res.status(404).end();
+    return;
+  }
+  try {
+    if (config.isProd) {
+      const data = await loadMirroredMedia(kind, assetId);
+      if (data) {
+        sendVideo(req, res, data);
+        return;
+      }
+    }
+    mirror.enqueue(kind, assetId);
+    res.set("Cache-Control", CDN_REDIRECT_CACHE);
+    res.redirect(302, cdnMediaUrl(kind, assetId, config.cardArtCdnBase));
+  } catch (err) {
+    logger.error({ err }, "Error serving card video");
+    res.status(500).end();
+  }
+};
+router.get("/cards-anim/:file", cardVideo("anim"));
+router.get("/cards-sign/:file", cardVideo("sign"));
 
 // Card artwork is served from Postgres in prod (kept in sync by the holodori
 // sync); in dev the static /images handler wins when art is on disk.

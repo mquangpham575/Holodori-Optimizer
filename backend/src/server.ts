@@ -3,11 +3,13 @@ import { createApp } from "./app.js";
 import { seedDatabase, syncHolodoriCards } from "./services/syncService.js";
 import { disconnectKafka } from "./kafka/producer.js";
 import { closePool } from "./db/postgres.js";
+import { getMediaMirror } from "./services/mediaService.js";
 import { logger } from "./logger.js";
 
 // Seed the active store (Postgres in prod, JSON file locally), then keep card
 // data fresh with the upstream HolodoriDB sync on boot and every 6 hours.
 await seedDatabase();
+getMediaMirror(); // checks for ffmpeg now, so the first card opened can already be mirrored
 syncHolodoriCards();
 setInterval(syncHolodoriCards, 6 * 60 * 60 * 1000);
 

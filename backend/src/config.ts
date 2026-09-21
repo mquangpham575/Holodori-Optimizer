@@ -26,6 +26,12 @@ interface AppConfig {
   masterBaseUrl: string;
   /** Read card art out of the optimizer's bundle (CARD_ART_BUNDLE=false to disable). */
   bundleArtEnabled: boolean;
+  /** Serve 5-star animations/signatures from our own store once someone has opened them (CARD_MEDIA_MIRROR=false to disable). */
+  mediaMirrorEnabled: boolean;
+  /** Stop mirroring videos once the store holds this many bytes (CARD_MEDIA_MAX_MB). */
+  mediaMaxBytes: number;
+  /** ffmpeg binary used to shrink the animations (FFMPEG_PATH). */
+  ffmpegPath: string;
   dataJsPath: string;
   kafkaBrokers: string | null;
   logLevel: string;
@@ -99,6 +105,9 @@ const config: AppConfig = {
   cardDataSource: parseDataSource(process.env.HOLODORI_DATA_SOURCE),
   masterBaseUrl: parseHttpsBase(process.env.HOLODORI_MASTER_BASE_URL, DEFAULT_MASTER_BASE_URL),
   bundleArtEnabled: process.env.CARD_ART_BUNDLE !== "false",
+  mediaMirrorEnabled: process.env.CARD_MEDIA_MIRROR !== "false",
+  mediaMaxBytes: (Number(process.env.CARD_MEDIA_MAX_MB) > 0 ? Number(process.env.CARD_MEDIA_MAX_MB) : 300) * 1024 * 1024,
+  ffmpegPath: process.env.FFMPEG_PATH || "ffmpeg",
   dataJsPath: path.join(BACKEND_ROOT, "../frontend/src/data.js"),
   kafkaBrokers: process.env.KAFKA_BROKERS || null,
   logLevel: process.env.LOG_LEVEL || "info",

@@ -42,3 +42,7 @@ frontend/public/images/upload_*
 frontend/public/images/cards-full/
 frontend/public/images/cards-thumb/
 frontend/public/images/cards-square/
+
+# Card animation/signature videos mirrored on demand (prod serves them from Postgres)
+frontend/public/images/cards-anim/
+frontend/public/images/cards-sign/
