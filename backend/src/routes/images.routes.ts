@@ -80,15 +80,19 @@ router.get("/cards/:file", async (req, res) => {
         sendWebp(res, result.rows[0].data);
         return;
       }
-      // No bundled art for this card: use the mirrored illustration if we have it.
-      const mirrored = await getPool().query("SELECT thumb_img FROM card_art_full WHERE asset_id = $1", [assetId]);
+      // No bundled art for this card: use the square icon cut from the mirrored
+      // illustration (never the 16:9 original, which would be squeezed in the frames).
+      const mirrored = await getPool().query(
+        "SELECT square_img FROM card_art_full WHERE asset_id = $1 AND square_img IS NOT NULL",
+        [assetId]
+      );
       if (mirrored.rows.length > 0) {
-        sendWebp(res, mirrored.rows[0].thumb_img, "public, max-age=300");
+        sendWebp(res, mirrored.rows[0].square_img, "public, max-age=300");
         return;
       }
-    } else if (fs.existsSync(path.join(config.imagesDir, "cards-thumb", `${assetId}.webp`))) {
+    } else if (fs.existsSync(path.join(config.imagesDir, "cards-square", `${assetId}.webp`))) {
       res.set("Cache-Control", "public, max-age=300");
-      res.redirect(302, `/images/cards-thumb/${assetId}.webp`);
+      res.redirect(302, `/images/cards-square/${assetId}.webp`);
       return;
     }
     const portrait = await portraitFor(assetId);

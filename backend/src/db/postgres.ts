@@ -142,6 +142,8 @@ export const initPostgresSchema = async (): Promise<void> => {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
     `);
+    // 256x256 icon cut from the illustration, for the small square-ish frames.
+    await client.query("ALTER TABLE card_art_full ADD COLUMN IF NOT EXISTS square_img BYTEA");
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS songs (
@@ -374,12 +376,23 @@ export const postgresFullArtStore = (): import("../etl/card-art-cdn.js").FullArt
   },
   async save(assetId, art) {
     await getPool().query(
-      `INSERT INTO card_art_full (asset_id, full_img, thumb_img, etag) VALUES ($1, $2, $3, $4)
+      `INSERT INTO card_art_full (asset_id, full_img, thumb_img, square_img, etag) VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (asset_id) DO UPDATE SET
-         full_img = EXCLUDED.full_img, thumb_img = EXCLUDED.thumb_img, etag = EXCLUDED.etag,
-         checked_at = now(), updated_at = now()`,
-      [assetId, art.full, art.thumb, art.etag]
+         full_img = EXCLUDED.full_img, thumb_img = EXCLUDED.thumb_img, square_img = EXCLUDED.square_img,
+         etag = EXCLUDED.etag, checked_at = now(), updated_at = now()`,
+      [assetId, art.full, art.thumb, art.square, art.etag]
     );
+  },
+  async missingSquare() {
+    const res = await getPool().query("SELECT asset_id FROM card_art_full WHERE square_img IS NULL");
+    return res.rows.map((r: any) => r.asset_id as string);
+  },
+  async loadFull(assetId) {
+    const res = await getPool().query("SELECT full_img FROM card_art_full WHERE asset_id = $1", [assetId]);
+    return res.rows[0]?.full_img ?? null;
+  },
+  async saveSquare(assetId, square) {
+    await getPool().query("UPDATE card_art_full SET square_img = $2 WHERE asset_id = $1", [assetId, square]);
   },
   async touch(assetId) {
     await getPool().query("UPDATE card_art_full SET checked_at = now() WHERE asset_id = $1", [assetId]);

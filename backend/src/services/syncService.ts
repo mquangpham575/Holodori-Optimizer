@@ -126,6 +126,7 @@ let holodoriSyncInFlight = false;
 const devFullArtStore = (): FullArtStore => {
   const fullDir = path.join(config.imagesDir, "cards-full");
   const thumbDir = path.join(config.imagesDir, "cards-thumb");
+  const squareDir = path.join(config.imagesDir, "cards-square");
   const metaFile = path.join(fullDir, ".meta.json");
   const readMeta = (): Record<string, { etag: string | null; checkedAt: number }> => {
     try {
@@ -153,11 +154,31 @@ const devFullArtStore = (): FullArtStore => {
       fs.mkdirSync(thumbDir, { recursive: true });
       fs.writeFileSync(path.join(fullDir, `${assetId}.webp`), art.full);
       fs.writeFileSync(path.join(thumbDir, `${assetId}.webp`), art.thumb);
+      if (art.square) {
+        fs.mkdirSync(squareDir, { recursive: true });
+        fs.writeFileSync(path.join(squareDir, `${assetId}.webp`), art.square);
+      }
       writeMeta({ ...readMeta(), [assetId]: { etag: art.etag, checkedAt: Date.now() } });
     },
     async touch(assetId) {
       const meta = readMeta();
       if (meta[assetId]) writeMeta({ ...meta, [assetId]: { ...meta[assetId], checkedAt: Date.now() } });
+    },
+    async missingSquare() {
+      return Object.keys(readMeta()).filter(
+        (id) => fs.existsSync(path.join(fullDir, `${id}.webp`)) && !fs.existsSync(path.join(squareDir, `${id}.webp`))
+      );
+    },
+    async loadFull(assetId) {
+      try {
+        return fs.readFileSync(path.join(fullDir, `${assetId}.webp`));
+      } catch {
+        return null;
+      }
+    },
+    async saveSquare(assetId, square) {
+      fs.mkdirSync(squareDir, { recursive: true });
+      fs.writeFileSync(path.join(squareDir, `${assetId}.webp`), square);
     },
   };
 };
@@ -170,9 +191,9 @@ export const ensureFullArt = async (cards: any[]): Promise<void> => {
     const ids = cards.map((c) => c.assetId).filter(Boolean) as string[];
     const store = config.isProd ? postgresFullArtStore() : devFullArtStore();
     const r = await syncFullArt(ids, store);
-    if (r.saved || r.failed || r.missing.length) {
+    if (r.saved || r.squared || r.failed || r.missing.length) {
       logger.info(
-        `Card art mirror: ${r.saved} downloaded, ${r.unchanged} up to date, ${r.missing.length} not on the CDN, ${r.failed} failed.`
+        `Card art mirror: ${r.saved} downloaded, ${r.squared} icons cut, ${r.unchanged} up to date, ${r.missing.length} not on the CDN, ${r.failed} failed.`
       );
     }
   } catch (err) {

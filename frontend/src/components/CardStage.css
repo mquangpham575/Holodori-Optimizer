@@ -16,7 +16,13 @@
   object-fit: cover;
 }
 
+/* Square framed art (older cards, or a card whose illustration is missing) fills a
+   portrait frame by cropping; the full-screen viewer shows all of it instead. */
 .card-stage-art[data-kind='framed'] {
+  object-position: 50% 30%;
+}
+
+.card-viewer-stage .card-stage-art[data-kind='framed'] {
   object-fit: contain;
 }
 

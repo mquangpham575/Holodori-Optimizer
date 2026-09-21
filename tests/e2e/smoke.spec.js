@@ -176,6 +176,42 @@ test("card art: cards without animation still maximise, without toggles or sound
   await expect(viewer).toHaveCount(0);
 });
 
+// Card art is square (older cards) or 16:9 (newer ones) but most frames are portrait, so
+// an image must be cropped to fit (object-fit: cover), never squeezed (fill).
+const stretchedImages = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll("img")]
+      .filter((img) => {
+        const r = img.getBoundingClientRect();
+        if (r.width < 8 || r.height < 8 || !img.naturalWidth) return false;
+        const fit = getComputedStyle(img).objectFit;
+        if (fit !== "fill") return false;
+        return Math.abs(r.width / r.height / (img.naturalWidth / img.naturalHeight) - 1) > 0.03;
+      })
+      .map((img) => `${img.className || "img"} ${img.naturalWidth}x${img.naturalHeight} in ${Math.round(img.width)}x${Math.round(img.height)}`)
+  );
+
+test("card art is never stretched in the team builder, roster or card database", async ({ page }) => {
+  await page.goto("/builder");
+  await fillTeam(page);
+  expect(await stretchedImages(page)).toEqual([]);
+  await page.getByText("My Character Roster").first().click();
+  await page.getByRole("button", { name: "Add All Cards" }).click();
+  await expect(page.locator(".owned-card-img").first()).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(await stretchedImages(page)).toEqual([]);
+  await page.getByPlaceholder(/Search card name/).fill("Fuwawa");
+  await expect(page.locator(".search-thumb-img").first()).toBeVisible();
+  expect(await stretchedImages(page)).toEqual([]);
+
+  await page.goto("/characters");
+  await expect(page.locator(".char-card-img").first()).toBeVisible();
+  expect(await stretchedImages(page)).toEqual([]);
+  await page.getByRole("button", { name: "List view" }).click();
+  await expect(page.locator(".char-row-img").first()).toBeVisible();
+  expect(await stretchedImages(page)).toEqual([]);
+});
+
 test("characters: list view toggle", async ({ page }) => {
   await page.goto("/characters");
   await page.getByRole("button", { name: "List view" }).click();

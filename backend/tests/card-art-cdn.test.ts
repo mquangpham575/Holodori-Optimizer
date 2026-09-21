@@ -7,6 +7,8 @@ import {
   syncFullArt,
   RECHECK_MS,
   THUMB_WIDTH,
+  SQUARE_SIZE,
+  makeSquare,
   type FullArtStore,
 } from "../src/etl/card-art-cdn.ts";
 
@@ -50,6 +52,42 @@ test("fetchFullArt returns the original plus a grid-size thumbnail", async () =>
   assert.equal(meta.width, THUMB_WIDTH);
   assert.ok(r.thumb.length < src.length);
   assert.equal(seen!.headers["If-None-Match"], '"old"');
+  // ...and a square icon, so the small frames never have to stretch a 16:9 picture.
+  const sq = await sharp(r.square!).metadata();
+  assert.deepEqual([sq.format, sq.width, sq.height], ["webp", SQUARE_SIZE, SQUARE_SIZE]);
+});
+
+test("the square icon keeps the picture's proportions instead of squeezing it", async () => {
+  // 1820x1024: a red disc on the right of a blue field. A stretched copy would shrink the
+  // disc horizontally; a crop keeps it round and still contains it.
+  const w = 1820, h = 1024, cx = 1300, cy = 512, rad = 300;
+  const raw = Buffer.alloc(w * h * 3);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 3;
+      const inside = (x - cx) ** 2 + (y - cy) ** 2 < rad ** 2;
+      raw[i] = inside ? 230 : 20;
+      raw[i + 1] = inside ? 20 : 40;
+      raw[i + 2] = inside ? 20 : 200;
+    }
+  }
+  const src = await sharp(raw, { raw: { width: w, height: h, channels: 3 } }).webp().toBuffer();
+  const icon = await makeSquare(src);
+  assert.ok(icon);
+  const { data, info } = await sharp(icon!).raw().toBuffer({ resolveWithObject: true });
+  let minX = info.width, maxX = 0, minY = info.height, maxY = 0;
+  for (let y = 0; y < info.height; y++) {
+    for (let x = 0; x < info.width; x++) {
+      const i = (y * info.width + x) * info.channels;
+      if (data[i] > 150 && data[i + 2] < 100) {
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      }
+    }
+  }
+  const dw = maxX - minX + 1, dh = maxY - minY + 1;
+  assert.ok(dw > 50 && dh > 50, "the subject is in the icon");
+  assert.ok(Math.abs(dw / dh - 1) < 0.1, `subject is still round (${dw}x${dh})`);
 });
 
 test("fetchFullArt handles 304, 404 and rejects non-WebP bodies", async () => {
@@ -117,4 +155,29 @@ test("sync stops hammering a CDN that is down", async () => {
   assert.ok(calls <= 6, `stopped early (${calls} calls)`);
   assert.ok(r.failed >= 5);
   assert.equal(r.saved, 0);
+});
+
+test("sync cuts icons for cards that were mirrored before icons existed, without downloading again", async () => {
+  const src = await bigWebp();
+  const icons = new Map<string, Buffer>();
+  const store: FullArtStore = {
+    known: async () => new Map([["old-card", { etag: '"o"', checkedAt: Date.now() }]]),
+    save: async () => {},
+    touch: async () => {},
+    missingSquare: async () => ["old-card", "no-original"].filter((id) => !icons.has(id)),
+    loadFull: async (id) => (id === "old-card" ? src : null),
+    saveSquare: async (id, sq) => {
+      icons.set(id, sq);
+    },
+  };
+  const fetchImpl = (async () => {
+    throw new Error("must not download");
+  }) as unknown as typeof fetch;
+  const r = await syncFullArt(["old-card"], store, { base: BASE, fetchImpl });
+  assert.equal(r.squared, 1);
+  assert.deepEqual([...icons.keys()], ["old-card"]);
+  const meta = await sharp(icons.get("old-card")!).metadata();
+  assert.equal(meta.width, SQUARE_SIZE);
+  // a second run finds nothing left to do
+  assert.equal((await syncFullArt(["old-card"], store, { base: BASE, fetchImpl })).squared, 0);
 });

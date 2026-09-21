@@ -382,7 +382,8 @@
 .slot-img {
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: cover;
+  object-position: 50% 30%; /* card art is square or wider: crop, never stretch */
 }
 
 .roster-item-media {
@@ -1572,7 +1573,8 @@
 .search-thumb-img {
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: cover;
+  object-position: 50% 30%; /* card art is square or wider: crop, never stretch */
 }
 
 .search-card-info {
@@ -1710,7 +1712,8 @@
 .owned-card-img {
   width: 100%;
   height: 100%;
-  object-fit: fill;
+  object-fit: cover;
+  object-position: 50% 30%; /* card art is square or wider: crop, never stretch */
 }
 
 .owned-card-details {
