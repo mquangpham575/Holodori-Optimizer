@@ -197,6 +197,30 @@ for (const [name, slow] of [["animation", "mov_card_full_"], ["signature", "mov_
   });
 }
 
+// Once both are showing, neither may pause, hide or restart out of turn: the signature
+// only ever restarts with an animation loop.
+test("card art: once running, the animation never pauses and the signature never flickers", async ({ page }) => {
+  await delayed(page, (url) => url.href.includes("mov_card_sign_"), fixture("sign.webm"), "video/webm", 5000);
+  await page.goto(FIVE_STAR);
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator("canvas.card-sign-color")).toHaveCount(1);
+  // Until the signature has loaded the animation is held back and the idle art shows.
+  expect((await inStep(dialog)).animPlaying).toBe(false);
+  await expect(dialog.locator("img.card-stage-art")).toBeVisible();
+  await expect.poll(async () => (await inStep(dialog)).shown, { timeout: 15000 }).toBe(true);
+  await page.evaluate(() => {
+    window.__glitches = [];
+    setInterval(() => {
+      const anim = document.querySelector("video.card-stage-video");
+      const color = document.querySelector(".card-sign-color");
+      if (anim && anim.paused) window.__glitches.push("animation paused");
+      if (color && color.classList.contains("is-hidden")) window.__glitches.push("signature hidden");
+    }, 20);
+  });
+  await page.waitForTimeout(4000);
+  expect(await page.evaluate(() => window.__glitches)).toEqual([]);
+});
+
 test("card art: over the idle art the signature waits for the art, not a black stage", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("holodreams_card_animation", "off"));
   await delayed(page, "**/images/cards-full/*.webp", fixture("art.png"), "image/webp", 5000);
