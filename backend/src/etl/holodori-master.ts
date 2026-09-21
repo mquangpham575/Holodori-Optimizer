@@ -13,8 +13,9 @@
  * The output has exactly the shape packedToLegacySnapshot() consumes.
  */
 
-export const MASTER_BASE_URL =
-  "https://raw.githubusercontent.com/HolodoriDB/holodori-db-eng-diff/main";
+import config from "../config.js";
+
+export const MASTER_BASE_URL = config.masterBaseUrl;
 
 const MASTER_TIMEOUT_MS = Number(process.env.HOLODORI_FETCH_TIMEOUT_MS) || 120_000;
 

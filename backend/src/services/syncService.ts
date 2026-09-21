@@ -188,6 +188,7 @@ export const ensureFullArt = async (cards: any[]): Promise<void> => {
 // the member's portrait (see images.routes.ts). With ETag revalidation this is
 // a cheap 304 on the regular 6-hourly runs.
 export const ensureCardArt = async (cards: any[]): Promise<void> => {
+  if (!config.bundleArtEnabled) return;
   try {
     const wanted = [...new Set(cards.map((c) => c.assetId).filter(Boolean))] as string[];
     let missing: string[];
@@ -220,6 +221,10 @@ export const ensureCardArt = async (cards: any[]): Promise<void> => {
 };
 
 export const syncHolodoriCards = async (): Promise<void> => {
+  if (config.cardDataSource === "none") {
+    logger.info("HolodoriDB sync disabled (HOLODORI_DATA_SOURCE=none); serving the stored catalog as is.");
+    return;
+  }
   if (holodoriSyncInFlight) return;
   holodoriSyncInFlight = true;
   try {

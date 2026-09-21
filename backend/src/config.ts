@@ -20,6 +20,12 @@ export interface AppConfig {
   imagesDir: string;
   /** Base URL of the CDN that hosts full card illustrations; empty disables the mirror. */
   cardArtCdnBase: string;
+  /** Where card/skill/song data comes from (see HOLODORI_DATA_SOURCE). */
+  cardDataSource: DataSource;
+  /** Origin of the HolodoriDB-format master tables (HOLODORI_MASTER_BASE_URL). */
+  masterBaseUrl: string;
+  /** Read card art out of the optimizer's bundle (CARD_ART_BUNDLE=false to disable). */
+  bundleArtEnabled: boolean;
   dataJsPath: string;
   kafkaBrokers: string | null;
   logLevel: string;
@@ -53,6 +59,22 @@ const parseTrustProxy = (raw: string | undefined): boolean | number | string => 
   return raw;
 };
 
+export type DataSource = "auto" | "master" | "optimizer" | "none";
+
+/** auto = master tables, falling back to the optimizer pack; none = no upstream sync. */
+export const parseDataSource = (raw: string | undefined): DataSource => {
+  const v = (raw ?? "").trim().toLowerCase();
+  return v === "master" || v === "optimizer" || v === "none" ? v : "auto";
+};
+
+export const DEFAULT_MASTER_BASE_URL = "https://raw.githubusercontent.com/HolodoriDB/holodori-db-eng-diff/main";
+
+/** A plain https URL (no query/fragment), trailing slashes removed; anything else -> fallback. */
+export const parseHttpsBase = (raw: string | undefined, fallback: string): string => {
+  const v = (raw ?? "").trim().replace(/\/+$/, "");
+  return /^https:\/\/[A-Za-z0-9.-]+(:\d+)?(\/[A-Za-z0-9._~%/-]*)?$/.test(v) ? v : fallback;
+};
+
 const config: AppConfig = {
   isProd,
   adminEnabled,
@@ -72,6 +94,11 @@ const config: AppConfig = {
   // Full-size card illustrations are mirrored (once per card, revalidated weekly)
   // from this CDN into our own store. Set CARD_ART_CDN_BASE="" to turn it off.
   cardArtCdnBase: (process.env.CARD_ART_CDN_BASE ?? "https://cdn.holodori.dev").trim(),
+  // Upstream sources are configuration, not code: point them at your own mirror, or
+  // switch them off, without touching the sync logic.
+  cardDataSource: parseDataSource(process.env.HOLODORI_DATA_SOURCE),
+  masterBaseUrl: parseHttpsBase(process.env.HOLODORI_MASTER_BASE_URL, DEFAULT_MASTER_BASE_URL),
+  bundleArtEnabled: process.env.CARD_ART_BUNDLE !== "false",
   dataJsPath: path.join(BACKEND_ROOT, "../frontend/src/data.js"),
   kafkaBrokers: process.env.KAFKA_BROKERS || null,
   logLevel: process.env.LOG_LEVEL || "info",

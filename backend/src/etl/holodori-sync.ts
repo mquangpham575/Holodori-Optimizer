@@ -11,6 +11,7 @@
 
 import { createHash } from "node:crypto";
 import { logger } from "../logger.js";
+import config, { type DataSource } from "../config.js";
 import { fetchMasterTables, buildPackedFromMaster, MASTER_BASE_URL } from "./holodori-master.js";
 
 // Upstream card-data source (also the reference for the optimizer logic).
@@ -50,25 +51,30 @@ export async function fetchOptimizerHtml(): Promise<string> {
   return text;
 }
 
-// Primary source: HolodoriDB master data converted directly (fresh within
-// minutes of a master-data release, ~2 MB). Fallback: the optimizer's bundled
-// pack, which only moves when that project publishes a release (and is a 23 MB
-// download). Both produce the identical normalized-card-v2 shape.
-export async function fetchPacked(): Promise<any> {
-  try {
-    const { version, tables } = await fetchMasterTables();
-    const { packed, skipped } = buildPackedFromMaster(version, tables);
-    if (skipped.length > 0) {
-      logger.warn(
-        { skipped },
-        `HolodoriDB master: ${skipped.length} cards could not be converted and were left out`
-      );
+// Sources (HOLODORI_DATA_SOURCE): "master" converts the HolodoriDB-format master
+// tables directly (fresh within minutes of a game update, ~2 MB); "optimizer" reads
+// the optimizer's bundled pack (moves only on its releases, 23 MB download); "auto"
+// (default) tries master and falls back to the optimizer. Both produce the identical
+// normalized-card-v2 shape. "none" is handled by the caller (no upstream sync).
+export async function fetchPacked(source: DataSource = config.cardDataSource): Promise<any> {
+  if (source === "none") throw new Error("upstream card data is disabled (HOLODORI_DATA_SOURCE=none)");
+  if (source !== "optimizer") {
+    try {
+      const { version, tables } = await fetchMasterTables();
+      const { packed, skipped } = buildPackedFromMaster(version, tables);
+      if (skipped.length > 0) {
+        logger.warn(
+          { skipped },
+          `HolodoriDB master: ${skipped.length} cards could not be converted and were left out`
+        );
+      }
+      return packed;
+    } catch (err) {
+      if (source === "master") throw err;
+      logger.warn({ err }, "HolodoriDB master fetch/convert failed; falling back to the optimizer pack");
     }
-    return packed;
-  } catch (err) {
-    logger.warn({ err }, "HolodoriDB master fetch/convert failed; falling back to the optimizer pack");
-    return extractPacked(await fetchOptimizerHtml());
   }
+  return extractPacked(await fetchOptimizerHtml());
 }
 
 const MUSIC_BASE_URL = MASTER_BASE_URL;

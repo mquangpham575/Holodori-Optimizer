@@ -1,20 +1,20 @@
-import { test, before, after } from "node:test";
+import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, mkdtempSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { buildPackedFromMaster } from "../src/etl/holodori-master.ts";
 
 const fx = JSON.parse(readFileSync("backend/tests/fixtures/holodori-master-fixture.json", "utf8"));
 
-let tempDir: string;
-before(() => {
-  tempDir = mkdtempSync(join(tmpdir(), "holodreams-catalog-"));
-  process.env.DB_PATH = join(tempDir, "database.json");
-});
+// config.ts reads DB_PATH once when it is first imported, and most of the modules
+// under test import it. So the temp path must exist before any of them is loaded
+// (hence dynamic imports below rather than static ones).
+const tempDir = mkdtempSync(join(tmpdir(), "holodreams-catalog-"));
+process.env.DB_PATH = join(tempDir, "database.json");
 after(() => rmSync(tempDir, { recursive: true, force: true }));
 
 const snapshotFromFixture = async () => {
+  const { buildPackedFromMaster } = await import("../src/etl/holodori-master.ts");
   const { packedToLegacySnapshot } = await import("../src/etl/holodori-sync.ts");
   return packedToLegacySnapshot(buildPackedFromMaster(fx.version, fx.tables).packed);
 };
