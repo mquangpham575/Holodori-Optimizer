@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+// Card media helpers: per-visitor animation/signature preferences and voice prefetching.
+
 // --- Preferences -----------------------------------------------------------
 
 const storageGet = (key) => {
@@ -31,3 +33,21 @@ export function useStagePrefs() {
   }, []);
   return { animation, signature, setAnimation, setSignature };
 }
+
+// --- Voice lines ---------------------------------------------------------------------
+
+// The voice is about 1 MB. Start fetching it when the visitor reaches for the maximise
+// button, and keep the element so the viewer can play it the moment it opens.
+const voices = new Map();
+export const warmVoice = (url) => {
+  if (!url || typeof Audio !== 'function') return null;
+  let audio = voices.get(url);
+  if (!audio) {
+    audio = new Audio();
+    audio.preload = 'auto';
+    audio.src = url;
+    voices.set(url, audio);
+    if (voices.size > 3) voices.delete(voices.keys().next().value);
+  }
+  return audio;
+};

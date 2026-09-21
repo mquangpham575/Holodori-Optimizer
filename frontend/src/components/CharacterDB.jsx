@@ -1,5 +1,5 @@
 import { useLanguage } from '../context/LanguageContext';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   X, Users, Sparkles, Award, Zap, Shield, SlidersHorizontal, LayoutGrid, List,
@@ -9,7 +9,7 @@ import { ALL_CARDS } from '../data';
 import { getTypeIconUrl } from '../charUtils';
 import CardArt from './CardArt';
 import { CardStage, CardViewer, ExpandButton, StageToggles } from './CardStage';
-import { useStagePrefs } from '../useStagePrefs';
+import { useStagePrefs } from '../cardMedia';
 import './CharacterDB.css';
 
 const storageGet = (key) => {
@@ -115,6 +115,8 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
   const [animationFailed, setAnimationFailed] = useState(false);
   const [signatureFailed, setSignatureFailed] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  // Where the inline animation is, so the maximised viewer carries on from there.
+  const animationTime = useRef(0);
 
   const displayList = useMemo(
     () => (allCards.length > 0 ? allCards : ALL_CARDS && ALL_CARDS.length > 0 ? ALL_CARDS : characters),
@@ -575,12 +577,15 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
               <div className="modal-card-col">
                 <div className="modal-card-frame" style={{ borderColor: getTypeColor(activeCharacter.type), boxShadow: `0 0 25px ${getTypeColor(activeCharacter.type)}35` }}>
                   <div className="card-rarity-pill">{activeCharacter.rarity}</div>
+                  {/* While maximised the card is shown once, in the viewer: two live
+                      video + canvas stacks would each slow the other down. */}
                   <CardStage
                     card={activeCharacter}
-                    animation={animation && !animationFailed}
-                    signature={signature && !signatureFailed}
+                    animation={animation && !animationFailed && !viewerOpen}
+                    signature={signature && !signatureFailed && !viewerOpen}
                     onAnimationError={() => setAnimationFailed(true)}
                     onSignatureError={() => setSignatureFailed(true)}
+                    timeRef={animationTime}
                   />
                 </div>
                 <div className="card-stage-controls">
@@ -593,7 +598,7 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
                     animationOk={!animationFailed}
                     signatureOk={!signatureFailed}
                   />
-                  <ExpandButton onClick={() => setViewerOpen(true)} />
+                  <ExpandButton card={activeCharacter} onClick={() => setViewerOpen(true)} />
                 </div>
                 {viewerOpen && (
                   <CardViewer
@@ -607,6 +612,7 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
                     onAnimationError={() => setAnimationFailed(true)}
                     onSignatureError={() => setSignatureFailed(true)}
                     onClose={() => setViewerOpen(false)}
+                    timeRef={animationTime}
                   />
                 )}
 

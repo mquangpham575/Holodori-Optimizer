@@ -28,8 +28,7 @@
 
 .card-stage-layer,
 .card-sign-cutout,
-.card-sign-glow,
-.card-sign-glow canvas {
+.card-sign-color {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -40,18 +39,12 @@
 
 /* Signature compositing: see SignatureLayer in CardStage.jsx */
 .card-sign-cutout {
-  filter: invert(1);
   mix-blend-mode: multiply;
 }
 
-.card-sign-glow {
-  isolation: isolate;
+.card-sign-color {
   mix-blend-mode: screen; /* fallback where plus-lighter is unsupported */
   mix-blend-mode: plus-lighter;
-}
-
-.card-sign-mask {
-  mix-blend-mode: multiply;
 }
 
 /* The decoder; it has to stay rendered, but is never seen. */
@@ -165,8 +158,8 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(3, 4, 10, 0.97);
-  backdrop-filter: blur(6px);
+  /* Opaque on purpose: blurring what is behind would redo the blur on every video frame. */
+  background: #03040a;
   animation: fadeIn 0.2s ease-out;
 }
 

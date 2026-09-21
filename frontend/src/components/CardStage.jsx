@@ -3,10 +3,9 @@ import { createPortal } from 'react-dom';
 import { Maximize2, Volume2, VolumeX, X } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import CardArt from './CardArt';
+import { warmVoice } from '../cardMedia';
 import './CardStage.css';
 
-// --- Signature overlay ------------------------------------------------------
-//
 // --- Signature overlay ------------------------------------------------------
 //
 // The signature is a "stacked alpha" video: the colour picture is the top half of
@@ -16,11 +15,12 @@ import './CardStage.css';
 // into a canvas is still allowed, though, and the browser's compositor can combine
 // canvases without any pixel ever being read back. With m = matte and c = colour:
 //
-//   backdrop * (1 - m)   canvas 1: the matte, inverted, blended with "multiply"
-//   + c * m              group:    colour x matte ("multiply"), added with "plus-lighter"
+//   backdrop * (1 - m)   canvas "cutout": the inverted matte, blended with "multiply"
+//   + c * m              canvas "color":  colour x matte, added with "plus-lighter"
 //
-// which is ordinary alpha compositing of a straight-alpha picture. All three
-// canvases are painted from the same video element, so they cannot drift apart.
+// which is ordinary alpha compositing of a straight-alpha picture. Both canvases are
+// painted from the same video element, so they cannot drift apart, and they are only
+// as large as the picture is shown (never the full 1280 px inside a small card).
 
 const playMuted = (video) => {
   video.muted = true;
@@ -31,7 +31,6 @@ const playMuted = (video) => {
 function SignatureLayer({ src, master, onError }) {
   const videoRef = useRef(null);
   const colorRef = useRef(null);
-  const maskRef = useRef(null);
   const cutoutRef = useRef(null);
   // Parents pass a fresh callback every render; keep effects from restarting on it.
   const errorRef = useRef(onError);
@@ -41,13 +40,21 @@ function SignatureLayer({ src, master, onError }) {
   useEffect(() => {
     const video = videoRef.current;
     const color = colorRef.current;
-    const mask = maskRef.current;
     const cutout = cutoutRef.current;
-    if (!video || !color || !mask || !cutout) return undefined;
+    if (!video || !color || !cutout) return undefined;
     const colorCtx = color.getContext('2d');
-    const maskCtx = mask.getContext('2d');
     const cutoutCtx = cutout.getContext('2d');
-    if (!colorCtx || !maskCtx || !cutoutCtx) { errorRef.current?.(); return undefined; }
+    if (!colorCtx || !cutoutCtx) { errorRef.current?.(); return undefined; }
+
+    // Draw at the size the picture is displayed (device pixels, at most the video's own).
+    const shown = { width: 0 };
+    const stage = color.parentElement;
+    const observer = typeof ResizeObserver === 'function' && stage
+      ? new ResizeObserver(([entry]) => {
+        shown.width = Math.round(entry.contentRect.width * Math.min(window.devicePixelRatio || 1, 2));
+      })
+      : null;
+    observer?.observe(stage);
 
     let stopped = false;
     let handle = 0;
@@ -57,13 +64,24 @@ function SignatureLayer({ src, master, onError }) {
       if (video.readyState < 2 || !video.videoWidth) return;
       const w = video.videoWidth;
       const h = Math.floor(video.videoHeight / 2);
-      if (color.width !== w || color.height !== h) {
-        for (const c of [color, mask, cutout]) { c.width = w; c.height = h; }
+      const dw = Math.max(64, Math.min(w, shown.width || w));
+      const dh = Math.round((dw * h) / w);
+      if (color.width !== dw || color.height !== dh) {
+        color.width = dw; color.height = dh;
+        cutout.width = dw; cutout.height = dh;
       }
       try {
-        colorCtx.drawImage(video, 0, 0, w, h, 0, 0, w, h);
-        maskCtx.drawImage(video, 0, h, w, h, 0, 0, w, h);
-        cutoutCtx.drawImage(video, 0, h, w, h, 0, 0, w, h);
+        // c * m
+        colorCtx.globalCompositeOperation = 'source-over';
+        colorCtx.drawImage(video, 0, 0, w, h, 0, 0, dw, dh);
+        colorCtx.globalCompositeOperation = 'multiply';
+        colorCtx.drawImage(video, 0, h, w, h, 0, 0, dw, dh);
+        // 1 - m
+        cutoutCtx.globalCompositeOperation = 'source-over';
+        cutoutCtx.drawImage(video, 0, h, w, h, 0, 0, dw, dh);
+        cutoutCtx.globalCompositeOperation = 'difference';
+        cutoutCtx.fillStyle = '#fff';
+        cutoutCtx.fillRect(0, 0, dw, dh);
       } catch { /* frame not decodable yet */ }
     };
     const loop = () => {
@@ -76,6 +94,7 @@ function SignatureLayer({ src, master, onError }) {
     video.addEventListener('seeked', paint);
     return () => {
       stopped = true;
+      observer?.disconnect();
       if (useFrameCallback) video.cancelVideoFrameCallback?.(handle);
       else cancelAnimationFrame(handle);
       video.removeEventListener('loadeddata', paint);
@@ -130,10 +149,7 @@ function SignatureLayer({ src, master, onError }) {
         onError={onError}
       />
       <canvas ref={cutoutRef} className="card-sign-cutout" aria-hidden="true" />
-      <div className="card-sign-glow" aria-hidden="true">
-        <canvas ref={colorRef} className="card-sign-color" />
-        <canvas ref={maskRef} className="card-sign-mask" />
-      </div>
+      <canvas ref={colorRef} className="card-sign-color" aria-hidden="true" />
     </>
   );
 }
@@ -141,8 +157,12 @@ function SignatureLayer({ src, master, onError }) {
 // --- The art stage ------------------------------------------------------------
 
 /** Card illustration with the optional looping animation and signature on top. */
-export function CardStage({ card, animation, signature, onAnimationError, onSignatureError, className = '' }) {
+export function CardStage({ card, animation, signature, onAnimationError, onSignatureError, className = '', timeRef, startAt = 0 }) {
   const [animEl, setAnimEl] = useState(null);
+  // timeRef: where the animation currently is, written for whoever opens the next stage
+  // (the maximised viewer carries on from there instead of restarting). startAt: the
+  // position to begin at, used once.
+  const resumeAt = useRef(startAt);
   const showAnimation = Boolean(animation && card.videoUrl);
   const showSignature = Boolean(signature && card.signUrl);
   return (
@@ -163,6 +183,12 @@ export function CardStage({ card, animation, signature, onAnimationError, onSign
           playsInline
           preload="auto"
           onError={onAnimationError}
+          onTimeUpdate={timeRef ? (e) => { timeRef.current = e.currentTarget.currentTime; } : undefined}
+          onLoadedMetadata={(e) => {
+            const video = e.currentTarget;
+            if (resumeAt.current > 0 && resumeAt.current < video.duration) video.currentTime = resumeAt.current;
+            resumeAt.current = 0;
+          }}
         />
       )}
       {showSignature && (
@@ -211,21 +237,38 @@ export function StageToggles({ card, animation, signature, onAnimation, onSignat
  *  Escape is handled by the owner so it can close this before the card dialog. */
 export function CardViewer({
   card, animation, signature, onAnimation, onSignature,
-  animationOk, signatureOk, onAnimationError, onSignatureError, onClose,
+  animationOk, signatureOk, onAnimationError, onSignatureError, onClose, timeRef,
 }) {
   const { t } = useLanguage();
+  const hostRef = useRef(null);
   const audioRef = useRef(null);
+  const resumeAt = useRef(timeRef?.current || 0);
   const [muted, setMuted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [audioFailed, setAudioFailed] = useState(false);
   const hasVoice = Boolean(card.voiceUrl) && !audioFailed;
 
+  // The voice element comes from the cache (usually already buffered by hovering the
+  // maximise button) and is parked in the viewer so it is part of the dialog.
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return undefined;
+    const audio = warmVoice(card.voiceUrl);
+    const host = hostRef.current;
+    if (!audio || !host) return undefined;
+    audioRef.current = audio;
+    host.appendChild(audio);
+    const on = { play: () => setPlaying(true), pause: () => setPlaying(false), ended: () => setPlaying(false), error: () => setAudioFailed(true) };
+    for (const [name, fn] of Object.entries(on)) audio.addEventListener(name, fn);
+    if (audio.error) setAudioFailed(true);
+    audio.muted = false;
+    audio.currentTime = 0;
     const p = audio.play();
     if (p && typeof p.catch === 'function') p.catch(() => setPlaying(false));
-    return () => audio.pause();
+    return () => {
+      for (const [name, fn] of Object.entries(on)) audio.removeEventListener(name, fn);
+      audio.pause();
+      audio.remove();
+      audioRef.current = null;
+    };
   }, [card.voiceUrl]);
 
   useEffect(() => {
@@ -268,6 +311,7 @@ export function CardViewer({
             signature={signature}
             onAnimationError={onAnimationError}
             onSignatureError={onSignatureError}
+            startAt={resumeAt.current}
           />
         </div>
         <div className="card-viewer-bar">
@@ -293,26 +337,26 @@ export function CardViewer({
           )}
         </div>
       </div>
-      {card.voiceUrl && (
-        <audio
-          ref={audioRef}
-          src={card.voiceUrl}
-          preload="auto"
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
-          onEnded={() => setPlaying(false)}
-          onError={() => setAudioFailed(true)}
-        />
-      )}
+      <div ref={hostRef} hidden />
     </div>,
     document.body
   );
 }
 
-export function ExpandButton({ onClick }) {
+export function ExpandButton({ card, onClick }) {
   const { t } = useLanguage();
+  const warm = () => warmVoice(card?.voiceUrl);
   return (
-    <button type="button" className="card-expand-btn" onClick={onClick} aria-label={t('view_larger')} title={t('view_larger')}>
+    <button
+      type="button"
+      className="card-expand-btn"
+      onClick={onClick}
+      onPointerEnter={warm}
+      onFocus={warm}
+      onTouchStart={warm}
+      aria-label={t('view_larger')}
+      title={t('view_larger')}
+    >
       <Maximize2 size={16} />
     </button>
   );
