@@ -1,15 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import CharacterDB from './components/CharacterDB';
-import TeamBuilder from './components/TeamBuilder';
 import Guides from './components/Guides';
-import AdminDashboard from './components/AdminDashboard';
 import { CHARACTERS } from './data';
 import { buildAllCards } from './allCards';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import './App.css';
+
+// The team builder (scoring engine + search worker) and the admin dashboard are
+// the bulk of the bundle and most visitors never open them.
+const TeamBuilder = lazy(() => import('./components/TeamBuilder'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
 // Helper function to parse hex to RGB
 const hexToRgb = (hex) => {
@@ -34,14 +37,64 @@ const idMigrationMap = {
 
 const migrateIds = (id) => idMigrationMap[id] || id;
 
+// localStorage can throw (Safari private mode, blocked site data) and can hold
+// corrupt JSON. Neither should be able to blank the whole app on startup.
+const storageGet = (key) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+const storageSet = (key, value) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable: keep working in memory */
+  }
+};
+const safeJsonParse = (raw, fallback) => {
+  if (raw == null) return fallback;
+  try {
+    const value = JSON.parse(raw);
+    return value ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+// The device id is the only "credential" guarding a device's presets/roster on
+// the server, so it must be unguessable (Math.random is not).
+let memoryDeviceId = null;
+const generateDeviceId = () => {
+  const c = globalThis.crypto;
+  if (c?.randomUUID) return 'dev_' + c.randomUUID().replace(/-/g, '');
+  const bytes = new Uint8Array(16);
+  c?.getRandomValues?.(bytes);
+  return 'dev_' + Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+};
 const getOrCreateDeviceId = () => {
-  let id = localStorage.getItem('holodreams_device_id');
+  let id = storageGet('holodreams_device_id') || memoryDeviceId;
   if (!id) {
-    id = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('holodreams_device_id', id);
+    id = generateDeviceId();
+    memoryDeviceId = id;
+    storageSet('holodreams_device_id', id);
   }
   return id;
 };
+
+// Coerce roster entries into the {id, bloom, level} shape the API validates.
+const sanitizeRoster = (roster) =>
+  (Array.isArray(roster) ? roster : [])
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      if (!item || typeof item.id !== 'string') return null;
+      const out = { id: item.id };
+      if (Number.isInteger(item.bloom) && item.bloom >= 0 && item.bloom <= 10) out.bloom = item.bloom;
+      if (Number.isInteger(item.level) && item.level >= 1 && item.level <= 80) out.level = item.level;
+      return out;
+    })
+    .filter(Boolean);
 
 function App() {
   const [notification, setNotification] = useState(null);
@@ -49,13 +102,10 @@ function App() {
   const [presets, setPresets] = useState([]);
   const [selectedPresetId, setSelectedPresetId] = useState('preset_1');
   const [defaultRoster, setDefaultRoster] = useState([]);
-  const [rosterByPreset, setRosterByPreset] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('holodreams_roster_by_preset')) || {};
-    } catch {
-      return {};
-    }
-  });
+  const [rosterByPreset, setRosterByPreset] = useState(() =>
+    safeJsonParse(storageGet('holodreams_roster_by_preset'), {})
+  );
+  const rosterSyncTimer = useRef(null);
   const ownedRoster = rosterByPreset[selectedPresetId] ?? defaultRoster;
   const [guides, setGuides] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,13 +116,13 @@ function App() {
       : 'https://site--hololive-dream--mv2hgs5fgpjc.code.run'
   );
 
-  const deviceId = getOrCreateDeviceId();
+  const [deviceId] = useState(getOrCreateDeviceId);
 
   const allCards = useMemo(() => buildAllCards(characters), [characters]);
 
   // Load theme accent color from localStorage or default (Sora Blue)
   const [themeAccent] = useState(() => {
-    return localStorage.getItem('holodreams_theme_accent') || '#3a86ff';
+    return storageGet('holodreams_theme_accent') || '#3a86ff';
   });
 
   // Apply theme accent colors dynamically to CSS custom variables
@@ -81,7 +131,7 @@ function App() {
     document.documentElement.style.setProperty('--accent-color', themeAccent);
     document.documentElement.style.setProperty('--accent-glow', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`);
     document.documentElement.style.setProperty('--accent-glow-strong', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`);
-    localStorage.setItem('holodreams_theme_accent', themeAccent);
+    storageSet('holodreams_theme_accent', themeAccent);
   }, [themeAccent]);
 
   // Fetch initial data from backend API with offline fallback
@@ -123,17 +173,17 @@ function App() {
       } catch (err) {
         console.error("Backend fetch failed, loading fallback state:", err);
         // Load fallback presets from local storage
-        const savedPresets = localStorage.getItem('holodreams_presets');
-        if (savedPresets) {
-          setPresets(JSON.parse(savedPresets));
+        const savedPresets = safeJsonParse(storageGet('holodreams_presets'), null);
+        if (Array.isArray(savedPresets) && savedPresets.length > 0) {
+          setPresets(savedPresets);
         } else {
           // Migration fallback
-          const savedOld = localStorage.getItem('holodreams_player_data');
+          const savedOld = storageGet('holodreams_player_data');
           let oldTeam = [null, null, null, null, null];
           let oldLeader = null;
           if (savedOld) {
-            const parsed = JSON.parse(savedOld);
-            if (parsed.favoriteTeam) {
+            const parsed = safeJsonParse(savedOld, {});
+            if (Array.isArray(parsed.favoriteTeam)) {
               oldTeam = parsed.favoriteTeam.map(migrateIds);
             }
             if (parsed.favoriteLeader) {
@@ -150,9 +200,9 @@ function App() {
         }
         
         // Load fallback roster
-        const savedRoster = localStorage.getItem('holodreams_owned_roster');
-        if (savedRoster) {
-          setDefaultRoster(JSON.parse(savedRoster));
+        const savedRoster = safeJsonParse(storageGet('holodreams_owned_roster'), null);
+        if (Array.isArray(savedRoster)) {
+          setDefaultRoster(savedRoster);
         } else {
           setDefaultRoster(CHARACTERS.map(c => c.id));
         }
@@ -203,10 +253,10 @@ function App() {
       }
     } catch (err) {
       console.error("Error saving presets to backend, using local storage:", err);
-      localStorage.setItem('holodreams_presets', JSON.stringify(updatedPresets));
+      storageSet('holodreams_presets', JSON.stringify(updatedPresets));
       const activePreset = updatedPresets.find(p => p.isActive) || updatedPresets[0];
       const oldData = { favoriteTeam: activePreset.team, favoriteLeader: activePreset.leader };
-      localStorage.setItem('holodreams_player_data', JSON.stringify(oldData));
+      storageSet('holodreams_player_data', JSON.stringify(oldData));
       showNotification('Presets saved locally (offline mode)', 'warning');
     }
   };
@@ -214,14 +264,29 @@ function App() {
   const handleUpdateOwnedRoster = (newRoster) => {
     setRosterByPreset((prev) => {
       const next = { ...prev, [selectedPresetId]: newRoster };
-      try {
-        localStorage.setItem('holodreams_roster_by_preset', JSON.stringify(next));
-      } catch (err) {
-        console.error("Error saving roster to localStorage:", err);
-      }
+      storageSet('holodreams_roster_by_preset', JSON.stringify(next));
       return next;
     });
+
+    // The roster used to live only in localStorage: GET /api/roster was read on
+    // load but nothing ever PUT it, so it never reached the database and was
+    // lost on a new browser/device. Push it (debounced) as the device roster;
+    // per-preset variants stay local and fall back to this one elsewhere.
+    clearTimeout(rosterSyncTimer.current);
+    rosterSyncTimer.current = setTimeout(() => {
+      fetch(`${API_BASE}/api/roster`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-device-id': deviceId },
+        body: JSON.stringify(sanitizeRoster(newRoster)),
+      })
+        .then((res) => {
+          if (!res.ok) console.error('Roster sync rejected by server:', res.status);
+        })
+        .catch((err) => console.error('Roster sync failed (kept locally):', err));
+    }, 800);
   };
+
+  useEffect(() => () => clearTimeout(rosterSyncTimer.current), []);
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
@@ -261,6 +326,7 @@ function App() {
       <Navbar API_BASE={API_BASE} />
 
       <main className="main-content-layout">
+        <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading…</div>}>
         <Routes>
           <Route 
             path="/" 
@@ -296,6 +362,7 @@ function App() {
               <CharacterDB 
                 characters={characters}
                 allCards={allCards}
+                ownedRoster={ownedRoster}
               />
             } 
           />
@@ -305,6 +372,7 @@ function App() {
               <CharacterDB 
                 characters={characters}
                 allCards={allCards}
+                ownedRoster={ownedRoster}
               />
             } 
           />
@@ -370,6 +438,7 @@ function App() {
           <Route path="/home/:lang" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
 
       <footer className="footer glass">

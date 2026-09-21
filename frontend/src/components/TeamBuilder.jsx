@@ -105,7 +105,10 @@ const resolveSkillLevel = (char, skillType, bloomStage) => {
 const materializeCard = (char, bloomStage, cardLevel) => {
   const cd = char?.cardData || char;
   const bloom = bloomStage !== undefined ? bloomStage : 0;
-  const lvl = Math.max(1, Math.min(80, cardLevel || 70));
+  // 3-star cards top out at level 60 and 4-star at 70; indexing their (shorter)
+  // level curve at the default level 70 gave undefined -> NaN stats.
+  const curveLength = Array.isArray(cd?.levelBaseValues) ? cd.levelBaseValues.length : 80;
+  const lvl = Math.max(1, Math.min(80, curveLength || 80, cardLevel || 70));
 
   // Stats from levelBaseValues + statPermil + bloom statBonus
   let perf, tech, sense, total;
