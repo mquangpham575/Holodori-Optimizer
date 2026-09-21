@@ -8,14 +8,27 @@ export const cardArtUrl = (assetId) =>
 export const cardFullArtUrl = (assetId) => (assetId ? `/images/cards-full/${assetId}.webp` : null);
 export const cardThumbArtUrl = (assetId) => (assetId ? `/images/cards-thumb/${assetId}.webp` : null);
 
-// 5-star cards have a looping animation. It is streamed straight from the CDN only
-// when a visitor presses "Animation" (about 2.5 MB each), never mirrored. Set
-// VITE_CARD_VIDEO_BASE="" at build time to switch it off.
-const VIDEO_BASE = (import.meta.env?.VITE_CARD_VIDEO_BASE ?? 'https://cdn.holodori.dev').replace(/\/+$/, '');
-export const cardVideoUrl = (assetId, rarityNum) => {
-  if (!VIDEO_BASE || !assetId || rarityNum !== 5 || !/^[A-Za-z0-9_-]+$/.test(assetId)) return null;
-  const name = `mov_card_full_0_${assetId}`;
-  return `${VIDEO_BASE}/assets/resources/${name}.usm/${name}/${name}.mp4`;
+// 5-star cards also have a looping animation, a signature overlay and a voice line.
+// They are streamed straight from the CDN only when a visitor opens the card (about
+// 2.5 MB + 0.3 MB + 1 MB), never mirrored. Set VITE_CARD_VIDEO_BASE="" at build time
+// to switch all of it off.
+const MEDIA_BASE = (import.meta.env?.VITE_CARD_VIDEO_BASE ?? 'https://cdn.holodori.dev').replace(/\/+$/, '');
+const mediaOk = (assetId, rarityNum) =>
+  Boolean(MEDIA_BASE && assetId && rarityNum === 5 && /^[A-Za-z0-9_-]+$/.test(assetId));
+// Movies live at <name>.usm/<name>/<name>.<ext>; the audio at <name>.acb/<name>.mp3.
+const movieUrl = (assetId, rarityNum, prefix, ext) => {
+  if (!mediaOk(assetId, rarityNum)) return null;
+  const name = `${prefix}${assetId}`;
+  return `${MEDIA_BASE}/assets/resources/${name}.usm/${name}/${name}.${ext}`;
+};
+export const cardVideoUrl = (assetId, rarityNum) => movieUrl(assetId, rarityNum, 'mov_card_full_0_', 'mp4');
+// Stacked-alpha H.264: colour in the top half of each frame, the matte in the bottom half.
+export const cardSignUrl = (assetId, rarityNum) => movieUrl(assetId, rarityNum, 'mov_card_sign_', 'h264.mp4');
+// The "situation" voice line, named after the member number (the asset id's first part).
+export const cardVoiceUrl = (assetId, rarityNum) => {
+  if (!mediaOk(assetId, rarityNum)) return null;
+  const name = `vo_card_cmn_${assetId.split('-')[0]}_${assetId}_situation`;
+  return `${MEDIA_BASE}/assets/resources/${name}.acb/${name}.mp3`;
 };
 
 const rarityToLabel = (rarity) => {
@@ -57,6 +70,8 @@ export const buildAllCards = (characters = []) => {
         fullImage: cardFullArtUrl(v.assetId),
         thumbImage: cardThumbArtUrl(v.assetId),
         videoUrl: cardVideoUrl(v.assetId, rarityNumOf(v)),
+        signUrl: cardSignUrl(v.assetId, rarityNumOf(v)),
+        voiceUrl: cardVoiceUrl(v.assetId, rarityNumOf(v)),
         fallbackImage: c.fallbackImage,
         avatar: c.avatar,
         stats: v.stats,

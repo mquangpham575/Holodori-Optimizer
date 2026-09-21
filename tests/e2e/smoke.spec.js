@@ -1,4 +1,21 @@
+import fs from "node:fs";
 import { test, expect } from "playwright/test";
+
+// Tests never touch the real art CDN: its media is answered from small local fixtures
+// (VP9 stand-ins for the H.264 originals, which headless Chromium cannot decode).
+const fixture = (name) => fs.readFileSync(new URL(`./fixtures/${name}`, import.meta.url));
+test.beforeEach(async ({ page }) => {
+  await page.route("https://cdn.holodori.dev/**", (route) => {
+    const url = route.request().url();
+    if (url.includes("mov_card_sign_")) return route.fulfill({ body: fixture("sign.webm"), contentType: "video/webm" });
+    if (url.includes("mov_card_full_")) return route.fulfill({ body: fixture("anim.webm"), contentType: "video/webm" });
+    if (url.includes("/vo_card_")) return route.fulfill({ body: fixture("voice.mp3"), contentType: "audio/mpeg" });
+    return route.abort();
+  });
+  await page.route("**/images/cards-full/*.webp", (route) =>
+    route.fulfill({ body: fixture("art.png"), contentType: "image/webp" })
+  );
+});
 
 const TEAM = [
   "Nerissa Ravencroft",
@@ -77,9 +94,86 @@ test("characters: a card deep-links, shows stats and closes with Escape", async 
 
 test("characters: cards without artwork fall back instead of showing a broken image", async ({ page }) => {
   await page.goto("/characters?card=00004-5-uniq-0081-00");
-  const img = page.getByRole("dialog").locator("img.modal-card-portrait");
+  const img = page.getByRole("dialog").locator("img.card-stage-art");
   await expect(img).toBeVisible();
   expect(await img.evaluate((el) => el.naturalWidth)).toBeGreaterThan(0);
+});
+
+const FIVE_STAR = "/characters?card=00004-5-uniq-0081-00";
+
+test("card art: animation autoplays on a loop with the signature on top, and both can be switched off", async ({ page }) => {
+  await page.goto(FIVE_STAR);
+  const dialog = page.getByRole("dialog");
+  const video = dialog.locator("video.card-stage-video");
+  await expect(video).toHaveCount(1);
+  expect(await video.evaluate((v) => [v.loop, v.muted, v.autoplay])).toEqual([true, true, true]);
+  await expect.poll(() => video.evaluate((v) => !v.paused && v.currentTime > 0)).toBe(true);
+  // The signature is painted into two canvases (colour + matte) from one hidden video.
+  const color = dialog.locator("canvas.card-sign-color");
+  await expect.poll(() => color.evaluate((c) => c.width)).toBeGreaterThan(0);
+  await expect(dialog.locator("canvas.card-sign-cutout")).toHaveCount(1);
+
+  const animation = dialog.getByRole("switch", { name: "Animation" });
+  const signature = dialog.getByRole("switch", { name: "Signature" });
+  await expect(animation).toHaveAttribute("aria-checked", "true");
+  await signature.click();
+  await expect(dialog.locator("canvas.card-sign-color")).toHaveCount(0);
+  await expect(video).toHaveCount(1);
+  await animation.click();
+  await expect(video).toHaveCount(0);
+
+  // The choice is remembered.
+  await page.goto(FIVE_STAR);
+  await expect(page.getByRole("dialog").getByRole("switch", { name: "Animation" })).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByRole("dialog").getByRole("switch", { name: "Signature" })).toHaveAttribute("aria-checked", "false");
+});
+
+test("card art: maximise works with idle art or animation, with or without signature, and plays the voice", async ({ page }) => {
+  await page.goto(FIVE_STAR);
+  await page.getByRole("dialog").getByRole("button", { name: "View larger" }).click();
+  const viewer = page.locator(".card-viewer");
+  await expect(viewer).toBeVisible();
+  // Voice starts by itself (the click that opened the viewer is the user gesture).
+  const audio = viewer.locator("audio");
+  await expect.poll(() => audio.evaluate((a) => !a.paused)).toBe(true);
+  await viewer.getByRole("button", { name: "Mute" }).click();
+  expect(await audio.evaluate((a) => a.muted)).toBe(true);
+  await expect(viewer.getByRole("button", { name: "Unmute" })).toBeVisible();
+
+  // animation + signature
+  await expect(viewer.locator("video.card-stage-video")).toHaveCount(1);
+  await expect(viewer.locator("canvas.card-sign-color")).toHaveCount(1);
+  // idle art + signature
+  await viewer.getByRole("switch", { name: "Animation" }).click();
+  await expect(viewer.locator("video.card-stage-video")).toHaveCount(0);
+  await expect(viewer.locator("canvas.card-sign-color")).toHaveCount(1);
+  // idle art only
+  await viewer.getByRole("switch", { name: "Signature" }).click();
+  await expect(viewer.locator("canvas.card-sign-color")).toHaveCount(0);
+  await expect(viewer.locator("img.card-stage-art")).toBeVisible();
+  // animation only
+  await viewer.getByRole("switch", { name: "Animation" }).click();
+  await expect(viewer.locator("video.card-stage-video")).toHaveCount(1);
+
+  // Escape closes the viewer first, then the card, and the voice stops with the viewer.
+  await page.keyboard.press("Escape");
+  await expect(viewer).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("card art: cards without animation still maximise, without toggles or sound", async ({ page }) => {
+  await page.goto("/characters?card=00001-4-cmmn-0000-00");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("switch")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "View larger" }).click();
+  const viewer = page.locator(".card-viewer");
+  await expect(viewer.locator("img.card-stage-art")).toBeVisible();
+  await expect(viewer.getByRole("switch")).toHaveCount(0);
+  await expect(viewer.locator("audio")).toHaveCount(0);
+  await viewer.getByRole("button", { name: "Close" }).click();
+  await expect(viewer).toHaveCount(0);
 });
 
 test("characters: list view toggle", async ({ page }) => {

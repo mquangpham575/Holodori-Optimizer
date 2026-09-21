@@ -1,0 +1,213 @@
+/* Card art stage: illustration, then animation, then the signature on top. */
+.card-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Keeps the signature's blend modes inside the stage so they only see the art. */
+  isolation: isolate;
+  background: #05060d;
+}
+
+.card-stage-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-stage-art[data-kind='framed'] {
+  object-fit: contain;
+}
+
+.card-stage-layer,
+.card-sign-cutout,
+.card-sign-glow,
+.card-sign-glow canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* Signature compositing: see SignatureLayer in CardStage.jsx */
+.card-sign-cutout {
+  filter: invert(1);
+  mix-blend-mode: multiply;
+}
+
+.card-sign-glow {
+  isolation: isolate;
+  mix-blend-mode: screen; /* fallback where plus-lighter is unsupported */
+  mix-blend-mode: plus-lighter;
+}
+
+.card-sign-mask {
+  mix-blend-mode: multiply;
+}
+
+/* The decoder; it has to stay rendered, but is never seen. */
+.card-sign-source {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Toggle switches */
+.card-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: none;
+  border: 0;
+  padding: 0.25rem 0;
+  color: var(--text-main, #e8eaf6);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.card-switch-track {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.card-switch.on .card-switch-track {
+  background: #5b7cfa;
+}
+
+.card-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.card-switch.on .card-switch-knob {
+  transform: translateX(18px);
+}
+
+.card-switch:focus-visible,
+.card-sound-btn:focus-visible,
+.card-expand-btn:focus-visible,
+.card-viewer-close:focus-visible {
+  outline: 2px solid #8fa5ff;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-switch-track,
+  .card-switch-knob { transition: none; }
+}
+
+/* Controls under the card in the detail dialog */
+.card-stage-controls {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-expand-btn,
+.card-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  cursor: pointer;
+}
+
+.card-expand-btn:hover,
+.card-sound-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.card-stage-controls .card-expand-btn {
+  margin-left: auto;
+}
+
+/* Full-screen viewer (portalled to <body>, above the detail dialog) */
+.card-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(3, 4, 10, 0.97);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.card-viewer-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  /* Largest 16:9 picture that still leaves room for the control bar. */
+  width: min(96vw, calc((100vh - 120px) * 16 / 9));
+}
+
+.card-viewer-stage {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.card-viewer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  min-height: 40px;
+  color: var(--text-main, #e8eaf6);
+}
+
+.card-viewer-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(13, 17, 26, 0.85);
+  color: #fff;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.card-viewer-close:hover {
+  background: rgba(60, 70, 110, 0.9);
+}

@@ -1125,23 +1125,13 @@
   aspect-ratio: 16 / 9;
 }
 
-.char-card-img[data-kind='wide'],
-.modal-card-portrait[data-kind='wide'] {
+.char-card-img[data-kind='wide'] {
   object-fit: cover;
 }
 
 .modal-card-frame:has(img[data-kind='wide']),
 .modal-card-frame:has(video) {
   aspect-ratio: 16 / 9;
-}
-
-.modal-card-video {
-  object-fit: cover;
-  display: block;
-}
-
-.animation-toggle {
-  align-self: stretch;
 }
 
 @media (min-width: 821px) {

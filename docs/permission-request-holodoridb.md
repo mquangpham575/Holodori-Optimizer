@@ -20,8 +20,9 @@ publish, and on what terms:
    illustration (`img_card_full_<id>_unsquished.webp`) once, stores it in my own
    database, and re-checks it with a conditional request (ETag) at most once a
    week. It downloads three at a time, stops after a few failures, and sends no
-   special headers. The 5-star animation is *not* copied: the visitor's browser
-   streams it from your CDN only when they press "Animation".
+   special headers. The 5-star animation, signature overlay (`mov_card_sign_*`) and
+   voice line (`vo_card_cmn_*_situation`) are *not* copied: the visitor's browser
+   streams them from your CDN when they open a card.
 
 What I can offer:
 

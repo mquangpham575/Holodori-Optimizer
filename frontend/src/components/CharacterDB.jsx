@@ -3,10 +3,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   X, Users, Sparkles, Award, Zap, Shield, SlidersHorizontal, LayoutGrid, List,
-  ArrowDownWideNarrow, ArrowUpNarrowWide, Link as LinkIcon, Check, Play, Pause,
+  ArrowDownWideNarrow, ArrowUpNarrowWide, Link as LinkIcon, Check,
 } from 'lucide-react';
 import { ALL_CARDS } from '../data';
 import { getTypeIconUrl } from '../charUtils';
+import CardArt from './CardArt';
+import { CardStage, CardViewer, ExpandButton, StageToggles } from './CardStage';
+import { useStagePrefs } from '../useStagePrefs';
 import './CharacterDB.css';
 
 const storageGet = (key) => {
@@ -14,37 +17,6 @@ const storageGet = (key) => {
 };
 const storageSet = (key, value) => {
   try { window.localStorage.setItem(key, value); } catch { /* storage unavailable */ }
-};
-
-// Module-level so the component type stays stable across renders (defining it
-// inside the component would remount the <img> and reset the error state each
-// render, causing broken images to retry endlessly).
-const getInitials = (name) => {
-  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
-  return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase();
-};
-
-// Tries each source in order (full illustration, then the bundled card art, then the
-// member portrait) before falling back to initials, so a card whose artwork is not
-// available yet still shows something sensible instead of a broken image.
-// data-kind lets the CSS give the wide illustrations a 16:9 frame.
-const CardArt = ({ name, sources, alt, className, small }) => {
-  const list = (sources || []).filter((s, i, all) => s && all.indexOf(s) === i);
-  const [index, setIndex] = useState(0);
-  if (index >= list.length) {
-    return <div className={`card-art-initials${small ? ' small' : ''}`}>{getInitials(name)}</div>;
-  }
-  return (
-    <img
-      key={list[index]}
-      src={list[index]}
-      alt={alt || name}
-      className={className}
-      data-kind={index === 0 && /\/images\/cards-(full|thumb)\//.test(list[0]) ? 'wide' : 'framed'}
-      loading="lazy"
-      onError={() => setIndex((i) => i + 1)}
-    />
-  );
 };
 
 const STAT_KEYS = ['performance', 'technique', 'sense'];
@@ -139,8 +111,10 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
   const [statBloom, setStatBloom] = useState(5);
   const [statLevel, setStatLevel] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [showVideo, setShowVideo] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
+  const { animation, signature, setAnimation, setSignature } = useStagePrefs();
+  const [animationFailed, setAnimationFailed] = useState(false);
+  const [signatureFailed, setSignatureFailed] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   const displayList = useMemo(
     () => (allCards.length > 0 ? allCards : ALL_CARDS && ALL_CARDS.length > 0 ? ALL_CARDS : characters),
@@ -223,16 +197,22 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
     setStatBloom(5);
     setStatLevel(null);
     setLinkCopied(false);
-    setShowVideo(false);
-    setVideoFailed(false);
+    setAnimationFailed(false);
+    setSignatureFailed(false);
+    setViewerOpen(false);
   }, [activeKey]);
 
   useEffect(() => {
     if (!activeKey) return undefined;
-    const onKey = (e) => { if (e.key === 'Escape') closeCard(); };
+    // Escape closes the maximised card first, then the dialog behind it.
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      if (viewerOpen) setViewerOpen(false);
+      else closeCard();
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activeKey, closeCard]);
+  }, [activeKey, closeCard, viewerOpen]);
 
   const changeView = (next) => {
     setView(next);
@@ -595,35 +575,39 @@ export default function CharacterDB({ characters = [], allCards = [], ownedRoste
               <div className="modal-card-col">
                 <div className="modal-card-frame" style={{ borderColor: getTypeColor(activeCharacter.type), boxShadow: `0 0 25px ${getTypeColor(activeCharacter.type)}35` }}>
                   <div className="card-rarity-pill">{activeCharacter.rarity}</div>
-                  {showVideo && activeCharacter.videoUrl ? (
-                    <video
-                      className="modal-card-portrait modal-card-video"
-                      src={activeCharacter.videoUrl}
-                      poster={activeCharacter.fullImage || undefined}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      onError={() => { setShowVideo(false); setVideoFailed(true); }}
-                    />
-                  ) : (
-                    <CardArt
-                      name={activeCharacter.name}
-                      sources={[activeCharacter.fullImage, activeCharacter.image, activeCharacter.fallbackImage]}
-                      className="modal-card-portrait"
-                    />
-                  )}
+                  <CardStage
+                    card={activeCharacter}
+                    animation={animation && !animationFailed}
+                    signature={signature && !signatureFailed}
+                    onAnimationError={() => setAnimationFailed(true)}
+                    onSignatureError={() => setSignatureFailed(true)}
+                  />
                 </div>
-                {activeCharacter.videoUrl && !videoFailed && (
-                  <button
-                    type="button"
-                    className={`toolbar-btn animation-toggle${showVideo ? ' active' : ''}`}
-                    aria-pressed={showVideo}
-                    onClick={() => setShowVideo((v) => !v)}
-                  >
-                    {showVideo ? <Pause size={14} /> : <Play size={14} />}
-                    <span>{t('animation')}</span>
-                  </button>
+                <div className="card-stage-controls">
+                  <StageToggles
+                    card={activeCharacter}
+                    animation={animation}
+                    signature={signature}
+                    onAnimation={setAnimation}
+                    onSignature={setSignature}
+                    animationOk={!animationFailed}
+                    signatureOk={!signatureFailed}
+                  />
+                  <ExpandButton onClick={() => setViewerOpen(true)} />
+                </div>
+                {viewerOpen && (
+                  <CardViewer
+                    card={activeCharacter}
+                    animation={animation && !animationFailed}
+                    signature={signature && !signatureFailed}
+                    onAnimation={setAnimation}
+                    onSignature={setSignature}
+                    animationOk={!animationFailed}
+                    signatureOk={!signatureFailed}
+                    onAnimationError={() => setAnimationFailed(true)}
+                    onSignatureError={() => setSignatureFailed(true)}
+                    onClose={() => setViewerOpen(false)}
+                  />
                 )}
 
                 <div className="modal-stat-box glass">

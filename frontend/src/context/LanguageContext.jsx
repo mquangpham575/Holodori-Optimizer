@@ -21,6 +21,11 @@ export const LANGUAGES = [
 const TRANSLATIONS = {
   en: {
     animation: "Animation",
+    signature: "Signature",
+    view_larger: "View larger",
+    mute: "Mute",
+    unmute: "Unmute",
+    play_voice: "Play voice",
     rarity: "Rarity",
     roster: "Roster",
     close: "Close",
@@ -164,6 +169,11 @@ const TRANSLATIONS = {
   },
   vi: {
     animation: "Hoạt ảnh",
+    signature: "Chữ ký",
+    view_larger: "Xem lớn hơn",
+    mute: "Tắt tiếng",
+    unmute: "Bật tiếng",
+    play_voice: "Phát giọng nói",
     rarity: "Độ hiếm",
     roster: "Danh sách sở hữu",
     close: "Đóng",
@@ -307,6 +317,11 @@ const TRANSLATIONS = {
   },
   ja: {
     animation: "アニメーション",
+    signature: "サイン",
+    view_larger: "拡大表示",
+    mute: "ミュート",
+    unmute: "ミュート解除",
+    play_voice: "ボイスを再生",
     rarity: "レアリティ",
     roster: "所持リスト",
     close: "閉じる",
